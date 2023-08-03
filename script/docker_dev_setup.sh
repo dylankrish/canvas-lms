@@ -23,8 +23,10 @@ fi
 print_canvas_intro
 
 if [[ $OS == 'Darwin' ]]; then
-  source script/common/utils/dinghy_proxy_setup.sh
-  dinghy_machine_exists && exit 1
+  # source script/common/utils/dinghy_proxy_setup.sh
+  # dinghy_machine_exists && exit 1
+  print('This fork is intended to be run on Linux.')
+  exit 1
 fi
 
 create_log_file
