@@ -359,6 +359,7 @@ class ApplicationController < ActionController::Base
     account_calendars_planner_support
     permanent_page_links
     developer_key_page_checkboxes
+    improved_no_results_messaging
   ].freeze
   JS_ENV_ROOT_ACCOUNT_FEATURES = %i[
     product_tours
@@ -374,6 +375,7 @@ class ApplicationController < ActionController::Base
     rce_transform_loaded_content
     lti_assignment_page_line_items
     mobile_offline_mode
+    react_discussions_post
   ].freeze
   JS_ENV_BRAND_ACCOUNT_FEATURES = [
     :embedded_release_notes

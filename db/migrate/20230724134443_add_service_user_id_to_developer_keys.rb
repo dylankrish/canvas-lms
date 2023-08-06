@@ -1,5 +1,6 @@
-<%
-# Copyright (C) 2022 - present Instructure, Inc.
+# frozen_string_literal: true
+
+# Copyright (C) 2023 - present Instructure, Inc.
 #
 # This file is part of Canvas.
 #
@@ -14,16 +15,19 @@
 #
 # You should have received a copy of the GNU Affero General Public License along
 # with this program. If not, see <http://www.gnu.org/licenses/>.
-%>
 
-<%# Don't render the forwarder frame _inside_ the forwarder frame %>
-<% if Lti::PlatformStorage.flag_enabled? && action_name != "post_message_forwarding"%>
-  <%= iframe(
-    lti_post_message_forwarding_url,
-    name: Lti::PlatformStorage::FORWARDING_TARGET,
-    title: Lti::PlatformStorage::FORWARDING_TARGET,
-    id: Lti::PlatformStorage::FORWARDING_TARGET,
-    sandbox: "allow-scripts allow-same-origin",
-    style: "display:none;"
-  ) %>
-<% end %>
+class AddServiceUserIdToDeveloperKeys < ActiveRecord::Migration[7.0]
+  tag :predeploy
+
+  disable_ddl_transaction!
+
+  def change
+    add_reference(
+      :developer_keys,
+      :service_user,
+      if_not_exists: true,
+      index: { where: "service_user_id IS NOT NULL", algorithm: :concurrently, if_not_exists: true },
+      foreign_key: { to_table: :users }
+    )
+  end
+end

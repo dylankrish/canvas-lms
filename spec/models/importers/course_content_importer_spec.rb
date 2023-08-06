@@ -206,6 +206,15 @@ describe Course do
       expect(file).not_to be_nil
       expect(file.filename).to eq("dropbox.zip")
       expect(file.folder.full_name).to eq("course files/Course Content/Orientation/WebCT specific and old stuff")
+
+      expect(migration.migration_settings[:attachment_path_id_lookup]).to eq(
+        {
+          "Course Content/Orientation/Ins and Outs/Eres directions.htm" => @course.attachments.find_by(display_name: "Eres directions.htm").migration_id,
+          "Course Content/Orientation/WebCT specific and old stuff/dropbox.zip" => file.migration_id,
+          "Pictures/banner_kandinsky.jpg" => @course.attachments.find_by(display_name: "banner_kandinsky.jpg").migration_id,
+          "Writing Assignments/Examples/theatre_example.htm" => @course.attachments.find_by(display_name: "theatre_example.htm").migration_id,
+        }
+      )
     end
 
     def build_migration(import_course, params, copy_options = {})
@@ -482,18 +491,21 @@ describe Course do
 
   describe "import_media_objects" do
     before do
-      attachment_model(uploaded_data: stub_file_data("test.m4v", "asdf", "video/mp4"))
+      @kmh = double(KalturaMediaFileHandler)
+      allow(KalturaMediaFileHandler).to receive(:new).and_return(@kmh)
+      MediaObject.create!(media_id: "maybe")
+      attachment_model(uploaded_data: stub_file_data("test.m4v", "asdf", "video/mp4"), media_entry_id: "maybe")
     end
 
     it "waits for media objects on canvas cartridge import" do
       migration = double(canvas_import?: true)
-      expect(MediaObject).to receive(:add_media_files).with([@attachment], true)
+      expect(@kmh).to receive(:add_media_files).with([@attachment], true)
       Importers::CourseContentImporter.import_media_objects([@attachment], migration)
     end
 
     it "does not wait for media objects on other import" do
       migration = double(canvas_import?: false)
-      expect(MediaObject).to receive(:add_media_files).with([@attachment], false)
+      expect(@kmh).to receive(:add_media_files).with([@attachment], false)
       Importers::CourseContentImporter.import_media_objects([@attachment], migration)
     end
   end

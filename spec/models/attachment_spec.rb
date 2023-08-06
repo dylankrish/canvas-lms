@@ -626,6 +626,13 @@ describe Attachment do
       expect(@attachment.media_tracks_include_originals).to match [en_track, fra_track]
       expect(@attachment.media_tracks_include_originals).not_to include fr_track
     end
+
+    it "differentiates between inherited and non-inherited tracks" do
+      @media_object.media_tracks.create!(kind: "subtitles", locale: "en", content: "en subs", user_id: @teacher)
+      @attachment.media_tracks.create!(kind: "subtitles", locale: "fr", content: "fr subs", user_id: @teacher, media_object: @media_object)
+      expect(@attachment.media_tracks_include_originals.first.inherited).to be_truthy
+      expect(@attachment.media_tracks_include_originals.last.inherited).to be_falsey
+    end
   end
 
   context "destroy" do
@@ -3122,23 +3129,6 @@ describe Attachment do
     it "returns soft-deleted media objects" do
       @media_object.destroy
       expect(@attachment.media_object_by_media_id).to eq @media_object
-    end
-  end
-
-  describe "active_media_object_by_media_id" do
-    before(:once) do
-      course_with_teacher(active_all: true)
-      @media_object = @course.media_objects.create!(media_id: "0_feedbeef", attachment: attachment_model(context: @course))
-      @attachment = attachment_model(context: @course, media_entry_id: @media_object.media_id)
-    end
-
-    it "returns the media object with the given media id" do
-      expect(@attachment.active_media_object_by_media_id).to eq @media_object
-    end
-
-    it "does not return deleted media objects" do
-      @media_object.destroy
-      expect(@attachment.active_media_object_by_media_id).to be_nil
     end
   end
 end

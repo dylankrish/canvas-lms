@@ -118,7 +118,6 @@ class Attachment < ActiveRecord::Base
   has_one :group_and_membership_importer, inverse_of: :attachment
   has_one :media_object
   belongs_to :media_object_by_media_id, class_name: "MediaObject", primary_key: :media_id, foreign_key: :media_entry_id, inverse_of: :attachments_by_media_id
-  belongs_to :active_media_object_by_media_id, -> { where.not(workflow_state: "deleted") }, class_name: "MediaObject", primary_key: :media_id, foreign_key: :media_entry_id, inverse_of: :active_attachments_by_media_id
   has_many :media_tracks, dependent: :destroy
   has_many :submission_draft_attachments, inverse_of: :attachment
   has_many :submissions, -> { active }
@@ -360,9 +359,9 @@ class Attachment < ActiveRecord::Base
       MediaTrack.select("*, ROW_NUMBER() OVER(PARTITION BY media_tracks_all.locale, media_tracks_all.media_object_id ORDER BY media_tracks_all.rank) AS row")
         .from(<<~SQL.squish),
           (
-            #{MediaTrack.select("*, 0 AS rank, attachment_id AS for_att_id").where(attachment_id: attachment_ids).to_sql}
+            #{MediaTrack.select("*, 0 AS rank, attachment_id AS for_att_id, false AS inherited").where(attachment_id: attachment_ids).to_sql}
             UNION
-            #{MediaTrack.select("media_tracks.*, 1 AS rank, attachments_by_media_ids_media_objects.id AS for_att_id")
+            #{MediaTrack.select("media_tracks.*, 1 AS rank, attachments_by_media_ids_media_objects.id AS for_att_id, true AS inherited")
               .joins(media_object: [:attachment, :attachments_by_media_id])
               .where("media_tracks.attachment_id = attachments.id")
               .where(media_objects: { attachments_by_media_ids_media_objects: { id: attachment_ids } }).to_sql}
