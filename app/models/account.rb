@@ -126,6 +126,7 @@ class Account < ActiveRecord::Base
            class_name: "Lti::ResourceLink",
            dependent: :destroy
   belongs_to :course_template, class_name: "Course", inverse_of: :templated_accounts
+  belongs_to :grading_standard
 
   def inherited_assessment_question_banks(include_self = false, *additional_contexts)
     sql, conds = [], []
@@ -2315,14 +2316,15 @@ class Account < ActiveRecord::Base
 
   # Forces the default setting to overwrite each user's preference
   def update_user_dashboards
-    User.where(id: user_account_associations.select(:user_id))
-        .where("#{User.table_name}.preferences LIKE ?", "%:dashboard_view:%")
-        .find_in_batches do |batch|
+    User.where(id: root_account.pseudonyms.active.joins(:user).where("#{User.table_name}.preferences LIKE ?", "%:dashboard_view:%").select(:user_id)).find_in_batches do |batch|
       users = batch.reject do |user|
         user.preferences[:dashboard_view].nil? ||
           user.dashboard_view(self) == default_dashboard_view
       end
       users.each do |user|
+        # don't write to the shadow record
+        user = User.find(user.id) unless user.canonical?
+
         user.preferences.delete(:dashboard_view)
         user.save!
       end
@@ -2369,6 +2371,15 @@ class Account < ActiveRecord::Base
 
   def grading_standard_read_permission
     :read
+  end
+
+  def grading_standard_enabled
+    default_grading_standard.present?
+  end
+  alias_method :grading_standard_enabled?, :grading_standard_enabled
+
+  def default_grading_standard
+    account_chain.find(&:grading_standard_id)&.grading_standard
   end
 
   class << self
