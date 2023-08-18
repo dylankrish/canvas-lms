@@ -18,7 +18,7 @@
 # with this program. If not, see <http://www.gnu.org/licenses/>.
 
 group :test do
-  gem "rails-dom-testing", "2.0.3"
+  gem "rails-dom-testing", "~> 2.1"
   gem "rails-controller-testing", "1.0.5"
 
   gem "dotenv", "~> 2.8", require: false
@@ -30,7 +30,7 @@ group :test do
   gem "db-query-matchers", "0.11.0"
   gem "rspec", "~> 3.12"
   gem "rspec_around_all", "0.2.0"
-  gem "rspec-rails", "6.0.1"
+  gem "rspec-rails", "~> 6.0"
   gem "rspec-collection_matchers", "1.2.0"
   gem "shoulda-matchers", "4.3.0"
 

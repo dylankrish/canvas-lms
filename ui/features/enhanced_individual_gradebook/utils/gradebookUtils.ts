@@ -98,8 +98,8 @@ export function mapAssignmentGroupQueryResults(
         rules: curr.rules,
         id: curr.id,
         position: curr.position,
-        integration_data: {}, // TODO: Get Data
-        sis_source_id: null, // TODO: Get data
+        integration_data: {},
+        sis_source_id: curr.sisId,
         invalid: totalGroupPoints === 0,
         gradingPeriodsIds: _.uniq(assignmentGroupGradingPeriods),
       }
@@ -156,7 +156,7 @@ export function studentDisplayName(
   student: SortableStudent | GradebookStudentDetails,
   hideStudentNames: boolean
 ): string {
-  return hideStudentNames ? student.hiddenName ?? I18n.t('Student') : student.name
+  return hideStudentNames ? student.hiddenName ?? I18n.t('Student') : student.sortableName
 }
 
 export function sortAssignments(
@@ -218,6 +218,8 @@ export function mapUnderscoreSubmission(submission: Submission): GradebookUserSu
     submissionType: submission.submission_type,
     state: submission.workflow_state,
     cachedDueDate: submission.cached_due_date,
+    deductedPoints: submission.points_deducted,
+    enteredGrade: submission.entered_grade,
   }
 }
 

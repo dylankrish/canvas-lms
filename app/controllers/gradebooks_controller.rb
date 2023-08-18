@@ -227,6 +227,7 @@ class GradebooksController < ApplicationController
                     end
 
       js_hash[:effective_final_score] = total_score.effective_final_score if total_score&.overridden?
+      js_hash[:final_override_custom_grade_status_id] = total_score.custom_grade_status_id if total_score&.overridden? && Account.site_admin.feature_enabled?(:custom_gradebook_statuses)
     end
 
     js_env(js_hash)
@@ -319,7 +320,8 @@ class GradebooksController < ApplicationController
         return
       end
 
-      if gradebook_version == "individual_enhanced"
+      individual_enhanced_enabled = @context.root_account.feature_enabled?(:individual_gradebook_enhancements)
+      if gradebook_version == "individual_enhanced" && individual_enhanced_enabled
         show_enhanced_individual_gradebook
       elsif ["srgb", "individual"].include?(gradebook_version)
         show_individual_gradebook
@@ -1080,6 +1082,7 @@ class GradebooksController < ApplicationController
           ),
           course_id: @context.id,
           assignment_id: @assignment.id,
+          custom_grade_statuses: Account.site_admin.feature_enabled?(:custom_gradebook_statuses) ? @domain_root_account.custom_grade_statuses.active.as_json(include_root: false) : [],
           assignment_title: @assignment.title,
           rubric: rubric ? rubric_json(rubric, @current_user, session, style: "full") : nil,
           nonScoringRubrics: @domain_root_account.feature_enabled?(:non_scoring_rubrics),

@@ -2,7 +2,7 @@ PATH
   remote: ../canvas_http
   specs:
     canvas_http (1.0.0)
-      multipart
+      legacy_multipart
 
 PATH
   remote: ../canvas_slug
@@ -11,9 +11,9 @@ PATH
       swearjar (~> 1.4)
 
 PATH
-  remote: ../multipart
+  remote: ../legacy_multipart
   specs:
-    multipart (0.0.1)
+    legacy_multipart (0.0.1)
       canvas_slug
       mime-types (~> 3.2)
 
@@ -49,9 +49,9 @@ GEM
       aes_key_wrap
       bindata
       httpclient
-    mime-types (3.3.1)
+    mime-types (3.5.0)
       mime-types-data (~> 3.2015)
-    mime-types-data (3.2023.0218.1)
+    mime-types-data (3.2023.0808)
     minitest (5.19.0)
     public_suffix (5.0.3)
     rake (13.0.6)
@@ -70,7 +70,7 @@ GEM
       rspec-support (~> 3.12.0)
     rspec-support (3.12.1)
     swearjar (1.4.0)
-    tzinfo (2.0.4)
+    tzinfo (2.0.6)
       concurrent-ruby (~> 1.0)
     webmock (3.18.1)
       addressable (>= 2.8.0)
@@ -89,7 +89,7 @@ DEPENDENCIES
   canvas_http!
   canvas_panda_pub!
   canvas_slug!
-  multipart!
+  legacy_multipart!
   rake
   rspec (~> 3.0)
   webmock (~> 3.0)

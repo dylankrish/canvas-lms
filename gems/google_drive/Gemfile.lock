@@ -86,11 +86,11 @@ GEM
     crack (0.4.5)
       rexml
     crass (1.0.6)
+    date (3.3.3)
     diff-lcs (1.5.0)
-    digest (3.1.1)
     erubi (1.12.0)
     extlib (0.9.16)
-    faraday (0.17.4)
+    faraday (0.17.6)
       multipart-post (>= 1.2, < 3)
     globalid (1.1.0)
       activesupport (>= 5.0)
@@ -107,35 +107,33 @@ GEM
     hashdiff (1.0.1)
     i18n (1.14.1)
       concurrent-ruby (~> 1.0)
-    jwt (2.5.0)
+    jwt (2.7.1)
     launchy (2.5.2)
       addressable (~> 2.8)
     loofah (2.21.3)
       crass (~> 1.0.2)
       nokogiri (>= 1.12.0)
-    mail (2.7.1)
+    mail (2.8.1)
       mini_mime (>= 0.1.1)
+      net-imap
+      net-pop
+      net-smtp
     marcel (1.0.2)
     method_source (1.0.0)
     mini_mime (1.1.5)
     mini_portile2 (2.8.4)
     minitest (5.19.0)
     multi_json (1.15.0)
-    multipart-post (2.1.1)
-    net-imap (0.2.3)
-      digest
+    multipart-post (2.3.0)
+    net-imap (0.3.7)
+      date
       net-protocol
-      strscan
-    net-pop (0.1.1)
-      digest
+    net-pop (0.1.2)
       net-protocol
-      timeout
     net-protocol (0.2.1)
       timeout
-    net-smtp (0.3.1)
-      digest
+    net-smtp (0.3.3)
       net-protocol
-      timeout
     nio4r (2.5.9)
     nokogiri (1.13.10)
       mini_portile2 (~> 2.8.0)
@@ -167,8 +165,9 @@ GEM
       activesupport (= 7.0.7)
       bundler (>= 1.15.0)
       railties (= 7.0.7)
-    rails-dom-testing (2.0.3)
-      activesupport (>= 4.2.0)
+    rails-dom-testing (2.2.0)
+      activesupport (>= 5.0.0)
+      minitest
       nokogiri (>= 1.6)
     rails-html-sanitizer (1.5.0)
       loofah (~> 2.19, >= 2.19.1)
@@ -195,16 +194,15 @@ GEM
       diff-lcs (>= 1.2.0, < 2.0)
       rspec-support (~> 3.12.0)
     rspec-support (3.12.1)
-    signet (0.16.0)
+    signet (0.17.0)
       addressable (~> 2.8)
-      faraday (>= 0.17.3, < 2.0)
+      faraday (>= 0.17.5, < 3.a)
       jwt (>= 1.5, < 3.0)
       multi_json (~> 1.10)
-    strscan (3.0.6)
     thor (1.2.2)
-    timecop (0.9.6)
+    timecop (0.9.8)
     timeout (0.4.0)
-    tzinfo (2.0.4)
+    tzinfo (2.0.6)
       concurrent-ruby (~> 1.0)
     webmock (3.18.1)
       addressable (>= 2.8.0)
