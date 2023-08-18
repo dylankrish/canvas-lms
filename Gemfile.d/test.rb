@@ -22,17 +22,17 @@ group :test do
   gem "rails-controller-testing", "1.0.5"
 
   gem "dotenv", "~> 2.8", require: false
-  gem "brakeman", "~> 5.4", require: false
+  gem "brakeman", "~> 6.0", require: false
   gem "simplecov", "~> 0.22", require: false
   gem "simplecov-rcov", "~> 0.3", require: false
-  gem "puma", "~> 5.6.5", require: false
+  gem "puma", "~> 6.3", require: false
 
   gem "db-query-matchers", "0.11.0"
   gem "rspec", "~> 3.12"
   gem "rspec_around_all", "0.2.0"
   gem "rspec-rails", "~> 6.0"
   gem "rspec-collection_matchers", "1.2.0"
-  gem "shoulda-matchers", "4.3.0"
+  gem "shoulda-matchers", "~> 5.3"
 
   gem "once-ler", "2.0.1"
   gem "sauce_whisk", "~> 0.3"
@@ -50,7 +50,7 @@ group :test do
   gem "pact-messages", "0.2.0"
   gem "pact_broker-client", "~> 1.66"
   gem "database_cleaner", "~> 2.0"
-  gem "json-schema", "~> 2.8.1"
+  gem "json-schema", "~> 4.0"
 
   gem "rspecq", github: "kyler-instructure/rspecq", ref: "8cea6a3225cf0856a26c6c6b93a5ea5605082aa0"
   gem "flakey_spec_catcher", "~> 0.12", require: false

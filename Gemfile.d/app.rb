@@ -43,9 +43,7 @@ gem "aws-sdk-kms", "~> 1.63", require: false
 gem "aws-sdk-s3", "~> 1.119", require: false
 gem "aws-sdk-sns", "~> 1.60", require: false
 gem "aws-sdk-sqs", "~> 1.53", require: false
-gem "barby", "0.6.8", require: false
-  gem "rqrcode", "1.2.0", require: false
-  gem "chunky_png", "1.4.0", require: false
+gem "rqrcode", "~> 2.2", require: false
 gem "bcrypt", "~> 3.1"
 gem "bigdecimal", "~> 3.1"
 gem "browser", "~> 5.3", require: false
@@ -62,9 +60,9 @@ gem "encrypted_cookie_store-instructure", "1.2.12", require: "encrypted_cookie_s
 gem "folio-pagination", "0.0.12", require: "folio/rails"
 gem "ffi", "~> 1.15", require: false
 gem "gepub", "1.0.15"
-gem "apollo-federation", "1.1.5"
-gem "graphql", "1.12.14"
-gem "graphql-batch", "0.4.3"
+gem "apollo-federation", "~> 3.8"
+gem "graphql", "~> 1.12.7"
+gem "graphql-batch", "~> 0.5"
 gem "hashery", "2.1.2", require: false
 gem "highline", "~> 2.0", require: false
 gem "httparty", "~> 0.21"
@@ -73,7 +71,7 @@ gem "i18nliner", "~> 0.2.4"
 gem "icalendar", "~> 2.9", require: false
 gem "diplomat", "~> 2.6", require: false
 gem "ims-lti", "2.3.3", require: "ims"
-gem "rrule", "0.4.4", require: false
+gem "rrule", "~> 0.5", require: false
 
 gem "inst_access", "0.1.2"
 gem "inst_statsd", "~> 3.0"
@@ -84,7 +82,7 @@ gem "inst-jobs-statsd", "~> 3.0"
 # the json gem is installed, it will always use that one even before bundler
 # gets activated. Updating the gem in it's own commit will make this easier.
 gem "json", "~> 2.6.1"
-gem "json_schemer", "~> 0.2"
+gem "json_schemer", "~> 1.0"
 gem "json-jwt", "~> 1.13", require: false
 gem "link_header", "0.0.8"
 gem "mail", "~> 2.8", require: false
@@ -104,14 +102,13 @@ gem "oj", "~> 3.16"
 gem "outrigger", "3.0.1"
 gem "parallel", "~> 1.23", require: false
 gem "pdf-reader", "~> 2.11"
-gem "pg_query", "2.2.0"
+gem "pg_query", "~> 4.2", require: false
 gem "prawn-emoji", "~> 5.3", require: false
 gem "prawn-rails", "~> 1.4"
   gem "matrix", "0.4.2" # Used to be a default gem but is no more, but prawn depends on it implicitly
 gem "prosopite", "~> 1.3"
 gem "rack", "~> 2.2"
 gem "rack-brotli", "~> 1.2"
-gem "rack-test", "1.1.0"
 gem "rake", "~> 13.0"
 gem "rails-observers", "0.1.5"
 gem "ratom-nokogiri", "0.10.11", require: false
@@ -120,7 +117,7 @@ gem "regexp_parser", "~> 2.8", require: false
 gem "retriable", "1.4.1"
 gem "ritex", "1.0.1", require: false
 gem "rotp", "~> 6.2", require: false
-gem "rss", "0.2.9", require: false
+gem "rss", "~> 0.3", require: false
 gem "ruby-duration", "3.2.3", require: false
 gem "rubycas-client", "2.3.9", require: false
 gem "ruby-rtf", "0.0.5"
@@ -138,7 +135,6 @@ gem "week_of_month",
     "1.2.5",
     github: "instructure/week-of-month",
     ref: "b3013639e9474f302b5a6f27e4e45313e8d24902"
-gem "will_paginate", "3.3.0", require: false # required for folio-pagination
 
 gem "faraday", "~> 0.17"
 

@@ -500,20 +500,23 @@ class DiscussionTopicsController < ApplicationController
     add_crumb t :create_new_crumb, "Create new"
 
     if @context.root_account.feature_enabled?(:discussion_create)
-      hash = { is_announcement: params[:is_announcement] }
+      hash = { is_announcement: params[:is_announcement] || "false" }
       if @context.grants_right?(@current_user, session, :read)
+        hash[:context_id] = @context.id
         if @context.is_a?(Course)
-          hash[:course_id] = @context.id.to_s
+          hash[:context_type] = "Course"
         elsif @context.is_a?(Group)
-          hash[:group_id] = @context.id.to_s
+          hash[:context_type] = "Group"
         end
       end
+      hash[:is_student] = context.user_is_student?(@current_user, include_fake_student: true)
       js_env(hash)
       js_bundle :discussion_topic_edit_v2
       css_bundle :discussions_index, :learning_outcomes
       render html: "", layout: (params[:embed] == "true") ? "mobile_embed" : true
       return
     end
+
     edit
   end
 
@@ -875,6 +878,17 @@ class DiscussionTopicsController < ApplicationController
               named_context_url(@context, endpoint, @topic, *params)
             end
 
+            can_attach_topic = @topic.grants_right?(@current_user, session, :attach)
+            # Looking at the DiscussionEntry model, the policy for allowing to attach files to replies is
+            # almost identical to the DiscussionTopic model, the code below adds the extra condition that
+            # DiscussionEntry has but DiscussionTopic doesn't.
+            can_attach_entries = can_attach_topic ||
+                                 (
+                                   @context.respond_to?(:allow_student_forum_attachments) &&
+                                   @context.allow_student_forum_attachments &&
+                                   @context.grants_right?(@current_user, session, :post_to_forum) &&
+                                   @topic.available_for?(@current_user)
+                                 )
             env_hash = {
               APP_URL: named_context_url(@context, :context_discussion_topic_url, @topic),
               TOPIC: {
@@ -890,8 +904,10 @@ class DiscussionTopicsController < ApplicationController
                 # Can reply
                 CAN_REPLY: @topic.grants_right?(@current_user, session, :reply) &&
                            !@topic.homeroom_announcement?(@context),
-                # Can attach files on replies
-                CAN_ATTACH: @topic.grants_right?(@current_user, session, :attach),
+                # Can attach files on topic
+                CAN_ATTACH_TOPIC: can_attach_topic,
+                # Can attach files on entries aka replies
+                CAN_ATTACH_ENTRIES: can_attach_entries,
                 CAN_RATE: @topic.grants_right?(@current_user, session, :rate),
                 CAN_READ_REPLIES: @topic.grants_right?(@current_user, :read_replies) &&
                                   !@topic.homeroom_announcement?(@context),

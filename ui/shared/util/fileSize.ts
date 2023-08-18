@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 - present Instructure, Inc.
+ * Copyright (C) 2023 - present Instructure, Inc.
  *
  * This file is part of Canvas.
  *
@@ -16,5 +16,13 @@
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-export * from './prefetched_xhrs'
-export * from './filterUselessConsoleMessages'
+export default function fileSize(bytes: number): string {
+  const factor = 1024
+  if (bytes < factor) {
+    return `${bytes} bytes`
+  } else if (bytes < factor * factor) {
+    return `${Math.floor(bytes / factor)}KB`
+  } else {
+    return `${Math.round((10.0 * bytes) / factor / factor) / 10.0}MB`
+  }
+}
