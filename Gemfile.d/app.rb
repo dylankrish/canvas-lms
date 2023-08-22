@@ -54,7 +54,7 @@ gem "canvas_link_migrator", "0.2.0"
 gem "canvas_webex", "0.18.2"
 gem "crocodoc-ruby", "0.0.1", require: false
 gem "code_ownership", "~> 1.33"
-gem "ddtrace", "~> 0.54", require: false
+gem "ddtrace", "~> 1.13", require: false
 gem "docx", "~> 0.8"
 gem "encrypted_cookie_store-instructure", "1.2.12", require: "encrypted_cookie_store"
 gem "folio-pagination", "0.0.12", require: "folio/rails"
@@ -95,7 +95,7 @@ gem "net-ldap", "~> 0.18", require: false
 gem "net-imap", "~> 0.3", require: false
 gem "net-pop", "~> 0.1", require: false
 gem "net-smtp", "~> 0.3", require: false
-gem "nokogiri", "~> 1.13.8", require: false # 1.14 breaks nokogiri-xmlsec
+gem "nokogiri", "~> 1.14", require: false
 gem "oauth", "~> 1.1", require: false
 gem "oauth2", "~> 1.4", require: false
 gem "oj", "~> 3.16"
