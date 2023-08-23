@@ -70,7 +70,7 @@ gem "i18n", "~> 1.12"
 gem "i18nliner", "~> 0.2.4"
 gem "icalendar", "~> 2.9", require: false
 gem "diplomat", "~> 2.6", require: false
-gem "ims-lti", "2.3.3", require: "ims"
+gem "ims-lti", "~> 2.3", require: "ims"
 gem "rrule", "~> 0.5", require: false
 
 gem "inst_access", "0.1.2"
@@ -82,7 +82,7 @@ gem "inst-jobs-statsd", "~> 3.0"
 # the json gem is installed, it will always use that one even before bundler
 # gets activated. Updating the gem in it's own commit will make this easier.
 gem "json", "~> 2.6.1"
-gem "json_schemer", "~> 1.0"
+gem "json_schemer", "~> 2.0"
 gem "json-jwt", "~> 1.13", require: false
 gem "link_header", "0.0.8"
 gem "mail", "~> 2.8", require: false
@@ -114,14 +114,14 @@ gem "rails-observers", "0.1.5"
 gem "ratom-nokogiri", "0.10.11", require: false
 gem "redcarpet", "~> 3.6", require: false
 gem "regexp_parser", "~> 2.8", require: false
-gem "retriable", "1.4.1"
+gem "retriable", "~> 3.1"
 gem "ritex", "1.0.1", require: false
 gem "rotp", "~> 6.2", require: false
 gem "rss", "~> 0.3", require: false
 gem "ruby-duration", "3.2.3", require: false
 gem "rubycas-client", "2.3.9", require: false
 gem "ruby-rtf", "0.0.5"
-gem "rubyzip", "2.3.0", require: "zip"
+gem "rubyzip", "~> 2.3", require: "zip"
 gem "saml2", "3.1.2"
 gem "sanitize", "~> 6.0", require: false
 gem "sentry-rails", "~> 5.10"
@@ -136,7 +136,7 @@ gem "week_of_month",
     github: "instructure/week-of-month",
     ref: "b3013639e9474f302b5a6f27e4e45313e8d24902"
 
-gem "faraday", "~> 0.17"
+gem "faraday", "~> 2.7"
 
 path "../gems" do
   gem "activesupport-suspend_callbacks"

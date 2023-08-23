@@ -361,6 +361,7 @@ class ApplicationController < ActionController::Base
     developer_key_page_checkboxes
     improved_no_results_messaging
     differentiated_modules
+    enhanced_course_creation_account_fetching
   ].freeze
   JS_ENV_ROOT_ACCOUNT_FEATURES = %i[
     product_tours
@@ -2966,16 +2967,6 @@ class ApplicationController < ActionController::Base
     end
 
     @google_drive_connection = GoogleDrive::Connection.new(refresh_token, access_token, ApplicationController.google_drive_timeout)
-  end
-
-  def google_drive_client(refresh_token = nil, access_token = nil)
-    settings = Canvas::Plugin.find(:google_drive).try(:settings) || {}
-    client_secrets = {
-      client_id: settings[:client_id],
-      client_secret: settings[:client_secret_dec],
-      redirect_uri: settings[:redirect_uri]
-    }.with_indifferent_access
-    GoogleDrive::Client.create(client_secrets, refresh_token, access_token)
   end
 
   def user_has_google_drive
