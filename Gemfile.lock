@@ -474,7 +474,7 @@ GEM
     canvas_connect (0.3.16)
       adobe_connect (~> 1.0.0)
       rake (>= 0.9.6)
-    canvas_link_migrator (0.2.0)
+    canvas_link_migrator (0.2.1)
       activesupport
       nokogiri
       rack
@@ -1076,7 +1076,7 @@ GEM
       axe-core-selenium (~> 4.1)
       rspec (~> 3.8)
     swearjar (1.4.0)
-    switchman (3.5.8)
+    switchman (3.5.9)
       activerecord (>= 6.1.4, < 7.1)
       guardrail (~> 3.0.1)
       parallel (~> 1.22)
@@ -1201,7 +1201,7 @@ DEPENDENCIES
   canvas_ext!
   canvas_http!
   canvas_kaltura!
-  canvas_link_migrator (= 0.2.0)
+  canvas_link_migrator (~> 0.2)
   canvas_mimetype_fu!
   canvas_panda_pub!
   canvas_partman!

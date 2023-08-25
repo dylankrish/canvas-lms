@@ -231,6 +231,7 @@ class Course < ActiveRecord::Base
   has_many :grading_periods, through: :grading_period_groups
   has_many :usage_rights, as: :context, inverse_of: :context, class_name: "UsageRights", dependent: :destroy
 
+  has_many :custom_grade_statuses, -> { active }, through: :root_account
   has_many :sis_post_grades_statuses
 
   has_many :progresses, as: :context, inverse_of: :context
@@ -2467,7 +2468,9 @@ class Course < ActiveRecord::Base
 
   def enroll_user(user, type = "StudentEnrollment", opts = {})
     enrollment_state = opts[:enrollment_state]
-    enrollment_state ||= "active" if type == "ObserverEnrollment" && user.registered?
+    if (type == "ObserverEnrollment" || opts[:temporary_enrollment_source_user_id]) && user.registered?
+      enrollment_state ||= "active"
+    end
     section = opts[:section]
     limit_privileges_to_course_section = opts[:limit_privileges_to_course_section] || false
     associated_user_id = opts[:associated_user_id]

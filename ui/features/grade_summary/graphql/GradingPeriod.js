@@ -28,6 +28,7 @@ export const GradingPeriod = {
       closeDate
       title
       weight
+      isLast
       id
       startDate
       updatedAt
@@ -41,6 +42,7 @@ export const GradingPeriod = {
     closeDate: string,
     title: string,
     weight: float,
+    isLast: bool,
     id: string,
     startDate: string,
     updatedAt: string,
@@ -52,6 +54,7 @@ export const GradingPeriod = {
     closeDate = '2020-01-03',
     title = 'Grading Period 1',
     weight = 50,
+    isLast = false,
     displayTotals = true,
     id = '1',
     startDate = '2020-01-01',
@@ -63,6 +66,7 @@ export const GradingPeriod = {
     closeDate,
     title,
     weight,
+    isLast,
     displayTotals,
     id,
     startDate,

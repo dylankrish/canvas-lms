@@ -362,6 +362,7 @@ class ApplicationController < ActionController::Base
     improved_no_results_messaging
     differentiated_modules
     enhanced_course_creation_account_fetching
+    instui_for_import_page
   ].freeze
   JS_ENV_ROOT_ACCOUNT_FEATURES = %i[
     product_tours
@@ -913,7 +914,7 @@ class ApplicationController < ActionController::Base
     if session[:pending_otp] && params[:controller] != "login/otp"
       return render plain: "Please finish logging in", status: :forbidden if request.xhr?
 
-      reset_session
+      destroy_session
       redirect_to login_url
     end
   end
