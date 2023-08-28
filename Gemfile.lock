@@ -70,7 +70,6 @@ PATH
     canvas_cassandra (0.1.0)
       cassandra-cql (~> 1.2.2)
       config_file
-      rails (>= 5.0)
 
 PATH
   remote: gems/i18n_extraction
@@ -96,13 +95,13 @@ PATH
   specs:
     academic_benchmark (1.1.0)
       academic_benchmarks (~> 1.1.0)
-      rails (>= 3.2)
+      railties (>= 3.2)
 
 PATH
   remote: gems/plugins/account_reports
   specs:
     account_reports (1.1.0)
-      rails (>= 3.2)
+      railties (>= 3.2)
 
 PATH
   remote: gems/plugins/moodle_importer
@@ -129,7 +128,7 @@ PATH
   remote: gems/plugins/simply_versioned
   specs:
     simply_versioned (1.0.0)
-      rails (>= 3.2)
+      activerecord (>= 3.2)
 
 PATH
   remote: gems/rubocop-canvas
@@ -148,17 +147,19 @@ PATH
     activesupport-suspend_callbacks (0.0.1)
       activesupport (>= 3.2, < 7.1)
     acts_as_list (0.0.1)
-      rails (>= 3.2)
+      activerecord (>= 3.2)
     adheres_to_policy (0.0.1)
-      rails (>= 3.2)
+      activesupport (>= 3.2)
     attachment_fu (1.0.0)
-      rails (>= 3.2)
+      activerecord (>= 3.2)
+      railties (>= 3.2)
     autoextend (1.0.0)
     bookmarked_collection (1.0.0)
+      activerecord (>= 3.2)
       folio-pagination (~> 0.0.12)
       json_token
       paginated_collection
-      rails (>= 3.2)
+      railties (>= 3.2)
       will_paginate (>= 3.0, < 5.0)
     broadcast_policy (1.0.0)
       activesupport
@@ -166,11 +167,11 @@ PATH
     canvas_breach_mitigation (0.0.1)
       activesupport
     canvas_cache (0.1.0)
+      activesupport
       config_file
       digest-murmurhash (>= 1.1.0)
       guardrail (>= 2.0.0)
       inst_statsd (>= 2.1.0)
-      rails
       redis (>= 4.1.0)
       redis-scripting (>= 1.0.0)
       sentry-ruby (~> 5.10)
@@ -208,16 +209,15 @@ PATH
     canvas_sanitize (0.0.1)
       sanitize (~> 6.0)
     canvas_security (0.1.0)
+      activesupport
       canvas_cache
       canvas_errors
       dynamic_settings
       json-jwt
-      rails
     canvas_slug (0.0.1)
       swearjar (~> 1.4)
     canvas_sort (1.0.0)
     canvas_stringex (0.0.1)
-      rails (>= 3.2)
     canvas_text_helper (0.0.1)
       i18n
     canvas_time (1.0.0)
@@ -228,7 +228,7 @@ PATH
       canvas_mimetype_fu
       rubyzip (~> 2.0)
     config_file (0.1.0)
-      rails (>= 5.0)
+      railties (>= 5.0)
     csv_diff (1.0.0)
       sqlite3
     diigo (1.0.0)
@@ -239,12 +239,12 @@ PATH
       diplomat (>= 2.5.1)
       railties
     event_stream (0.1.0)
+      activerecord (>= 4.2)
       bookmarked_collection
       canvas_cassandra
       inst_statsd
       json_token
       paginated_collection
-      rails (>= 4.2)
     google_drive (1.0.0)
       google-apis-drive_v3 (~> 0.43)
     html_text_helper (0.0.1)
@@ -270,9 +270,6 @@ PATH
     legacy_multipart (0.0.1)
       canvas_slug
       mime-types (~> 3.2)
-    linked_in (1.0.0)
-      nokogiri
-      oauth
     live_events (1.0.0)
       activesupport
       aws-sdk-kinesis
@@ -304,7 +301,7 @@ PATH
       oauth
     utf8_cleaner (0.0.1)
     workflow (0.0.1)
-      rails (>= 3.2)
+      activesupport (>= 3.2)
 
 GEM
   remote: https://rubygems.org/
@@ -409,7 +406,7 @@ GEM
       request_store (~> 1.0)
     awesome_print (1.9.2)
     aws-eventstream (1.2.0)
-    aws-partitions (1.809.0)
+    aws-partitions (1.811.0)
     aws-sdk-applicationautoscaling (1.75.0)
       aws-sdk-core (~> 3, >= 3.177.0)
       aws-sigv4 (~> 1.1)
@@ -430,7 +427,7 @@ GEM
     aws-sdk-kms (1.71.0)
       aws-sdk-core (~> 3, >= 3.177.0)
       aws-sigv4 (~> 1.1)
-    aws-sdk-s3 (1.133.0)
+    aws-sdk-s3 (1.134.0)
       aws-sdk-core (~> 3, >= 3.181.0)
       aws-sdk-kms (~> 1)
       aws-sigv4 (~> 1.6)
@@ -507,7 +504,7 @@ GEM
     db-query-matchers (0.11.0)
       activesupport (>= 4.0, < 7.1)
       rspec (>= 3.0)
-    ddtrace (1.13.1)
+    ddtrace (1.14.0)
       debase-ruby_core_source (= 3.2.1)
       libdatadog (~> 3.0.0.1.0)
       libddwaf (~> 1.9.0.0.0)
@@ -589,11 +586,11 @@ GEM
       webrick
     google-apis-drive_v3 (0.43.0)
       google-apis-core (>= 0.11.0, < 2.a)
-    google-protobuf (3.24.1)
-    google-protobuf (3.24.1-aarch64-linux)
-    google-protobuf (3.24.1-arm64-darwin)
-    google-protobuf (3.24.1-x86_64-darwin)
-    google-protobuf (3.24.1-x86_64-linux)
+    google-protobuf (3.24.2)
+    google-protobuf (3.24.2-aarch64-linux)
+    google-protobuf (3.24.2-arm64-darwin)
+    google-protobuf (3.24.2-x86_64-darwin)
+    google-protobuf (3.24.2-x86_64-linux)
     googleauth (1.7.0)
       faraday (>= 0.17.3, < 3.a)
       jwt (>= 1.4, < 3.0)
@@ -642,7 +639,7 @@ GEM
       json-jwt (~> 1.7)
       rexml
       simple_oauth (~> 0.3.1)
-    inst-jobs (3.1.10)
+    inst-jobs (3.1.11)
       activerecord (>= 6.0)
       activerecord-pg-extensions (~> 0.4.4)
       activesupport (>= 6.0)
@@ -1082,7 +1079,7 @@ GEM
       guardrail (~> 3.0.1)
       parallel (~> 1.22)
       railties (>= 6.1, < 7.1)
-    switchman-inst-jobs (4.0.13)
+    switchman-inst-jobs (4.0.14)
       inst-jobs (>= 2.4.9, < 4.0)
       parallel (>= 1.19)
       railties (>= 6.1, < 7.1)
@@ -1105,7 +1102,7 @@ GEM
       sync
     trailblazer-option (0.1.2)
     ttfunk (1.7.0)
-    twilio-ruby (6.4.0)
+    twilio-ruby (6.5.0)
       faraday (>= 0.9, < 3.0)
       jwt (>= 1.5, < 3.0)
       nokogiri (>= 1.6, < 2.0)
@@ -1274,7 +1271,6 @@ DEPENDENCIES
   legacy_multipart!
   letter_opener (~> 1.8)
   link_header (= 0.0.8)
-  linked_in!
   live_events!
   lti-advantage!
   lti_outbound!
@@ -1366,7 +1362,7 @@ DEPENDENCIES
   stormbreaker (~> 1.0)
   stringify_ids!
   switchman (~> 3.5)
-  switchman-inst-jobs (= 4.0.13)
+  switchman-inst-jobs (~> 4.0)
   testrailtagging (= 0.3.8.7)
   thrift_client (= 0.9.3)!
   timecop (~> 0.9)

@@ -319,6 +319,7 @@ class ApplicationController < ActionController::Base
         @js_env[:K5_SUBJECT_COURSE] = @context.is_a?(Course) && @context.elementary_subject_course?
         @js_env[:LOCALE_TRANSLATION_FILE] = ::Canvas::Cdn.registry.url_for("javascripts/translations/#{@js_env[:LOCALES].first}.json")
         @js_env[:ACCOUNT_ID] = effective_account_id(@context)
+        @js_env[:user_cache_key] = Base64.encode64("#{@current_user.uuid}vyfW=;[p-0?:{P_=HUpgraqe;njalkhpvoiulkimmaqewg") if @current_user&.workflow_state
       end
     end
 
@@ -901,7 +902,6 @@ class ApplicationController < ActionController::Base
     if !files_domain? && Setting.get("block_html_frames", "true") == "true" && !@embeddable
       append_to_header("Content-Security-Policy", "frame-ancestors 'self' #{csp_frame_ancestors&.uniq&.join(" ")};")
     end
-    headers["Strict-Transport-Security"] = "max-age=31536000" if request.ssl?
     RequestContext::Generator.store_request_meta(request, @context, @sentry_trace)
     true
   end
@@ -2070,7 +2070,7 @@ class ApplicationController < ActionController::Base
         @resource_title = @tag.title
       end
       @resource_url = @tag.url
-      @tool = ContextExternalTool.find_external_tool(tag.url, context, tag.content_id)
+      @tool = ContextExternalTool.from_content_tag(tag, context)
 
       @assignment&.prepare_for_ags_if_needed!(@tool)
 
