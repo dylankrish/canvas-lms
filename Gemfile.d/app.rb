@@ -28,10 +28,7 @@ gem "irb", "~> 1.7"
 
 gem "academic_benchmarks", "1.1.2", require: false
 gem "active_model-better_errors", "1.6.7", require: "active_model/better_errors"
-gem "active_model_serializers",
-    "0.9.0alpha1",
-    github: "rails-api/active_model_serializers",
-    ref: "61882e1e4127facfe92e49057aec71edbe981829"
+gem "active_model_serializers", "~> 0.9.9"
 gem "activerecord-pg-extensions", "0.4.4"
 gem "addressable", "~> 2.8", require: false
 gem "after_transaction_commit", "2.2.2"
@@ -63,7 +60,6 @@ gem "gepub", "1.0.15"
 gem "apollo-federation", "~> 3.8"
 gem "graphql", "~> 1.12.7"
 gem "graphql-batch", "~> 0.5"
-gem "hashery", "2.1.2", require: false
 gem "highline", "~> 2.0", require: false
 gem "httparty", "~> 0.21"
 gem "i18n", "~> 1.12"
