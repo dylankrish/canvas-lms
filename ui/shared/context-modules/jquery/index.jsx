@@ -73,7 +73,7 @@ import {renderContextModulesPublishIcon} from '../utils/publishOneModuleHelper'
 import {underscoreString} from '@canvas/convert-case'
 import {selectContentDialog} from '@canvas/select-content-dialog'
 import DifferentiatedModulesTray from '@canvas/differentiated-modules'
-import {parseModule} from '@canvas/differentiated-modules/utils/parseModule'
+import {parseModule} from '@canvas/differentiated-modules/utils/moduleHelpers'
 
 if (!('INST' in window)) window.INST = {}
 
@@ -467,6 +467,7 @@ window.modules = (function () {
       $module.fadeIn('fast', () => {})
       $module.addClass('dont_remove')
       $form.find('.module_name').toggleClass('lonely_entry', isNew)
+      $form.find('.module_name label span').hide() // hide the asterisk in the form label
       const $toFocus = $('.ig-header-admin .al-trigger', $module)
       const fullSizeModal = window.matchMedia('(min-width: 600px)').matches
       const responsiveWidth = fullSizeModal ? 600 : 320

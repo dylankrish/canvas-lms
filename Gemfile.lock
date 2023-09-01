@@ -1,19 +1,4 @@
 GIT
-  remote: https://github.com/erickguan/ffi-icu.git
-  revision: 0c6f8b201f3994fa10c741ff5dbb146cb83f4a9d
-  ref: 0c6f8b201f3994fa10c741ff5dbb146cb83f4a9d
-  specs:
-    ffi-icu (0.4.0)
-      ffi (~> 1.0, >= 1.0.9)
-
-GIT
-  remote: https://github.com/instructure/week-of-month.git
-  revision: b3013639e9474f302b5a6f27e4e45313e8d24902
-  ref: b3013639e9474f302b5a6f27e4e45313e8d24902
-  specs:
-    week_of_month (1.2.5)
-
-GIT
   remote: https://github.com/kreynolds/cassandra-cql.git
   revision: 02b5abbe441a345c051a180327932566fd66bb36
   ref: 02b5abbe441a345c051a180327932566fd66bb36
@@ -542,6 +527,8 @@ GEM
     ffi-compiler (1.0.1)
       ffi (>= 1.0.0)
       rake
+    ffi-icu (0.5.1)
+      ffi (~> 1.0, >= 1.0.9)
     find_a_port (1.0.1)
     flakey_spec_catcher (0.12.1)
       rspec (~> 3.10)
@@ -797,7 +784,7 @@ GEM
       diff-lcs (~> 1.4)
       expgen (~> 0.1)
       rainbow (~> 3.1.1)
-    pact_broker-client (1.68.0)
+    pact_broker-client (1.70.0)
       dig_rb (~> 1.0)
       httparty (>= 0.21.0, < 1.0.0)
       rake (~> 13.0)
@@ -911,7 +898,7 @@ GEM
     retriable (3.1.2)
     rexml (3.2.6)
     ritex (1.0.1)
-    rotp (6.2.2)
+    rotp (6.3.0)
     rqrcode (2.2.0)
       chunky_png (~> 1.0)
       rqrcode_core (~> 1.0)
@@ -947,7 +934,7 @@ GEM
       rspec-core (>= 2, < 4, != 2.12.0)
     rss (0.3.0)
       rexml
-    rubocop (1.56.1)
+    rubocop (1.56.2)
       base64 (~> 0.1.1)
       json (~> 2.3)
       language_server-protocol (>= 3.17.0)
@@ -1125,7 +1112,7 @@ GEM
       coercible (~> 1.0)
       descendants_tracker (~> 0.0, >= 0.0.3)
     wcag_color_contrast (0.1.0)
-    webmock (3.18.1)
+    webmock (3.19.1)
       addressable (>= 2.8.0)
       crack (>= 0.3.2)
       hashdiff (>= 0.4.0, < 2.0.0)
@@ -1230,7 +1217,7 @@ DEPENDENCIES
   factory_bot (= 6.2.1)
   faraday (~> 2.7)
   ffi (~> 1.15)
-  ffi-icu (= 0.4.0)!
+  ffi-icu (~> 0.5)
   flakey_spec_catcher (~> 0.12)
   folio-pagination (= 0.0.12)
   gepub (= 1.0.15)
@@ -1368,7 +1355,6 @@ DEPENDENCIES
   vericite_api (= 1.5.3)
   wcag_color_contrast (= 0.1.0)
   webmock (~> 3.18)
-  week_of_month (= 1.2.5)!
   workflow!
   yard (~> 0.9)
   yard-appendix (= 0.1.8)
