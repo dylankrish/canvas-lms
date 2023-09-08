@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 #
-# Copyright (C) 2017 - present Instructure, Inc.
+# Copyright (C) 2023 - present Instructure, Inc.
 #
 # This file is part of Canvas.
 #
@@ -18,16 +18,18 @@
 # with this program. If not, see <http://www.gnu.org/licenses/>.
 #
 
-class AddNotNullConstraintToScoresCourseScore < ActiveRecord::Migration[7.0]
+class SetCourseScoreNotNull < ActiveRecord::Migration[7.0]
   tag :postdeploy
-  disable_ddl_transaction!
 
-  def change
+  def up
+    change_column_null :scores, :course_score, false
+    remove_check_constraint :scores, name: "course_score_not_null", if_exists: true
+  end
+
+  def down
     add_check_constraint(:scores,
                          "course_score IS NOT NULL",
-                         name: "course_score_not_null",
-                         validate: false,
-                         if_not_exists: true)
-    validate_constraint(:scores, :course_score_not_null)
+                         name: "course_score_not_null")
+    change_column_null :scores, :course_score, true
   end
 end
