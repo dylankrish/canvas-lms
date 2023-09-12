@@ -38,6 +38,7 @@ GEM
     ast (2.4.2)
     base64 (0.1.1)
     builder (3.2.4)
+    colorize (1.1.0)
     concurrent-ruby (1.2.2)
     crass (1.0.6)
     erubi (1.12.0)
@@ -58,7 +59,7 @@ GEM
     method_source (1.0.0)
     mini_mime (1.1.5)
     mini_portile2 (2.8.4)
-    minitest (5.19.0)
+    minitest (5.20.0)
     multi_xml (0.6.0)
     nokogiri (1.15.4)
       mini_portile2 (~> 2.8.2)
@@ -132,7 +133,7 @@ GEM
       rubocop (>= 1.33.0, < 2.0)
     rubocop-rake (0.6.0)
       rubocop (~> 1.0)
-    rubocop-rspec (2.23.2)
+    rubocop-rspec (2.24.0)
       rubocop (~> 1.33)
       rubocop-capybara (~> 2.17)
       rubocop-factory_bot (~> 2.22)
@@ -157,6 +158,7 @@ PLATFORMS
   x86_64-linux
 
 DEPENDENCIES
+  colorize (~> 1.0)
   gergich (~> 2.1)
   rubocop-canvas!
   rubocop-graphql (~> 1.3)

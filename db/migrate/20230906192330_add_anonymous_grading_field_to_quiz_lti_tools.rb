@@ -16,23 +16,15 @@
 # You should have received a copy of the GNU Affero General Public License along
 # with this program. If not, see <http://www.gnu.org/licenses/>.
 
-class AddWikiPageEmbeddings < ActiveRecord::Migration[7.0]
-  tag :predeploy
+class AddAnonymousGradingFieldToQuizLtiTools < ActiveRecord::Migration[7.0]
+  tag :postdeploy
 
-  def self.runnable?
-    connection.extension_available?(:vector)
+  def up
+    DataFixup::AddAnonymousGradingFieldToQuizLtiTools.delay_if_production(
+      priority: Delayed::LOW_PRIORITY,
+      n_strand: ["add_anonymous_grading_to_quiz_lti_tools", Shard.current.database_server.id]
+    ).run
   end
 
-  def change
-    enable_extension("vector")
-    create_table :wiki_page_embeddings do |t|
-      t.references :wiki_page, null: false, foreign_key: true
-      t.column :embedding,
-               "#{connection.extension("vector")&.schema || "public"}.vector",
-               limit: 1536,
-               null: false
-      t.timestamps null: false
-      t.references :root_account, foreign_key: { to_table: :accounts }, index: false, null: false
-    end
-  end
+  def down; end
 end
