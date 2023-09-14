@@ -446,7 +446,6 @@ class DiscussionTopicsController < ApplicationController
           js_env(SETTINGS_URL: named_context_url(@context, :api_v1_context_settings_url))
         end
 
-        add_body_class "hide-content-while-scripts-not-loaded"
         @page_title = join_title(t("#titles.discussions", "Discussions"), @context.name)
 
         content_for_head helpers.auto_discovery_link_tag(:atom, feeds_forum_format_path(@context.feed_code, :atom), { title: t(:course_discussions_atom_feed_title, "Course Discussions Atom Feed") })
@@ -667,19 +666,13 @@ class DiscussionTopicsController < ApplicationController
       append_default_due_time_js_env(@context, js_hash)
     end
 
-    if @context.root_account.feature_enabled?(:discussion_create)
-      js_hash[:is_announcement] = @topic.is_announcement
-
-      if @context.grants_right?(@current_user, session, :read)
-        js_hash[:context_id] = @context.id
-        if @context.is_a?(Course)
-          js_hash[:context_type] = "Course"
-        elsif @context.is_a?(Group)
-          js_hash[:context_type] = "Group"
-        end
+    if @context.root_account.feature_enabled?(:discussion_create) && @context.grants_right?(@current_user, session, :read)
+      js_hash[:context_id] = @context.id
+      if @context.is_a?(Course)
+        js_hash[:context_type] = "Course"
+      elsif @context.is_a?(Group)
+        js_hash[:context_type] = "Group"
       end
-
-      js_hash[:is_student] = context.user_is_student?(@current_user, include_fake_student: true)
     end
 
     js_env(js_hash)
@@ -1371,7 +1364,6 @@ class DiscussionTopicsController < ApplicationController
 
   def process_discussion_topic_runner(is_new:)
     @errors = {}
-
     if is_new && !@context.feature_enabled?(:react_discussions_post)
       params[:anonymous_state] = nil
     end
@@ -1384,16 +1376,9 @@ class DiscussionTopicsController < ApplicationController
       params[:anonymous_state] = nil
     end
 
-    if is_new &&
-       !params[:anonymous_state].nil? &&
-       !@context.settings[:allow_student_anonymous_discussion_topics] &&
-       !@context.grants_right?(@current_user, session, :manage)
-      @errors[:anonymous_state] = t(:error_anonymous_state_unauthorized_create,
-                                    "You are not able to create an anonymous discussion")
-    end
-
     if is_new && params[:anonymous_state]
-      if params[:group_category_id]
+      # group discussions in a course or discussions simply in a group context cannot be anonymous
+      if params[:group_category_id] || @context.is_a?(Group)
         @errors[:anonymous_state] = t(:error_anonymous_state_groups_create,
                                       "Group discussions cannot be anonymous.")
       end
@@ -1401,6 +1386,16 @@ class DiscussionTopicsController < ApplicationController
         @errors[:anonymous_state] = t(:error_graded_anonymous,
                                       "Anonymous discussions cannot be graded")
       end
+    end
+
+    # Groups do not have settings like courses do, so only run this for Course contexts
+    if is_new &&
+       !params[:anonymous_state].nil? &&
+       @context.is_a?(Course) &&
+       !@context.settings[:allow_student_anonymous_discussion_topics] &&
+       !@context.grants_right?(@current_user, session, :manage)
+      @errors[:anonymous_state] = t(:error_anonymous_state_unauthorized_create,
+                                    "You are not able to create an anonymous discussion")
     end
 
     model_type = if value_to_boolean(params[:is_announcement]) &&

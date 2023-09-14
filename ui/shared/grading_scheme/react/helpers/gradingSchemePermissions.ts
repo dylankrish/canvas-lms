@@ -16,14 +16,10 @@
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-import {calculatePanelHeight} from '../panelHelpers'
-
-describe('calculatePanelHeight', () => {
-  it('computes the correct height when withinTabs is true', () => {
-    expect(calculatePanelHeight(true)).toBe('calc(100vh - 127.5px)')
-  })
-
-  it('computes the correct height when withinTabs is false', () => {
-    expect(calculatePanelHeight(false)).toBe('calc(100vh - 79.5px)')
-  })
-})
+type ContextType = 'Account' | 'Course'
+export const canManageAccountGradingSchemes = (
+  currentContextType: ContextType,
+  gradingSchemeContextType: ContextType
+): boolean => {
+  return !(currentContextType === 'Course' && gradingSchemeContextType === 'Account')
+}

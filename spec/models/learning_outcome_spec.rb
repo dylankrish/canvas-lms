@@ -1152,9 +1152,9 @@ describe LearningOutcome do
         LoadAccount.default_domain_root_account.enable_feature!(:outcomes_new_decaying_average_calculation)
       end
 
-      it "defaults calculation_method to weighted_average" do
+      it "defaults calculation_method to standard_decaying_average" do
         @outcome = LearningOutcome.create!(title: "outcome")
-        expect(@outcome.calculation_method).to eql("weighted_average")
+        expect(@outcome.calculation_method).to eql("standard_decaying_average")
         expect(@outcome.calculation_int).to be 65
       end
 
@@ -1258,7 +1258,7 @@ describe LearningOutcome do
       ->(*courses) { courses.each { |c| student_in_course(course: c) } }
     end
 
-    let(:account) { -> { Account.all.find { |a| !a.site_admin? && a.root_account? } } }
+    let(:account) { -> { Account.find { |a| !a.site_admin? && a.root_account? } } }
 
     let(:create_rubric) do
       lambda do |outcome|

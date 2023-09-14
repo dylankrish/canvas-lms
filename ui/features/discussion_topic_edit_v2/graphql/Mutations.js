@@ -26,6 +26,8 @@ export const CREATE_DISCUSSION_TOPIC = gql`
     $title: String
     $message: String
     $published: Boolean
+    $requireInitialPost: Boolean
+    $anonymousState: String
   ) {
     createDiscussionTopic(
       input: {
@@ -34,11 +36,17 @@ export const CREATE_DISCUSSION_TOPIC = gql`
         title: $title
         message: $message
         published: $published
+        requireInitialPost: $requireInitialPost
+        anonymousState: $anonymousState
       }
     ) {
       discussionTopic {
         _id
         contextType
+        title
+        message
+        published
+        anonymousState
       }
       errors {
         ...Error

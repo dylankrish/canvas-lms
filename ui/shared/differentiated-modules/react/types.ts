@@ -16,8 +16,7 @@
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-export function calculatePanelHeight(withinTabs: boolean): string {
-  let headerHeight = 79.5
-  headerHeight += withinTabs ? 48 : 0 // height of the tab selector
-  return `calc(100vh - ${headerHeight}px)`
+export interface Module {
+  id: string
+  name: string
 }
