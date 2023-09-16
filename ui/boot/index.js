@@ -16,13 +16,13 @@
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-import canvasBaseTheme from '@instructure/canvas-theme'
-import canvasHighContrastTheme from '@instructure/canvas-high-contrast-theme'
+import {
+  canvas as canvasBaseTheme,
+  canvasHighContrast as canvasHighContrastTheme,
+} from '@instructure/ui-themes'
 import filterUselessConsoleMessages from '../../packages/filter-console-messages'
 import moment from 'moment'
 import './initializers/fakeRequireJSFallback'
-// must run before retriggerEarlyClicks to make sure data-method is
-// respected on quickly-clicked buttons
 import './initializers/ujsLinks'
 import {up as configureDateTimeMomentParser} from './initializers/configureDateTimeMomentParser'
 import {up as configureDateTime} from './initializers/configureDateTime'
@@ -82,18 +82,15 @@ if (process.env.NODE_ENV !== 'production') {
   setupConsoleMessageFilter()
 }
 
-// setup the inst-ui default theme
-// override the fontFamily to include "Lato Extended", which we prefer
+// Set up the default InstUI theme
+// Override the fontFamily to include "Lato Extended", which we prefer
 // to load over plain Lato (see LS-1559)
+const typography = {
+  fontFamily: 'LatoWeb, "Lato Extended", Lato, "Helvetica Neue", Helvetica, Arial, sans-serif',
+}
+
 if (ENV.use_high_contrast) {
-  canvasHighContrastTheme.use({
-    overrides: {
-      typography: {
-        fontFamily:
-          'LatoWeb, "Lato Extended", Lato, "Helvetica Neue", Helvetica, Arial, sans-serif',
-      },
-    },
-  })
+  canvasHighContrastTheme.use({overrides: {typography}})
 } else {
   const brandvars = window.CANVAS_ACTIVE_BRAND_VARIABLES || {}
 
@@ -107,16 +104,7 @@ if (ENV.use_high_contrast) {
     }
   }
 
-  canvasBaseTheme.use({
-    overrides: {
-      ...transitionOverride,
-      ...brandvars,
-      typography: {
-        fontFamily:
-          'LatoWeb, "Lato Extended", Lato, "Helvetica Neue", Helvetica, Arial, sans-serif',
-      },
-    },
-  })
+  canvasBaseTheme.use({overrides: {...transitionOverride, ...brandvars, typography}})
 }
 
 /* #__PURE__ */ if (process.env.NODE_ENV === 'test' || window.INST.environment === 'test') {

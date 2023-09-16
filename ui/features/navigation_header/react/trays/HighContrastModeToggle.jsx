@@ -18,11 +18,10 @@
 
 import {useScope as useI18nScope} from '@canvas/i18n'
 import {bool} from 'prop-types'
-import React, {useState, useRef} from 'react'
+import React, {useEffect, useState, useRef} from 'react'
 import doFetchApi from '@canvas/do-fetch-api-effect'
 import {showFlashAlert} from '@canvas/alerts/react/FlashAlert'
 import {colors as hcmColors} from '@instructure/canvas-high-contrast-theme'
-import {ApplyTheme} from '@instructure/ui-themeable'
 import {View} from '@instructure/ui-view'
 import {Text} from '@instructure/ui-text'
 import {Spinner} from '@instructure/ui-spinner'
@@ -30,6 +29,7 @@ import {Tooltip} from '@instructure/ui-tooltip'
 import {Checkbox, ToggleFacade} from '@instructure/ui-checkbox'
 import {IconButton} from '@instructure/ui-buttons'
 import {IconInfoLine} from '@instructure/ui-icons'
+import {InstUISettingsProvider} from '@instructure/emotion'
 
 const I18n = useI18nScope('ProfileTray')
 
@@ -39,8 +39,8 @@ const {porcelain, licorice, shamrock, brand} = hcmColors.values
 // as all the other page elements are just primary-color text, which is
 // the same in both the normal Canvas theme and the Canvas High Contrast
 // theme.
-const hcmOverrides = {
-  [ToggleFacade.theme]: {
+const componentOverrides = {
+  [ToggleFacade.componentId]: {
     color: porcelain,
     toggleBackground: porcelain,
     labelColor: licorice,
@@ -55,9 +55,11 @@ const hcmOverrides = {
 
 const HighContrastLabel = ({loading, isMobile}) => {
   const labelText = isMobile ? I18n.t('Hi-contrast') : I18n.t('Use High Contrast UI')
+  const mobileTipText = I18n.t('Enhance color contrast of content')
+  const dekstopTipText = I18n.t('Enhances the color contrast of text, buttons, etc.')
   const tipText = isMobile
-    ? I18n.t('Enhance color contrast of content')
-    : I18n.t('Enhances the color contrast of text, buttons, etc.')
+    ? mobileTipText
+    : dekstopTipText
   const tipTriggers = ['click']
 
   if (!isMobile) {
@@ -65,10 +67,28 @@ const HighContrastLabel = ({loading, isMobile}) => {
     tipTriggers.push('focus')
   }
 
+  const [tipTextState, setTipTextState] = useState(tipText)
+
+  const handleResize = () => {
+    if (window.devicePixelRatio >= 4) {
+      setTipTextState(mobileTipText)
+    } else if (window.devicePixelRatio < 4 && !isMobile) {
+      setTipTextState(dekstopTipText)
+    }
+  }
+
+  useEffect(() => {
+    window.addEventListener("resize", handleResize)
+
+    return () => {
+      window.removeEventListener("resize", handleResize)
+    }
+  }, [])
+
   return (
     <View as="span">
       <Text>{labelText}</Text>
-      <Tooltip renderTip={tipText} on={tipTriggers} placement="bottom start">
+      <Tooltip renderTip={tipTextState} on={tipTriggers} placement="bottom start">
         <IconButton
           renderIcon={IconInfoLine}
           size="small"
@@ -134,7 +154,7 @@ export default function HighContrastModeToggle({isMobile}) {
   // By definition this control for turning on HCM has to be in HCM all the time,
   // regardless of the global theme, so we have to apply some overrides.
   return (
-    <ApplyTheme theme={hcmOverrides}>
+    <InstUISettingsProvider theme={{componentOverrides}}>
       <View as="div" margin={margins}>
         <Checkbox
           variant="toggle"
@@ -150,7 +170,7 @@ export default function HighContrastModeToggle({isMobile}) {
           </Text>
         )}
       </View>
-    </ApplyTheme>
+    </InstUISettingsProvider>
   )
 }
 

@@ -30,6 +30,7 @@ import {
   listDroppedAssignments,
   filteredAssignments,
 } from './utils'
+import useStore, {updateState} from '../stores'
 import {calculateCourseGrade} from './gradeCalculatorConversions'
 
 import {totalRow} from './AssignmentTableRows/TotalRow'
@@ -43,7 +44,7 @@ const I18n = useI18nScope('grade_summary')
 const headers = [
   {key: 'name', value: I18n.t('Name'), id: nanoid(), alignment: 'start', width: '30%'},
   {key: 'dueAt', value: I18n.t('Due Date'), id: nanoid(), alignment: 'start', width: '20%'},
-  {key: 'status', value: I18n.t('Status'), id: nanoid(), alignment: 'center', width: '10%'},
+  {key: 'status', value: I18n.t('Status'), id: nanoid(), alignment: 'center', width: '15%'},
   {key: 'score', value: I18n.t('Score'), id: nanoid(), alignment: 'center', width: '10%'},
 ]
 
@@ -60,13 +61,7 @@ const getCurrentOrFinalGrade = (
   }
 }
 
-const AssignmentTable = ({
-  queryData,
-  layout,
-  setShowTray,
-  setSelectedSubmission,
-  handleReadStateChange,
-}) => {
+const AssignmentTable = ({queryData, layout, handleReadStateChange, setSubmissionAssignmentId}) => {
   const {assignmentSortBy} = React.useContext(GradeSummaryContext)
   const [calculateOnlyGradedAssignments, setCalculateOnlyGradedAssignments] = useState(true)
 
@@ -103,6 +98,10 @@ const AssignmentTable = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  const open = useStore(state => state.submissionTrayOpen)
+
+  const setShowTray = () => updateState({submissionTrayOpen: !open})
+
   return (
     <Table caption={I18n.t('Student Grade Summary')} layout={layout} hover={true}>
       <Table.Head>
@@ -132,10 +131,10 @@ const AssignmentTable = ({
                 modifiedAssignment,
                 queryData,
                 setShowTray,
-                setSelectedSubmission,
                 handleReadStateChange,
                 setOpenAssignmentDetailIds,
-                openAssignmentDetailIds
+                openAssignmentDetailIds,
+                setSubmissionAssignmentId
               ),
               openAssignmentDetailIds.includes(modifiedAssignment._id) &&
               modifiedAssignment?.scoreStatistic

@@ -41,8 +41,9 @@ class Mutations::CreateDiscussionTopic < Mutations::DiscussionBase
 
     return validation_error(I18n.t("Invalid context")) unless discussion_topic_context
 
-    # if the passed value is neither "partial_anonymity" nor "full_anonymity", set it to nil
     anonymous_state = input[:anonymous_state]
+
+    # if the passed value is neither "partial_anonymity" nor "full_anonymity", set it to nil
     if anonymous_state && anonymous_state != "partial_anonymity" && anonymous_state != "full_anonymity"
       anonymous_state = nil
     end
@@ -50,7 +51,7 @@ class Mutations::CreateDiscussionTopic < Mutations::DiscussionBase
     if anonymous_state &&
        discussion_topic_context.is_a?(Course) &&
        !discussion_topic_context.settings[:allow_student_anonymous_discussion_topics] &&
-       discussion_topic_context.grants_right?(@current_user, session, :manage)
+       !discussion_topic_context.grants_right?(current_user, session, :manage)
       return validation_error(I18n.t("You are not able to create an anonymous discussion"))
     end
 
@@ -66,14 +67,32 @@ class Mutations::CreateDiscussionTopic < Mutations::DiscussionBase
         message: input[:message],
         workflow_state: input[:published] ? "active" : "unpublished",
         require_initial_post: input[:require_initial_post],
-        anonymous_state:
+        anonymous_state:,
+        user: current_user
       }
     )
     verify_authorized_action!(discussion_topic, :create)
+
+    process_future_date_inputs(input[:delayed_post_at], input[:lock_at], discussion_topic)
+
     return errors_for(discussion_topic) unless discussion_topic.save
 
     { discussion_topic: }
   rescue ActiveRecord::RecordNotFound
     raise GraphQL::ExecutionError, "Not found"
+  end
+
+  def process_future_date_inputs(delayed_post_at, lock_at, discussion_topic)
+    discussion_topic.delayed_post_at = delayed_post_at if delayed_post_at
+    discussion_topic.lock_at = lock_at if lock_at
+
+    if discussion_topic.delayed_post_at_changed? || discussion_topic.lock_at_changed?
+      discussion_topic.workflow_state = discussion_topic.should_not_post_yet ? "post_delayed" : discussion_topic.workflow_state
+      if discussion_topic.should_lock_yet
+        discussion_topic.lock(without_save: true)
+      else
+        discussion_topic.unlock(without_save: true)
+      end
+    end
   end
 end

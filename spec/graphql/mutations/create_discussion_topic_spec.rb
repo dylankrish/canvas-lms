@@ -38,6 +38,8 @@ describe Mutations::CreateDiscussionTopic do
             published
             requireInitialPost
             anonymousState
+            delayedPostAt
+            lockAt
           }
           errors {
             attribute
@@ -127,6 +129,27 @@ describe Mutations::CreateDiscussionTopic do
     expect(created_discussion_topic["anonymousState"]).to eq anonymous_state
   end
 
+  it "allows teachers to still create anonymous discussions even when students cannot" do
+    @course.allow_student_anonymous_discussion_topics = false
+    @course.save!
+
+    query = <<~GQL
+      contextId: "#{@course.id}"
+      contextType: "Course"
+      title: "Student Anonymous Create"
+      message: "this should return an error"
+      published: true
+      anonymousState: "full_anonymity"
+    GQL
+
+    result = execute_with_input(query, @teacher)
+    created_discussion_topic = result.dig("data", "createDiscussionTopic", "discussionTopic")
+
+    expect(result["errors"]).to be_nil
+    expect(result.dig("data", "discussionTopic", "errors")).to be_nil
+    expect(created_discussion_topic["anonymousState"]).to eq "full_anonymity"
+  end
+
   it "creates a partial_anonymity discussion topic" do
     context_type = "Course"
     title = "Test Title"
@@ -199,6 +222,116 @@ describe Mutations::CreateDiscussionTopic do
         result = execute_with_input(query)
         expect_error(result, "You are not able to create an anonymous discussion in a group")
       end
+
+      it "returns an error for non-teachers without anonymous discussion creation permissions" do
+        @course.allow_student_anonymous_discussion_topics = false
+        @course.save!
+        student_in_course(active_all: true)
+
+        query = <<~GQL
+          contextId: "#{@course.id}"
+          contextType: "Course"
+          title: "Student Anonymous Create"
+          message: "this should return an error"
+          published: true
+          anonymousState: "full_anonymity"
+        GQL
+
+        result = execute_with_input(query, @student)
+        expect_error(result, "You are not able to create an anonymous discussion")
+      end
+    end
+  end
+
+  context "delayed_post_at and lock_at" do
+    it "successfully creates a discussion topic with delayed_post_at and lock_at" do
+      context_type = "Course"
+      title = "Delayed Topic"
+      message = "Lorem ipsum..."
+      published = false
+      require_initial_post = true
+      delayed_post_at = 5.days.from_now.iso8601
+      lock_at = 10.days.from_now.iso8601
+
+      query = <<~GQL
+        contextId: "#{@course.id}"
+        contextType: "#{context_type}"
+        title: "#{title}"
+        message: "#{message}"
+        published: #{published}
+        requireInitialPost: #{require_initial_post}
+        anonymousState: "off"
+        delayedPostAt: "#{delayed_post_at}"
+        lockAt: "#{lock_at}"
+      GQL
+
+      result = execute_with_input(query)
+      discussion_topic = result.dig("data", "createDiscussionTopic", "discussionTopic")
+
+      expect(result["errors"]).to be_nil
+      expect(result.dig("data", "discussionTopic", "errors")).to be_nil
+      expect(discussion_topic["delayedPostAt"]).to eq delayed_post_at
+      expect(discussion_topic["lockAt"]).to eq lock_at
+      expect(DiscussionTopic.last.workflow_state).to eq "post_delayed"
+    end
+
+    it "successfully creates a discussion topic with lock_at only" do
+      context_type = "Course"
+      title = "Delayed Topic"
+      message = "Lorem ipsum..."
+      published = false
+      require_initial_post = true
+      lock_at = 5.days.from_now.iso8601
+
+      query = <<~GQL
+        contextId: "#{@course.id}"
+        contextType: "#{context_type}"
+        title: "#{title}"
+        message: "#{message}"
+        published: #{published}
+        requireInitialPost: #{require_initial_post}
+        anonymousState: "off"
+        lockAt: "#{lock_at}"
+      GQL
+
+      result = execute_with_input(query)
+      discussion_topic = result.dig("data", "createDiscussionTopic", "discussionTopic")
+
+      expect(result["errors"]).to be_nil
+      expect(result.dig("data", "discussionTopic", "errors")).to be_nil
+      expect(discussion_topic["delayedPostAt"]).to be_nil
+      expect(discussion_topic["lockAt"]).to eq lock_at
+      expect(DiscussionTopic.last.workflow_state).to eq "unpublished"
+    end
+
+    it "successfully creates a discussion topic with null delayed_post_at and lock_at" do
+      context_type = "Course"
+      title = "Topic w/null delayed_post_at and lock_at"
+      message = "Lorem ipsum..."
+      published = false
+      require_initial_post = true
+      delayed_post_at = "null"
+      lock_at = "null"
+
+      query = <<~GQL
+        contextId: "#{@course.id}"
+        contextType: "#{context_type}"
+        title: "#{title}"
+        message: "#{message}"
+        published: #{published}
+        requireInitialPost: #{require_initial_post}
+        anonymousState: "off"
+        delayedPostAt: #{delayed_post_at}
+        lockAt: #{lock_at}
+      GQL
+
+      result = execute_with_input(query)
+      discussion_topic = result.dig("data", "createDiscussionTopic", "discussionTopic")
+
+      expect(result["errors"]).to be_nil
+      expect(result.dig("data", "discussionTopic", "errors")).to be_nil
+      expect(discussion_topic["delayedPostAt"]).to be_nil
+      expect(discussion_topic["lockAt"]).to be_nil
     end
   end
 end

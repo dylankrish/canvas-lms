@@ -273,7 +273,7 @@ export default class FilePreview extends React.PureComponent {
         shouldReturnFocus={true}
         unmountOnExit={true}
       >
-        <Mask theme={{background: 'rgba(0, 0, 0, 0.75)'}}>
+        <Mask themeOverride={{background: 'rgba(0, 0, 0, 0.75)'}}>
           <div className="ef-file-preview-overlay">
             <div className="ef-file-preview-header">
               <h1 className="ef-file-preview-header-filename">
@@ -295,6 +295,7 @@ export default class FilePreview extends React.PureComponent {
                   className={showInfoPanelClasses}
                   ref={e => (this.infoButton = e)}
                   onClick={this.toggle('showInfoPanel')}
+                  aria-expanded={this.state.showInfoPanel}
                 >
                   {/* Wrap content in a div because firefox doesn't support display: flex on buttons */}
                   <div>
