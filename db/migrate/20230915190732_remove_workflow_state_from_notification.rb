@@ -18,13 +18,10 @@
 # with this program. If not, see <http://www.gnu.org/licenses/>.
 #
 
-module BundlerLockfileExtensions
-  module Bundler
-    module SourceList
-      # consider them equivalent if the replacements just have a bunch of dups
-      def equivalent_sources?(lock_sources, replacement_sources)
-        super(lock_sources, replacement_sources.uniq)
-      end
-    end
+class RemoveWorkflowStateFromNotification < ActiveRecord::Migration[7.0]
+  tag :postdeploy
+
+  def change
+    remove_column :notifications, :workflow_state, :string, limit: 255, null: false, if_exists: true
   end
 end
