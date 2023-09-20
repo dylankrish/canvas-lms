@@ -86,8 +86,7 @@ describe GradebooksController do
         end
       end
 
-      it "includes submission_comments of posted submissions when visibility_feedback_student_grades_page flag on" do
-        Account.site_admin.enable_feature!(:visibility_feedback_student_grades_page)
+      it "includes submission_comments of posted submissions" do
         @assignment.anonymous_peer_reviews = true
         @assignment.save!
         attachment = attachment_model(context: @assignment)
@@ -184,19 +183,6 @@ describe GradebooksController do
 
                                                     }
                                                   })
-        end
-      end
-
-      it "does not include submission_comments of posted submissions when visibility_feedback_student_grades_page flag not enabled" do
-        submission_to_comment = @assignment.grade_student(@student, grade: 10, grader: @teacher).first
-        submission_to_comment.add_comment(comment: "a student comment", author: @teacher)
-        submission_to_comment.add_comment(comment: "another student comment", author: @teacher)
-
-        get "grade_summary", params: { course_id: @course.id, id: @student.id }
-        submission = assigns[:js_env][:submissions].find { |s| s[:assignment_id] == @assignment.id }
-        aggregate_failures do
-          expect(submission[:score]).to be 10.0
-          expect(submission[:submission_comments]).to be_nil
         end
       end
     end
@@ -2068,6 +2054,22 @@ describe GradebooksController do
             get :show, params: { course_id: @course.id }
             gradebook_env = assigns[:js_env][:GRADEBOOK_OPTIONS]
             expect(gradebook_env[:IMPROVED_LMGB]).to be true
+          end
+        end
+
+        describe "Outcomes Friendly Description" do
+          it "is false if the feature flag is off" do
+            Account.site_admin.disable_feature! :outcomes_friendly_description
+            get :show, params: { course_id: @course.id }
+            gradebook_env = assigns[:js_env][:GRADEBOOK_OPTIONS]
+            expect(gradebook_env[:OUTCOMES_FRIENDLY_DESCRIPTION]).to be false
+          end
+
+          it "is true if the feature flag is on" do
+            Account.site_admin.enable_feature! :outcomes_friendly_description
+            get :show, params: { course_id: @course.id }
+            gradebook_env = assigns[:js_env][:GRADEBOOK_OPTIONS]
+            expect(gradebook_env[:OUTCOMES_FRIENDLY_DESCRIPTION]).to be true
           end
         end
 

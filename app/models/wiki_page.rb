@@ -36,6 +36,7 @@ class WikiPage < ActiveRecord::Base
   include DuplicatingObjects
   include SearchTermHelper
   include LockedFor
+  include HtmlTextHelper
 
   include MasterCourses::Restrictor
   restrict_columns :content, [:body, :title]
@@ -74,7 +75,8 @@ class WikiPage < ActiveRecord::Base
               if: proc { context.try(:conditional_release?) }
   after_save :create_lookup, if: :should_create_lookup?
   after_save :delete_lookups, if: -> { !Account.site_admin.feature_enabled?(:permanent_page_links) && saved_change_to_workflow_state? && deleted? }
-  after_save :generate_embeddings, if: -> { (saved_change_to_body? || saved_change_to_title?) && OpenAi.smart_search_available?(root_account) }
+  after_save :generate_embeddings, if: :should_generate_embeddings?
+  after_save :delete_embeddings, if: -> { deleted? && saved_change_to_workflow_state? }
 
   scope :starting_with_title, lambda { |title|
     where("title ILIKE ?", "#{title}%")
@@ -104,20 +106,36 @@ class WikiPage < ActiveRecord::Base
     self.wiki_id ||= (context.wiki_id || context.wiki.id)
   end
 
+  def should_generate_embeddings?
+    return false if deleted?
+    return false unless OpenAi.smart_search_available?(root_account)
+
+    saved_change_to_body? ||
+      saved_change_to_title? ||
+      (saved_change_to_workflow_state? && workflow_state_before_last_save == "deleted")
+  end
+
   def generate_embeddings
     return unless OpenAi.smart_search_available?(root_account)
 
     # TODO: chunk content and create multiple
-    embedding = OpenAi.generate_embedding(body)[0]
+    text = html_to_text(body)
+    embedding = OpenAi.generate_embedding(text)[0]
+    delete_embeddings
+    wiki_page_embeddings.create!(embedding:)
+  end
+  handle_asynchronously :generate_embeddings, priority: Delayed::LOW_PRIORITY
+
+  def delete_embeddings
+    return unless ActiveRecord::Base.connection.table_exists?("wiki_page_embeddings")
+
     # TODO: delete via the association once pgvector is available everywhere
     # (without :dependent, that would try to nullify the fk in violation of the constraint
     #  but with :dependent, instances without pgvector would try to access the nonexistent table when a page is deleted)
     shard.activate do
       WikiPageEmbedding.where(wiki_page_id: self).delete_all
     end
-    wiki_page_embeddings.create!(embedding:)
   end
-  handle_asynchronously :generate_embeddings, priority: Delayed::LOW_PRIORITY
 
   def context
     if !association(:context).loaded? &&

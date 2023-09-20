@@ -130,32 +130,30 @@ class GradebooksController < ApplicationController
         json[:custom_grade_status_id] = submission.custom_grade_status_id if custom_gradebook_statuses_enabled
       end
 
-      if Account.site_admin.feature_enabled?(:visibility_feedback_student_grades_page) || Account.site_admin.feature_enabled?(:student_grade_summary_upgrade) || @context.restrict_quantitative_data?(@current_user)
-        json[:submission_comments] = submission.visible_submission_comments.map do |comment|
-          comment_map = {
-            id: comment.id,
-            attachments: comment.cached_attachments.map do |attachment|
-              {
-                id: attachment.id,
-                display_name: attachment.display_name,
-                mime_class: Attachment.mime_class(attachment.content_type),
-                url: file_download_url(attachment.id)
-              }.as_json
-            end,
-            attempt: comment.attempt,
-            author_name: comment_author_name_for(comment),
-            created_at: comment.created_at,
-            edited_at: comment.edited_at,
-            updated_at: comment.updated_at,
-            comment: comment.comment,
-            display_updated_at: datetime_string(comment.updated_at),
-            is_read: comment.read?(@current_user) || (!@presenter.student_is_user? && !@presenter.user_an_observer_of_student?),
-          }
-          comment_map[:media_object] = SubmissionComment.serialize_media_comment(comment.media_comment_id) if comment.media_comment?
-          comment_map
-        end.as_json
-        json[:assignment_url] = context_url(@context, :context_assignment_url, submission.assignment_id)
-      end
+      json[:submission_comments] = submission.visible_submission_comments.map do |comment|
+        comment_map = {
+          id: comment.id,
+          attachments: comment.cached_attachments.map do |attachment|
+            {
+              id: attachment.id,
+              display_name: attachment.display_name,
+              mime_class: Attachment.mime_class(attachment.content_type),
+              url: file_download_url(attachment.id)
+            }.as_json
+          end,
+          attempt: comment.attempt,
+          author_name: comment_author_name_for(comment),
+          created_at: comment.created_at,
+          edited_at: comment.edited_at,
+          updated_at: comment.updated_at,
+          comment: comment.comment,
+          display_updated_at: datetime_string(comment.updated_at),
+          is_read: comment.read?(@current_user) || (!@presenter.student_is_user? && !@presenter.user_an_observer_of_student?),
+        }
+        comment_map[:media_object] = SubmissionComment.serialize_media_comment(comment.media_comment_id) if comment.media_comment?
+        comment_map
+      end.as_json
+      json[:assignment_url] = context_url(@context, :context_assignment_url, submission.assignment_id)
 
       json
     end
@@ -777,6 +775,7 @@ class GradebooksController < ApplicationController
                context_id: @context.id.to_s,
                context_url: named_context_url(@context, :context_url),
                ACCOUNT_LEVEL_MASTERY_SCALES: root_account.feature_enabled?(:account_level_mastery_scales),
+               OUTCOMES_FRIENDLY_DESCRIPTION: Account.site_admin.feature_enabled?(:outcomes_friendly_description),
                outcome_proficiency:,
                sections: sections_json(visible_sections, @current_user, session, [], allow_sis_ids: true),
                settings: gradebook_settings(@context.global_id),

@@ -15,7 +15,7 @@ source "https://rubygems.org/"
 Plugin.uninstall(["bundler_lockfile_extensions"], {}) if Plugin.installed?("bundler_lockfile_extensions")
 
 # vendored until https://github.com/rubygems/rubygems/pull/6957 is merged and released
-plugin "bundler-multilock", "1.0.8", path: "vendor/gems/bundler-multilock"
+plugin "bundler-multilock", "1.0.9", path: "vendor/gems/bundler-multilock"
 # the extra check here is in case `bundle check` or `bundle exec` gets run before `bundle install`,
 # and is also fixed by the same PR
 raise GemNotFound, "bundler-multilock plugin is not installed" if !is_a?(Bundler::Plugin::DSL) && !Plugin.installed?("bundler-multilock")
@@ -49,9 +49,9 @@ SUPPORTED_RAILS_VERSIONS.product([nil, true]).each do |rails_version, include_pl
   end
 end
 
-Dir["Gemfile.d/*.lock", "gems/*/Gemfile.lock", base: Bundler.root].each do |gem_lockfile_name|
+(gemfile_root.glob("Gemfile.d/*.lock") + gemfile_root.glob("gems/*/Gemfile.lock")).each do |gem_lockfile_name|
   return unless lockfile(gem_lockfile_name,
-                         gemfile: gem_lockfile_name.sub(/\.lock$/, ""),
+                         gemfile: gem_lockfile_name.to_s.sub(/\.lock$/, ""),
                          allow_mismatched_dependencies: false)
 end
 # rubocop:enable Style/RedundantConstantBase
@@ -81,11 +81,11 @@ end
 Bundler::Dsl.prepend(GemOverride)
 
 if CANVAS_INCLUDE_PLUGINS
-  Dir[File.join(File.dirname(__FILE__), "gems/plugins/*/Gemfile.d/_before.rb")].each do |file|
+  gemfile_root.glob("gems/plugins/*/Gemfile.d/_before.rb") do |file|
     eval_gemfile(file)
   end
 end
 
-Dir.glob(File.join(File.dirname(__FILE__), "Gemfile.d", "*.rb")).each do |file|
+gemfile_root.glob("Gemfile.d/*.rb").each do |file|
   eval_gemfile(file)
 end
