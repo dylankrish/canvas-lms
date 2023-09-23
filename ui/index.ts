@@ -41,6 +41,7 @@ import './boot/initializers/ajax_errors'
 import './boot/initializers/activateKeyClicks'
 import './boot/initializers/activateTooltips'
 import './boot/initializers/injectAuthTokenIntoForms'
+import './boot/initializers/router'
 
 window.canvasReadyState = 'loading'
 window.dispatchEvent(new CustomEvent('canvasReadyStateChange'))
