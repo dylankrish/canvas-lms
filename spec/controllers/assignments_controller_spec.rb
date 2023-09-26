@@ -318,7 +318,7 @@ describe AssignmentsController do
 
       it "separates manage_assignments and manage_grades permissions" do
         user_session(@teacher)
-        @course.account.role_overrides.create! role: teacher_role, permission: "manage_assignments", enabled: false
+        @course.account.role_overrides.create! role: teacher_role, permission: "manage_assignments_edit", enabled: false
         get "index", params: { course_id: @course.id }
         expect(assigns[:js_env][:PERMISSIONS][:manage_grades]).to be_truthy
         expect(assigns[:js_env][:PERMISSIONS][:manage_assignments]).to be_falsey
@@ -646,9 +646,9 @@ describe AssignmentsController do
         expect(assigns[:can_direct_share]).to be true
       end
 
-      describe "with manage_content permission disabled" do
+      describe "with manage_course_content_add permission disabled" do
         before do
-          RoleOverride.create!(context: @course.account, permission: "manage_content", role: teacher_role, enabled: false)
+          RoleOverride.create!(context: @course.account, permission: "manage_course_content_add", role: teacher_role, enabled: false)
         end
 
         it "does not show direct share options if the course is active" do
@@ -1242,6 +1242,16 @@ describe AssignmentsController do
 
       get "show", params: { course_id: @course.id, id: @assignment.id }
       assert_require_login
+    end
+
+    it "sets 'ROOT_OUTCOME_GROUP' for external tool assignments in the teacher view" do
+      user_session(@teacher)
+      @assignment.submission_types = "external_tool"
+      @assignment.build_external_tool_tag(url: "http://example.com/test")
+      @assignment.save!
+
+      get "show", params: { course_id: @course.id, id: @assignment.id }
+      expect(assigns[:js_env][:ROOT_OUTCOME_GROUP]).not_to be_nil
     end
 
     it "sets first_annotation_submission to true if it's the first submission and the assignment is annotatable" do
