@@ -19,8 +19,8 @@
 
 module Canvas::OAuth
   class AsymmetricClientCredentialsProvider < ClientCredentialsProvider
-    def initialize(jwt, host, scopes = nil, protocol = "http://")
-      super(JSON::JWT.decode(jwt, :skip_verification)[:sub], host, scopes, protocol)
+    def initialize(jwt, host, scopes: nil, protocol: "http://")
+      super(JSON::JWT.decode(jwt, :skip_verification)[:sub], host, scopes:, protocol:)
       @errors = []
       if key.nil? || (key.public_jwk.nil? && key.public_jwk_url.nil?)
         @invalid_key = true
@@ -36,12 +36,20 @@ module Canvas::OAuth
       validator.valid?
     end
 
+    def assertion_method_permitted?
+      true
+    end
+
     def error_message
       return "JWK Error: Invalid JSON" if @invalid_json
       return "JWS signature invalid." if @invalid_key
       return "JWK Error: #{errors.first.message}" if errors.present?
 
       validator.error_message
+    end
+
+    def secret
+      key&.api_key
     end
 
     private
