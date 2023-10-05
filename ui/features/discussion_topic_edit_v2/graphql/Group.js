@@ -16,21 +16,25 @@
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-export interface Enrollment {
-  id: number
-  course_id: number
-  user: User
-  start_at: string | null
-  end_at: string | null
-  type: string
-}
+import {shape, string} from 'prop-types'
+import gql from 'graphql-tag'
 
-export const PROVIDER = 'provider' as const
-export const RECIPIENT = 'recipient' as const
-
-export type EnrollmentType = typeof PROVIDER | typeof RECIPIENT | null
-
-export interface User {
-  id: number
-  name: string
+export const Group = {
+  fragment: gql`
+    fragment Group on Group {
+      _id
+      id
+      name
+    }
+  `,
+  shape: shape({
+    _id: string,
+    id: string,
+    name: string,
+  }),
+  mock: {
+    _id: '5',
+    id: 'J2n9F08vw6',
+    name: 'Super Group',
+  },
 }
