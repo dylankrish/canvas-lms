@@ -233,6 +233,7 @@ class ApplicationController < ActionController::Base
           files_domain: HostUrl.file_host(@domain_root_account || Account.default, request.host_with_port),
           group_information:,
           DOMAIN_ROOT_ACCOUNT_ID: @domain_root_account&.global_id,
+          DOMAIN_ROOT_ACCOUNT_UUID: @domain_root_account&.uuid,
           k12: k12?,
           help_link_name:,
           help_link_icon:,
@@ -253,7 +254,6 @@ class ApplicationController < ActionController::Base
           RAILS_ENVIRONMENT: Canvas.environment
         }
         @js_env[:IN_PACED_COURSE] = @context.account.feature_enabled?(:course_paces) && @context.enable_course_paces? if @context.is_a?(Course)
-
         unless SentryExtensions::Settings.settings.blank?
           @js_env[:SENTRY_FRONTEND] = {
             dsn: SentryExtensions::Settings.settings[:frontend_dsn],
@@ -283,7 +283,7 @@ class ApplicationController < ActionController::Base
         @js_env[:KILL_JOY] = @domain_root_account.kill_joy? if @domain_root_account&.kill_joy?
 
         cached_features = cached_js_env_account_features
-
+        @js_env[:DOMAIN_ROOT_ACCOUNT_SFID] = Rails.cache.fetch(["sfid", @domain_root_account].cache_key) { @domain_root_account.salesforce_id } if @domain_root_account.respond_to?(:salesforce_id)
         @js_env[:DIRECT_SHARE_ENABLED] = @context.respond_to?(:grants_right?) && @context.grants_right?(@current_user, session, :direct_share)
         @js_env[:CAN_VIEW_CONTENT_SHARES] = @current_user&.can_view_content_shares?
         @js_env[:FEATURES] = cached_features.merge(
@@ -378,6 +378,7 @@ class ApplicationController < ActionController::Base
     lti_assignment_page_line_items
     mobile_offline_mode
     react_discussions_post
+    instui_nav
   ].freeze
   JS_ENV_BRAND_ACCOUNT_FEATURES = [
     :embedded_release_notes
@@ -597,15 +598,6 @@ class ApplicationController < ActionController::Base
         canAutoPublishCourses: can_manage
       )
     end
-
-    if is_child && Account.site_admin.feature_enabled?(:media_links_use_attachment_id)
-      mig_id_map = MasterCourses::ChildContentTag.where(content_id: @context.attachments.pluck(:id)).pluck(:content_id, :migration_id).to_h
-      master_tags = MasterCourses::MasterContentTag.where(migration_id: mig_id_map.values).each_with_object({}) do |mt, h|
-        h[mt.migration_id] = !!mt.restrictions[:content] || !!mt.restrictions[:all]
-      end
-      js_env CHILD_COURSE_ATTACHMENTS_LOCKED_STATUSES: mig_id_map.transform_values { |mig_id| master_tags[mig_id] }
-    end
-
     js_env BLUEPRINT_COURSES_DATA: bc_data
     if is_master && js_env.key?(:NEW_USER_TUTORIALS)
       js_env[:NEW_USER_TUTORIALS][:is_enabled] = false
