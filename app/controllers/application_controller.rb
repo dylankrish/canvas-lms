@@ -348,7 +348,6 @@ class ApplicationController < ActionController::Base
     lti_platform_storage
     calendar_series
     account_level_blackout_dates
-    rce_ux_improvements
     render_both_to_do_lists
     course_paces_redesign
     course_paces_for_students
@@ -357,7 +356,6 @@ class ApplicationController < ActionController::Base
     dev_key_oidc_alert
     media_links_use_attachment_id
     permanent_page_links
-    improved_no_results_messaging
     differentiated_modules
     enhanced_course_creation_account_fetching
     instui_for_import_page
