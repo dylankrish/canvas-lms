@@ -120,7 +120,7 @@ GEM
       bindata
       faraday (~> 2.0)
       faraday-follow_redirects
-    loofah (2.21.3)
+    loofah (2.21.4)
       crass (~> 1.0.2)
       nokogiri (>= 1.12.0)
     method_source (1.0.0)
@@ -139,7 +139,7 @@ GEM
       racc (~> 1.4)
     packs-specification (0.0.10)
       sorbet-runtime
-    psych (5.1.0)
+    psych (5.1.1)
       stringio
     raabro (1.4.0)
     racc (1.7.1)

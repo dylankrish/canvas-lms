@@ -138,7 +138,7 @@ GEM
       rdoc
       reline (>= 0.3.8)
     jmespath (1.6.2)
-    loofah (2.21.3)
+    loofah (2.21.4)
       crass (~> 1.0.2)
       nokogiri (>= 1.12.0)
     mail (2.8.1)
@@ -172,7 +172,7 @@ GEM
       racc (~> 1.4)
     packs-specification (0.0.10)
       sorbet-runtime
-    psych (5.1.0)
+    psych (5.1.1)
       stringio
     raabro (1.4.0)
     racc (1.7.1)
