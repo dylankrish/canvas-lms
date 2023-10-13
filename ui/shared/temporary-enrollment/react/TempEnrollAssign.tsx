@@ -47,6 +47,13 @@ import {
   updateLocalStorageObject,
 } from './util/helpers'
 import useDateTimeFormat from '@canvas/use-date-time-format-hook'
+import {createAnalyticPropsGenerator, setAnalyticPropsOnRef} from './util/analytics'
+import {MODULE_NAME} from './types'
+
+const I18n = useI18nScope('temporary_enrollment')
+
+// initialize analytics props
+const analyticProps = createAnalyticPropsGenerator(MODULE_NAME)
 
 interface Role {
   id: string
@@ -66,15 +73,16 @@ interface Permissions {
 interface Props {
   readonly enrollment: any
   readonly user: {
-    name: string
-    avatar_url?: string
-    id: string
+    readonly name: string
+    readonly avatar_url?: string
+    readonly id: string
   }
   readonly permissions: Permissions
   readonly roles: {id: string; label: string; base_role_name: string}[]
   readonly goBack: Function
   readonly doSubmit: () => boolean
   readonly setEnrollmentStatus: Function
+  readonly isInAssignEditMode: boolean
 }
 interface RoleChoice {
   id: string
@@ -94,7 +102,6 @@ type RoleName =
   | 'ObserverEnrollment'
 type PermissionName = 'teacher' | 'ta' | 'student' | 'observer' | 'designer'
 
-const I18n = useI18nScope('temporary_enrollment')
 const rolePermissionMapping: Record<RoleName, PermissionName> = {
   StudentEnrollment: 'student',
   TaEnrollment: 'ta',
@@ -356,17 +363,20 @@ export function TempEnrollAssign(props: Props) {
   return (
     <>
       <Grid>
-        <Grid.Row>
-          <Grid.Col>
-            <Button
-              onClick={() => {
-                props.goBack()
-              }}
-            >
-              {I18n.t('Back')}
-            </Button>
-          </Grid.Col>
-        </Grid.Row>
+        {!props.isInAssignEditMode && (
+          <Grid.Row>
+            <Grid.Col>
+              <Button
+                onClick={() => {
+                  props.goBack()
+                }}
+                {...analyticProps('Back')}
+              >
+                {I18n.t('Back')}
+              </Button>
+            </Grid.Col>
+          </Grid.Row>
+        )}
         <Grid.Row vAlign="middle">
           <Grid.Col>
             <Flex margin="small 0 small 0">
@@ -416,6 +426,8 @@ export function TempEnrollAssign(props: Props) {
               value={startDate.toISOString()}
               onChange={handleStartDateChange}
               invalidDateTimeMessage={I18n.t('The chosen date and time is invalid.')}
+              dateInputRef={ref => setAnalyticPropsOnRef(ref, analyticProps('StartDate'))}
+              timeInputRef={ref => setAnalyticPropsOnRef(ref, analyticProps('StartTime'))}
             />
           </Grid.Col>
           <Grid.Col>
@@ -451,6 +463,8 @@ export function TempEnrollAssign(props: Props) {
               value={endDate.toISOString()}
               onChange={handleEndDateChange}
               invalidDateTimeMessage={I18n.t('The chosen date and time is invalid.')}
+              dateInputRef={ref => setAnalyticPropsOnRef(ref, analyticProps('EndDate'))}
+              timeInputRef={ref => setAnalyticPropsOnRef(ref, analyticProps('EndTime'))}
             />
           </Grid.Col>
         </Grid.Row>

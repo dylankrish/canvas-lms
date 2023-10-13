@@ -32,10 +32,14 @@ import {TempEnrollSearch} from './TempEnrollSearch'
 import {TempEnrollEdit} from './TempEnrollEdit'
 import {TempEnrollAssign} from './TempEnrollAssign'
 import {Flex} from '@instructure/ui-flex'
-import {Enrollment, EnrollmentType} from './types'
+import {Enrollment, EnrollmentType, MODULE_NAME} from './types'
 import {showFlashSuccess} from '@canvas/alerts/react/FlashAlert'
+import {createAnalyticPropsGenerator} from './util/analytics'
 
 const I18n = useI18nScope('temporary_enrollment')
+
+// initialize analytics props
+const analyticProps = createAnalyticPropsGenerator(MODULE_NAME)
 
 interface Props {
   readonly title: string | ((enrollmentType: EnrollmentType, name: string) => string)
@@ -91,8 +95,8 @@ export function TempEnrollModal(props: Props) {
   const [page, setPage] = useState(0)
   const [enrollment, setEnrollment] = useState(null)
   const [enrollmentData, setEnrollmentData] = useState<Enrollment[]>([])
+  const [isViewingAssignFromEdit, setIsViewingAssignFromEdit] = useState(false)
 
-  const isEditModeLocal = isEditMode
   const dynamicTitle = typeof title === 'function' ? title(enrollmentType, user.name) : title
 
   useEffect(() => {
@@ -104,7 +108,7 @@ export function TempEnrollModal(props: Props) {
   function resetState(pg: number = 0) {
     setPage(pg)
 
-    if (isEditModeLocal) {
+    if (isEditMode) {
       onToggleEditMode(false)
     }
   }
@@ -184,6 +188,7 @@ export function TempEnrollModal(props: Props) {
   const handleGoToAssignPageWithEnrollment = (chosenEnrollment: any) => {
     setEnrollment(chosenEnrollment)
     resetState(2)
+    setIsViewingAssignFromEdit(true)
   }
 
   const handleChildClick =
@@ -201,7 +206,7 @@ export function TempEnrollModal(props: Props) {
     }
 
   const renderScreen = () => {
-    if (isEditModeLocal) {
+    if (isEditMode) {
       // edit enrollments screen
       return (
         <TempEnrollEdit
@@ -213,8 +218,8 @@ export function TempEnrollModal(props: Props) {
         />
       )
     } else {
-      // assign screen
       if (page >= 2) {
+        // assign screen
         return (
           <TempEnrollAssign
             user={user}
@@ -224,6 +229,7 @@ export function TempEnrollModal(props: Props) {
             permissions={permissions}
             doSubmit={isSubmissionPage}
             setEnrollmentStatus={handleEnrollmentSubmission}
+            isInAssignEditMode={isViewingAssignFromEdit}
           />
         )
       }
@@ -244,40 +250,42 @@ export function TempEnrollModal(props: Props) {
   }
 
   const renderButtons = () => {
-    if (isEditModeLocal) {
+    if (isEditMode) {
       return (
         <Flex.Item margin="0 small 0 0">
-          <Button onClick={handleCancel}>{I18n.t('Done')}</Button>
+          <Button onClick={handleCancel} {...analyticProps('Done')}>
+            {I18n.t('Done')}
+          </Button>
         </Flex.Item>
       )
     } else {
-      const buttons = []
-
-      buttons.push(
+      return [
         <Flex.Item key="cancel" margin="0 small 0 0">
-          <Button onClick={handleCancel}>{I18n.t('Cancel')}</Button>
-        </Flex.Item>
-      )
+          <Button onClick={handleCancel} {...analyticProps('Cancel')}>
+            {I18n.t('Cancel')}
+          </Button>
+        </Flex.Item>,
 
-      if (page === 1) {
-        buttons.push(
+        page === 1 && (
           <Flex.Item key="startOver" margin="0 small 0 0">
-            <Button onClick={handleResetToBeginning}>{I18n.t('Start Over')}</Button>
+            <Button onClick={handleResetToBeginning} {...analyticProps('StartOver')}>
+              {I18n.t('Start Over')}
+            </Button>
           </Flex.Item>
-        )
-      }
+        ),
 
-      if (!isEditModeLocal) {
-        buttons.push(
+        !isEditMode && (
           <Flex.Item key="nextOrSubmit" margin="0 small 0 0">
-            <Button color="primary" onClick={handlePageTransition}>
+            <Button
+              color="primary"
+              onClick={handlePageTransition}
+              {...analyticProps(page === 2 ? 'Submit' : 'Next')}
+            >
               {page === 2 ? I18n.t('Submit') : I18n.t('Next')}
             </Button>
           </Flex.Item>
-        )
-      }
-
-      return buttons
+        ),
+      ]
     }
   }
 
