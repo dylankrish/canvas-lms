@@ -16,23 +16,23 @@
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-import {render} from '@testing-library/react'
+import {render, fireEvent, screen} from '@testing-library/react'
 import React from 'react'
 import {AssignedTo} from '../AssignedTo'
 
 const DEFAULT_LIST_OPTIONS = {
-  'Master Paths': [{id: 'mp_option1', label: 'Master Path Option'}],
+  'Master Paths': [{assetCode: 'mp_option1', label: 'Master Path Option'}],
   'Course Sections': [
-    {id: 'sec_1', label: 'Section 1'},
-    {id: 'sec_2', label: 'Section 2'},
+    {assetCode: 'sec_1', label: 'Section 1'},
+    {assetCode: 'sec_2', label: 'Section 2'},
   ],
   Students: [
-    {id: 'u_1', label: 'Jason'},
-    {id: 'u_2', label: 'Drake'},
-    {id: 'u_3', label: 'Caleb'},
-    {id: 'u_4', label: 'Aaron'},
-    {id: 'u_5', label: 'Chawn'},
-    {id: 'u_6', label: 'Omar'},
+    {assetCode: 'u_1', label: 'Jason'},
+    {assetCode: 'u_2', label: 'Drake'},
+    {assetCode: 'u_3', label: 'Caleb'},
+    {assetCode: 'u_4', label: 'Aaron'},
+    {assetCode: 'u_5', label: 'Chawn'},
+    {assetCode: 'u_6', label: 'Omar'},
   ],
 }
 
@@ -80,5 +80,29 @@ describe('AssignTo', () => {
   it('shows an error message when provided', () => {
     const {queryByText} = setup({errorMessage: [{type: 'error', text: 'Some error occurred'}]})
     expect(queryByText('Some error occurred')).toBeInTheDocument()
+  })
+
+  it('keyboard navigation does not affect option filtering', () => {
+    const {getByTestId, getAllByTestId} = setup()
+
+    const selectOption = getByTestId('assign-to-select')
+    fireEvent.click(selectOption)
+
+    // Verify that all options appear
+    let availableOptions = getAllByTestId('assign-to-select-option')
+    expect(availableOptions.length).toBe(Object.values(DEFAULT_LIST_OPTIONS).flat().length)
+
+    // Verify that the input is correctly filtered when text is inputted
+    fireEvent.input(selectOption, {target: {value: 'ma'}})
+    availableOptions = getAllByTestId('assign-to-select-option')
+    expect(availableOptions.length).toBe(2)
+
+    // Verify that when you use keyboard navigation that the options are not further filtered
+    fireEvent.keyDown(selectOption, {keyCode: 40})
+    availableOptions = getAllByTestId('assign-to-select-option')
+    expect(availableOptions.length).toBe(2)
+
+    // Omar will appear once in in the text input and once in the menu
+    expect(screen.getAllByText('Omar').length).toBe(2)
   })
 })

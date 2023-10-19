@@ -92,6 +92,7 @@ export const GeneralMigrationControls = ({
       <View as="div" margin="medium none none none">
         <Button>{I18n.t('Cancel')}</Button>
         <Button
+          data-testid="submitMigration"
           onClick={() => {
             submitMigration({
               selectiveImport,
@@ -106,7 +107,7 @@ export const GeneralMigrationControls = ({
           {I18n.t('Add to Import Queue')}
         </Button>
       </View>
-      <hr />
+      <hr role="presentation" aria-hidden="true" />
     </>
   )
 }

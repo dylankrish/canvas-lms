@@ -47,6 +47,16 @@ export const AssignmentDueDate = ({
             setAssignedInformation(newInfo)
             onAssignedInfoChange(newInfo)
           }}
+          onOptionDismiss={dismissedOption => {
+            const newInfo = {
+              ...assignedInformation,
+              assignedList: assignedInformation.assignedList.filter(
+                option => option.assetCode !== dismissedOption.assetCode
+              ),
+            }
+            setAssignedInformation(newInfo)
+            onAssignedInfoChange(newInfo)
+          }}
         />
         <DateTimeInput
           description={I18n.t('Due')}
@@ -105,7 +115,7 @@ AssignmentDueDate.propTypes = {
   availableAssignToOptions: PropTypes.objectOf(
     PropTypes.arrayOf(
       PropTypes.shape({
-        id: PropTypes.string.isRequired,
+        assetCode: PropTypes.string.isRequired,
         label: PropTypes.string.isRequired,
       })
     )
