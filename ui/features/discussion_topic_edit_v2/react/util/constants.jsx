@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 - present Instructure, Inc.
+ * Copyright (C) 2023 - present Instructure, Inc.
  *
  * This file is part of Canvas.
  *
@@ -15,19 +15,11 @@
  * You should have received a copy of the GNU Affero General Public License along
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
-import axios from '@canvas/axios'
+import React from 'react'
 
-export const loadRollups = (courseId, gradebookFilters, needDefaults = false, page = 1) => {
-  const params = {
-    params: {
-      rating_percents: true,
-      per_page: 20,
-      exclude: gradebookFilters,
-      include: ['outcomes', 'users', 'outcome_paths', 'alignments'],
-      sort_by: 'student',
-      page,
-      ...(needDefaults && {add_defaults: true}),
-    },
-  }
-  return axios.get(`/api/v1/courses/${courseId}/outcome_rollups`, params)
+const GradedDiscussionDueDateDefaultValues = {
+  assignedInfoList: [],
+  setAssignedInfoList: () => {},
 }
+
+export const GradedDiscussionDueDatesContext = React.createContext(GradedDiscussionDueDateDefaultValues)
