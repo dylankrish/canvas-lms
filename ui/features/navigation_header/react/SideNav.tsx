@@ -22,10 +22,13 @@ import {Badge} from '@instructure/ui-badge'
 import {Avatar} from '@instructure/ui-avatar'
 import {
   IconAdminLine,
-  IconDashboardLine,
-  IconUserLine,
-  IconInboxLine,
+  IconCalendarMonthLine,
   IconCanvasLogoSolid,
+  IconCoursesLine,
+  IconDashboardLine,
+  IconHomeLine,
+  IconInboxLine,
+  IconQuestionLine,
 } from '@instructure/ui-icons'
 import {ScreenReaderContent} from '@instructure/ui-a11y-content'
 import {useScope as useI18nScope} from '@canvas/i18n'
@@ -33,6 +36,7 @@ import {useScope as useI18nScope} from '@canvas/i18n'
 const I18n = useI18nScope('new_user_tutorial')
 
 const SideNav = () => {
+  const isK5User = window.ENV.K5_USER
   return (
     <div style={{height: '100vh'}} data-testid="sidenav-container">
       <Navigation
@@ -45,7 +49,7 @@ const SideNav = () => {
         <Navigation.Item
           icon={<IconCanvasLogoSolid size="medium" data-testid="icon-canvas-logo" />}
           label={<ScreenReaderContent>{I18n.t('Home')}</ScreenReaderContent>}
-          href="#"
+          href="/"
           themeOverride={{
             iconColor: 'white',
             contentPadding: '1rem',
@@ -63,23 +67,52 @@ const SideNav = () => {
               src={window.ENV.current_user.avatar_image_url}
             />
           }
-          label="Account"
+          label={I18n.t('Account')}
           onClick={() => {
             // this.loadSubNav('account')
           }}
         />
-        <Navigation.Item icon={<IconAdminLine />} label="Admin" href="#" />
-        <Navigation.Item selected={true} icon={<IconDashboardLine />} label="Dashboard" href="#" />
+        <Navigation.Item
+          icon={<IconAdminLine />}
+          label={I18n.t('Admin')}
+          href="/accounts"
+          onClick={event => {
+            event.preventDefault()
+          }}
+        />
+        <Navigation.Item
+          selected={true}
+          icon={isK5User ? <IconHomeLine data-testid="K5HomeIcon" /> : <IconDashboardLine />}
+          label={isK5User ? I18n.t('Home') : I18n.t('Dashboard')}
+          href="/"
+        />
+        <Navigation.Item
+          icon={<IconCoursesLine />}
+          label={isK5User ? I18n.t('Subjects') : I18n.t('Courses')}
+          href="/courses"
+          onClick={event => {
+            event.preventDefault()
+          }}
+        />
+        <Navigation.Item
+          icon={<IconCalendarMonthLine />}
+          label={I18n.t('Calendar')}
+          href="/calendar"
+        />
         <Navigation.Item
           icon={
             <Badge count={99}>
               <IconInboxLine />
             </Badge>
           }
-          label="Inbox"
-          href="#"
+          label={I18n.t('Inbox')}
+          href="/conversations"
         />
-        <Navigation.Item icon={<IconUserLine />} label="Profile" href="#" />
+        <Navigation.Item
+          icon={<IconQuestionLine />}
+          label={I18n.t('Help')}
+          href="/accounts/self/settings"
+        />
       </Navigation>
     </div>
   )
