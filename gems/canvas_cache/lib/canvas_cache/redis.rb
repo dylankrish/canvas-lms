@@ -23,6 +23,7 @@ require "active_support/core_ext/module/introspection"
 require "active_support/core_ext/object/blank"
 require "guard_rail"
 require "redis"
+require "redis_client/cluster"
 
 # see https://github.com/redis/redis-rb/pull/739
 
@@ -42,10 +43,23 @@ module CanvasCache
       end
     end
 
+    module IgnorePipelinedKey
+      def pipelined(_key = nil, ...)
+        # ignore key; only useful for distributed
+        super(...)
+      end
+    end
+
     module Distributed
       def initialize(addresses, options = {})
         options[:ring] ||= HashRing.new([], options[:replicas], options[:digest])
         super
+      end
+
+      def pipelined(key = nil, ...)
+        return super(...) unless key
+
+        node_for(key).pipelined(...)
       end
     end
 
@@ -138,6 +152,8 @@ module CanvasCache
 
         ::Redis::Scripting::Module.prepend(Scripting::Module) if defined?(::Redis::Scripting::Module)
         ::Redis.prepend(Redis)
+        ::Redis.prepend(IgnorePipelinedKey)
+        ::RedisClient::Cluster.prepend(IgnorePipelinedKey)
         ::Redis::Client.prepend(Client)
         ::Redis::Distributed.prepend(Distributed)
       end
