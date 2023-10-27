@@ -16,7 +16,7 @@
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-import React, {useEffect, useState} from 'react'
+import React, {useEffect} from 'react'
 import {Navigation} from '@instructure/ui-navigation'
 import {Badge} from '@instructure/ui-badge'
 import {Avatar} from '@instructure/ui-avatar'
@@ -37,9 +37,9 @@ import {
 } from '@instructure/ui-icons'
 import {AccessibleContent, ScreenReaderContent} from '@instructure/ui-a11y-content'
 import {useScope as useI18nScope} from '@canvas/i18n'
-import {useQuery} from '@tanstack/react-query'
+import {useMutation, useQuery, useQueryClient} from '@tanstack/react-query'
 import {getUnreadCount} from './queries/unreadCountQuery'
-import {getSetting} from './queries/settingsQuery'
+import {getSetting, setSetting} from './queries/settingsQuery'
 
 const I18n = useI18nScope('sidenav')
 
@@ -52,9 +52,16 @@ export const InformationIconEnum = {
 
 const SideNav = () => {
   let logoUrl = null
-  const [isMinimized, setIsMinimized] = useState(false)
+  const queryClient = useQueryClient()
   const isK5User = window.ENV.K5_USER
   const helpIcon = window.ENV.help_link_icon
+
+  const navItemThemeOverride = {
+    iconColor: 'white',
+    contentPadding: '0.1rem',
+    backgroundColor: 'transparent',
+    hoverBackgroundColor: 'transparent',
+  }
 
   const getHelpIcon = (): JSX.Element => {
     switch (helpIcon) {
@@ -83,11 +90,6 @@ const SideNav = () => {
     logoUrl = variables['ic-brand-header-image']
   }
 
-  useEffect(() => {
-    if (isMinimized) document.body.classList.remove('primary-nav-expanded')
-    else document.body.classList.add('primary-nav-expanded')
-  }, [isMinimized, setIsMinimized])
-
   const {data: unreadConversationsCount} = useQuery({
     queryKey: ['unread_count', 'conversations'],
     queryFn: getUnreadCount,
@@ -115,6 +117,32 @@ const SideNav = () => {
     enabled: countsEnabled && ENV.FEATURES.embedded_release_notes && !releaseNotesBadgeDisabled,
   })
 
+  const {data: collapseGlobalNav} = useQuery({
+    queryKey: ['settings', 'collapse_global_nav'],
+    queryFn: getSetting,
+    enabled: true,
+  })
+
+  const setCollapseGlobalNav = useMutation({
+    mutationFn: setSetting,
+    onSuccess: () =>
+      queryClient.invalidateQueries({
+        queryKey: ['settings', 'collapse_global_nav'],
+      }),
+  })
+
+  function updateCollapseGlobalNav(newState: boolean) {
+    setCollapseGlobalNav.mutate({
+      setting: 'collapse_global_nav',
+      newState,
+    })
+  }
+
+  useEffect(() => {
+    if (collapseGlobalNav) document.body.classList.remove('primary-nav-expanded')
+    else document.body.classList.add('primary-nav-expanded')
+  }, [collapseGlobalNav])
+
   return (
     <div style={{width: '100%', height: '100vh'}} data-testid="sidenav-container">
       <Navigation
@@ -123,7 +151,8 @@ const SideNav = () => {
           expandedLabel: 'Minimize Navigation',
           minimizedLabel: 'Expand Navigation',
         }}
-        onMinimized={() => setIsMinimized(!isMinimized)}
+        defaultMinimized={collapseGlobalNav}
+        onMinimized={() => updateCollapseGlobalNav(!collapseGlobalNav)}
         themeOverride={{
           minimizedWidth: '100%',
         }}
@@ -131,28 +160,27 @@ const SideNav = () => {
         <Navigation.Item
           icon={
             !logoUrl ? (
-              <IconCanvasLogoSolid
-                size={!isMinimized ? 'medium' : 'small'}
-                data-testid="icon-canvas-logo"
-              />
+              <div style={{margin: '0.5rem 0 0.5rem 0'}}>
+                <IconCanvasLogoSolid
+                  size={!collapseGlobalNav ? 'medium' : 'small'}
+                  data-testid="sidenav-canvas-logo"
+                />
+              </div>
             ) : (
               <Img
                 display="inline-block"
-                alt="sidenav-header-image"
-                margin="x-small 0 x-small 0"
-                width={100}
+                alt="sidenav-brand-logomark"
+                margin={`${!collapseGlobalNav ? 'xxx-small' : 'x-small'} 0 small 0`}
                 src={logoUrl}
-                data-testid="sidenav-header-image"
+                data-testid="sidenav-brand-logomark"
               />
             )
           }
           label={<ScreenReaderContent>{I18n.t('Home')}</ScreenReaderContent>}
           href="/"
           themeOverride={{
-            iconColor: 'white',
-            contentPadding: !isMinimized ? '1rem' : '0',
-            backgroundColor: 'transparent',
-            hoverBackgroundColor: 'transparent',
+            ...navItemThemeOverride,
+            contentPadding: '0',
           }}
           data-testid="sidenav-header-logo"
         />
@@ -182,7 +210,7 @@ const SideNav = () => {
                 name={window.ENV.current_user.display_name}
                 size="x-small"
                 src={window.ENV.current_user.avatar_image_url}
-                data-testid="avatar"
+                data-testid="sidenav-user-avatar"
               />
             </Badge>
           }
@@ -190,6 +218,7 @@ const SideNav = () => {
           onClick={() => {
             // this.loadSubNav('account')
           }}
+          themeOverride={navItemThemeOverride}
         />
         <Navigation.Item
           icon={<IconAdminLine />}
@@ -198,12 +227,14 @@ const SideNav = () => {
           onClick={event => {
             event.preventDefault()
           }}
+          themeOverride={navItemThemeOverride}
         />
         <Navigation.Item
           selected={true}
           icon={isK5User ? <IconHomeLine data-testid="K5HomeIcon" /> : <IconDashboardLine />}
           label={isK5User ? I18n.t('Home') : I18n.t('Dashboard')}
           href="/"
+          themeOverride={navItemThemeOverride}
         />
         <Navigation.Item
           icon={<IconCoursesLine />}
@@ -212,11 +243,13 @@ const SideNav = () => {
           onClick={event => {
             event.preventDefault()
           }}
+          themeOverride={navItemThemeOverride}
         />
         <Navigation.Item
           icon={<IconCalendarMonthLine />}
           label={I18n.t('Calendar')}
           href="/calendar"
+          themeOverride={navItemThemeOverride}
         />
         <Navigation.Item
           icon={
@@ -245,6 +278,7 @@ const SideNav = () => {
           }
           label={I18n.t('Inbox')}
           href="/conversations"
+          themeOverride={navItemThemeOverride}
         />
         <Navigation.Item
           icon={
@@ -273,6 +307,7 @@ const SideNav = () => {
           }
           label={I18n.t('Help')}
           href="/accounts/self/settings"
+          themeOverride={navItemThemeOverride}
         />
       </Navigation>
     </div>
