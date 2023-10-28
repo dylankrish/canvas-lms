@@ -18,31 +18,24 @@
 
 import {useScope as useI18nScope} from '@canvas/i18n'
 import React from 'react'
-import {bool} from 'prop-types'
-import {HistoryShape} from '../HistoryShape'
-import HistoryList from '../HistoryList'
+import HistoryList from '../lists/HistoryList'
 import {View} from '@instructure/ui-view'
 import {Heading} from '@instructure/ui-heading'
 
 const I18n = useI18nScope('new_nav')
 
-HistoryTray.propTypes = {
-  history: HistoryShape.isRequired,
-  hasLoaded: bool.isRequired,
-}
-
 HistoryTray.defaultProps = {
   history: [],
 }
 
-export default function HistoryTray({hasLoaded, history}) {
+export default function HistoryTray() {
   return (
     <View as="div" padding="medium">
       <Heading level="h3" as="h2">
         {I18n.t('Recent History')}
       </Heading>
       <hr role="presentation" />
-      <HistoryList hasLoaded={hasLoaded} history={history} />
+      <HistoryList />
     </View>
   )
 }
