@@ -45,7 +45,7 @@ import {useQuery} from '@canvas/query'
 import {useMutation, useQueryClient} from '@tanstack/react-query'
 import {getUnreadCount} from './queries/unreadCountQuery'
 import {getSetting, setSetting} from './queries/settingsQuery'
-import {getActiveItem, getTrayLabel} from './utils'
+import {getActiveItem, getTrayLabel, getTrayPortal} from './utils'
 import type {ActiveTray} from './utils'
 
 const I18n = useI18nScope('sidenav')
@@ -53,14 +53,9 @@ const I18n = useI18nScope('sidenav')
 const CoursesTray = React.lazy(() => import('./trays/CoursesTray'))
 const GroupsTray = React.lazy(() => import('./trays/GroupsTray'))
 const AccountsTray = React.lazy(() => import('./trays/AccountsTray'))
-// const ProfileTray = React.lazy(() => import('./trays/ProfileTray'))
+const ProfileTray = React.lazy(() => import('./trays/ProfileTray'))
 const HistoryTray = React.lazy(() => import('./trays/HistoryTray'))
 const HelpTray = React.lazy(() => import('./trays/HelpTray'))
-
-const portal = document.createElement('div')
-portal.id = 'nav-tray-portal'
-portal.setAttribute('style', 'position: relative; z-index: 99;')
-document.body.appendChild(portal)
 
 export const InformationIconEnum = {
   INFORMATION: 'information',
@@ -137,20 +132,6 @@ const SideNav = () => {
     logoUrl = variables['ic-brand-header-image']
   }
 
-  const {data: unreadConversationsCount} = useQuery({
-    queryKey: ['unread_count', 'conversations'],
-    queryFn: getUnreadCount,
-    staleTime: 2 * 60 * 1000, // two minutes
-    enabled: countsEnabled && !ENV.current_user_disabled_inbox,
-  })
-
-  const {data: unreadContentSharesCount} = useQuery({
-    queryKey: ['unread_count', 'content_shares'],
-    queryFn: getUnreadCount,
-    staleTime: 5 * 60 * 1000, // two minutes
-    enabled: countsEnabled && ENV.CAN_VIEW_CONTENT_SHARES,
-  })
-
   const {data: releaseNotesBadgeDisabled} = useQuery({
     queryKey: ['settings', 'release_notes_badge_disabled'],
     queryFn: getSetting,
@@ -158,11 +139,28 @@ const SideNav = () => {
     fetchAtLeastOnce: true,
   })
 
+  const {data: unreadConversationsCount} = useQuery({
+    queryKey: ['unread_count', 'conversations'],
+    queryFn: getUnreadCount,
+    staleTime: 2 * 60 * 1000, // two minutes
+    enabled: countsEnabled && !ENV.current_user_disabled_inbox,
+    refetchOnWindowFocus: true,
+  })
+
+  const {data: unreadContentSharesCount} = useQuery({
+    queryKey: ['unread_count', 'content_shares'],
+    queryFn: getUnreadCount,
+    staleTime: 60 * 60 * 1000, // 1 hour
+    enabled: countsEnabled && ENV.CAN_VIEW_CONTENT_SHARES,
+    refetchOnWindowFocus: true,
+  })
+
   const {data: unreadReleaseNotesCount} = useQuery({
     queryKey: ['unread_count', 'release_notes'],
     queryFn: getUnreadCount,
     staleTime: 24 * 60 * 60 * 1000, // one day
     enabled: countsEnabled && ENV.FEATURES.embedded_release_notes && !releaseNotesBadgeDisabled,
+    refetchOnWindowFocus: true,
   })
 
   const {data: collapseGlobalNav} = useQuery({
@@ -193,7 +191,19 @@ const SideNav = () => {
   }, [collapseGlobalNav])
 
   return (
-    <div style={{width: '100%', height: '100vh'}} data-testid="sidenav-container">
+    <div
+      style={{width: '100%', height: '100vh'}}
+      className="sidenav-container"
+      data-testid="sidenav-container"
+    >
+      <style>{`
+        .sidenav-container a {
+          font-weight: 400;
+        }
+        .sidenav-container a:hover {
+          text-decoration: inherit;
+        }
+      `}</style>
       <SideNavBar
         label="Main navigation"
         toggleLabel={{
@@ -209,7 +219,7 @@ const SideNav = () => {
         <SideNavBar.Item
           icon={
             !logoUrl ? (
-              <div style={{margin: '0.5rem 0 0.5rem 0'}}>
+              <div style={{margin: '1rem 0 1rem 0'}}>
                 <IconCanvasLogoSolid
                   size={!collapseGlobalNav ? 'medium' : 'small'}
                   data-testid="sidenav-canvas-logo"
@@ -219,7 +229,7 @@ const SideNav = () => {
               <Img
                 display="inline-block"
                 alt="sidenav-brand-logomark"
-                margin={`${!collapseGlobalNav ? 'xxx-small' : 'x-small'} 0 small 0`}
+                margin={`${!collapseGlobalNav ? 'xxx-small' : 'x-small'} 0`}
                 src={logoUrl}
                 data-testid="sidenav-brand-logomark"
               />
@@ -391,7 +401,7 @@ const SideNav = () => {
         }
         shouldCloseOnDocumentClick={true}
         shouldContainFocus={trayShouldContainFocus}
-        mountNode={portal}
+        mountNode={getTrayPortal()}
         themeOverride={{smallWidth: '28em'}}
       >
         <div className={`navigation-tray-container ${activeTray}-tray`}>
@@ -419,7 +429,7 @@ const SideNav = () => {
               {activeTray === 'accounts' && <AccountsTray />}
               {activeTray === 'courses' && <CoursesTray />}
               {activeTray === 'groups' && <GroupsTray />}
-              {/* {activeTray === 'profile' && <ProfileTray />} */}
+              {activeTray === 'profile' && <ProfileTray />}
               {activeTray === 'history' && <HistoryTray />}
               {activeTray === 'help' && <HelpTray closeTray={() => setIsTrayOpen(false)} />}
             </React.Suspense>
