@@ -152,6 +152,7 @@ const SideNav = () => {
   const helpIcon = window.ENV.help_link_icon
 
   const navItemThemeOverride = {
+    iconSize: '1.5675rem',
     iconColor: 'white',
     contentPadding: '0.1rem',
     backgroundColor: 'transparent',
@@ -192,14 +193,6 @@ const SideNav = () => {
     fetchAtLeastOnce: true,
   })
 
-  const {data: unreadConversationsCount} = useQuery({
-    queryKey: ['unread_count', 'conversations'],
-    queryFn: getUnreadCount,
-    staleTime: 2 * 60 * 1000, // two minutes
-    enabled: countsEnabled && !ENV.current_user_disabled_inbox,
-    refetchOnWindowFocus: true,
-  })
-
   const {data: unreadContentSharesCount} = useQuery({
     queryKey: ['unread_count', 'content_shares'],
     queryFn: getUnreadCount,
@@ -208,12 +201,19 @@ const SideNav = () => {
     refetchOnWindowFocus: true,
   })
 
+  const {data: unreadConversationsCount} = useQuery({
+    queryKey: ['unread_count', 'conversations'],
+    queryFn: getUnreadCount,
+    staleTime: 2 * 60 * 1000, // two minutes
+    enabled: countsEnabled && !ENV.current_user_disabled_inbox,
+    broadcast: true,
+    refetchOnWindowFocus: true,
+  })
+
   const {data: unreadReleaseNotesCount} = useQuery({
     queryKey: ['unread_count', 'release_notes'],
     queryFn: getUnreadCount,
-    staleTime: 24 * 60 * 60 * 1000, // one day
     enabled: countsEnabled && ENV.FEATURES.embedded_release_notes && !releaseNotesBadgeDisabled,
-    refetchOnWindowFocus: true,
   })
 
   const {data: collapseGlobalNav} = useQuery({
@@ -239,6 +239,13 @@ const SideNav = () => {
   }
 
   useEffect(() => {
+    const collapseDiv = document.querySelectorAll('[aria-label="Main navigation"]')[0]
+      .childNodes[1] as HTMLElement
+    collapseDiv.setAttribute('collapse-div', 'true')
+
+    const collapseButton = collapseDiv.childNodes[0] as HTMLElement
+    collapseButton.setAttribute('collapse-button', 'true')
+
     if (collapseGlobalNav) document.body.classList.remove('primary-nav-expanded')
     else document.body.classList.add('primary-nav-expanded')
 
@@ -275,13 +282,24 @@ const SideNav = () => {
           height: ${!collapseGlobalNav ? '2.63rem' : '1.695rem'} !important;
         }
         .sidenav-container span[user-avatar="true"] {
-          width: ${!collapseGlobalNav ? '36px' : '30px'};
-          height: ${!collapseGlobalNav ? '36px' : '30px'};
+          width: ${!collapseGlobalNav ? '2.25rem' : '1.875rem'};
+          height: ${!collapseGlobalNav ? '2.25rem' : '1.875rem'};
           border: 2px solid var(--ic-brand-global-nav-avatar-border) !important;
         }
         .sidenav-container a[data-selected="true"]:hover {
           color: var(--ic-brand-primary);
           background-color: var(--ic-brand-global-nav-menu-item__text-color);
+        }
+        .sidenav-container div[collapse-div="true"] {
+          display: flex;
+          align-items: end;
+          overflow: auto;
+          width: 100%;
+          height: 100%;
+        }
+        .sidenav-container button[collapse-button="true"] {
+          width: 100%;
+          padding: 0.75rem !important;
         }
       `}</style>
       <SideNavBar

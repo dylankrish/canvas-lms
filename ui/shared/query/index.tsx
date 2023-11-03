@@ -17,13 +17,15 @@
  */
 
 import React from 'react'
-import {useQuery as nativeUseQuery, hashQueryKey, QueryClient} from '@tanstack/react-query'
-import type {UseQueryOptions, QueryKey} from '@tanstack/react-query'
+import {useQuery as baseUseQuery, hashQueryKey, QueryClient} from '@tanstack/react-query'
+import type {UseQueryOptions, QueryKey, QueryFunction} from '@tanstack/react-query'
 import {PersistQueryClientProvider} from '@tanstack/react-query-persist-client'
 import {createSyncStoragePersister} from '@tanstack/query-sync-storage-persister'
 import wasPageReloaded from '@canvas/util/wasPageReloaded'
+import {useBroadcastWhenFetched, useReception} from './utils'
 
-const CACHE_KEY = 'REACT_QUERY_OFFLINE_CACHE'
+const CACHE_KEY = 'QUERY_CACHE'
+const CHANNEL_KEY = 'QUERY_CHANNEL'
 
 export const queryClient = new QueryClient({
   defaultOptions: {
@@ -33,7 +35,7 @@ export const queryClient = new QueryClient({
       refetchOnReconnect: false,
       retry: false,
       staleTime: 1000 * 60 * 60 * 24, // 1 day,
-      cacheTime: 1000 * 60 * 60 * 24,
+      cacheTime: 1000 * 60 * 60 * 24 * 2, // 2 days,
     },
   },
 })
@@ -53,25 +55,61 @@ export function QueryProvider({children}: {children: React.ReactNode}) {
 
 const queriesFetched = new Set<string>()
 
+const broadcastChannel = new BroadcastChannel(CHANNEL_KEY)
+
 interface CustomUseQueryOptions<TData, TError> extends UseQueryOptions<TData, TError> {
   fetchAtLeastOnce?: boolean
-  queryKey?: QueryKey
+  broadcast?: boolean
 }
 
 export function useQuery<TData = unknown, TError = unknown>(
   options: CustomUseQueryOptions<TData, TError>
 ) {
   const ensureFetch = options.fetchAtLeastOnce || wasPageReloaded
-  const wasAlreadyFetched = queriesFetched.has(hashQueryKey(options.queryKey || []))
-
+  const hashedKey = hashQueryKey(options.queryKey || [])
+  const wasAlreadyFetched = queriesFetched.has(hashedKey)
   queriesFetched.add(hashQueryKey(options.queryKey || []))
 
   const refetchOnMount = ensureFetch && !wasAlreadyFetched ? 'always' : options.refetchOnMount
 
-  const mergedOptions: CustomUseQueryOptions<TData, TError> = {
-    refetchOnMount,
-    ...options,
-  }
+  // Handle incoming broadcasts
+  useReception({
+    hashedKey,
+    queryKey: options.queryKey,
+    queryClient,
+    channel: broadcastChannel,
+    enabled: options.broadcast,
+  })
 
-  return nativeUseQuery<TData, TError>(mergedOptions)
+  const mergedOptions: CustomUseQueryOptions<TData, TError> = {
+    ...options,
+    refetchOnMount,
+  }
+  const queryResult = baseUseQuery<TData, TError>(mergedOptions)
+
+  useBroadcastWhenFetched({
+    hashedKey,
+    queryResult,
+    channel: broadcastChannel,
+    enabled: options.broadcast,
+  })
+
+  return queryResult
+}
+
+export function prefetchQuery(queryKey: QueryKey, queryFn: QueryFunction) {
+  const hashedKey = hashQueryKey(queryKey || [])
+  const wasAlreadyFetched = queriesFetched.has(hashedKey)
+
+  if (
+    !wasAlreadyFetched &&
+    !queryClient.getQueryData(queryKey) &&
+    !queryClient.isFetching(queryKey)
+  ) {
+    queriesFetched.add(hashQueryKey(queryKey || []))
+    queryClient.prefetchQuery({
+      queryKey,
+      queryFn,
+    })
+  }
 }
