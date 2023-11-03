@@ -16,16 +16,20 @@
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-/**
- * From content_migrations_controller.rb
- */
-export interface EnvContentMigrations {
-  SHOW_SELECTABLE_OUTCOMES_IN_IMPORT?: boolean
-  UPLOAD_LIMIT?: number
-  QUESTION_BANKS?: {
-    assessment_question_bank: {
-      id: number
-      title: string
-    }
-  }[]
+require('moment/locale/ja')
+const moment = require('moment')
+
+const data = moment.localeData('ja')
+
+data._longDateFormat = {
+  LT: 'HH:mm',
+  LTS: 'HH:mm:ss',
+  L: 'YYYY/MM/DD',
+  LL: 'YYYY年M月D日',
+  LLL: 'YYYY年M月D日 HH,mm',
+  LLLL: 'YYYY年M月D日 dddd HH:mm',
+  l: 'YYYY/MM/DD',
+  ll: 'YYYY年M月D日',
+  lll: 'YYYY年M月D日 HH:mm',
+  llll: 'YYYY年M月D日(ddd) HH:mm',
 }
