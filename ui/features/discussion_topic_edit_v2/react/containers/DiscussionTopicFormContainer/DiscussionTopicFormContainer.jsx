@@ -42,10 +42,6 @@ export default function DiscussionTopicFormContainer({apolloClient}) {
   const currentDiscussionTopicId = ENV.DISCUSSION_TOPIC?.ATTRIBUTES?.id
   const isEditing = !!currentDiscussionTopicId
 
-  // sections and groupCategories are only available for Course and not group
-  const sections = currentContext?.sectionsConnection?.nodes
-  const groupCategories = currentContext?.groupSetsConnection?.nodes
-
   const {data: topicData, loading: topicIsLoading} = useQuery(DISCUSSION_TOPIC_QUERY, {
     skip: !isEditing,
     variables: {
@@ -117,8 +113,9 @@ export default function DiscussionTopicFormContainer({apolloClient}) {
       currentDiscussionTopic={currentDiscussionTopic}
       isStudent={ENV.current_user_is_student}
       assignmentGroups={currentContext?.assignmentGroupsConnection?.nodes}
-      sections={sections}
-      groupCategories={groupCategories}
+      sections={currentContext?.sectionsConnection?.nodes}
+      groupCategories={currentContext?.groupSetsConnection?.nodes}
+      studentEnrollments={currentContext?.enrollmentsConnection?.nodes}
       apolloClient={apolloClient}
       onSubmit={({
         title,
@@ -140,6 +137,7 @@ export default function DiscussionTopicFormContainer({apolloClient}) {
         isAnnouncement,
         groupCategoryId,
         assignment,
+        attachment,
       }) => {
         if (isEditing) {
           updateDiscussionTopic({
@@ -158,6 +156,8 @@ export default function DiscussionTopicFormContainer({apolloClient}) {
               podcastEnabled: enablePodcastFeed,
               podcastHasStudentPosts: includeRepliesInFeed,
               locked,
+              fileId: attachment?._id,
+              removeAttachment: !attachment?._id,
             },
           })
         } else {
@@ -183,6 +183,7 @@ export default function DiscussionTopicFormContainer({apolloClient}) {
               isAnnouncement,
               groupCategoryId: groupCategoryId || null,
               assignment,
+              fileId: attachment?._id,
             },
           })
         }

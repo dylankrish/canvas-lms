@@ -15,13 +15,37 @@
  * You should have received a copy of the GNU Affero General Public License along
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
-import React from 'react'
 
-const GradedDiscussionDueDateDefaultValues = {
-  assignedInfoList: [],
-  setAssignedInfoList: () => {},
-  studentEnrollments: [],
-  sections: [],
+import gql from 'graphql-tag'
+import {shape, string} from 'prop-types'
+
+export const Attachment = {
+  fragment: gql`
+    fragment Attachment on File {
+      id
+      _id
+      displayName
+      url
+    }
+  `,
+
+  shape: shape({
+    id: string,
+    _id: string,
+    displayName: string,
+    url: string,
+  }),
+
+  mock: ({
+    id = 'RGlzY3Vzc2lvbi0y',
+    _id = '7',
+    displayName = '288777.jpeg',
+    url = 'some_url',
+  } = {}) => ({
+    id,
+    _id,
+    displayName,
+    url,
+    __typename: 'File',
+  }),
 }
-
-export const GradedDiscussionDueDatesContext = React.createContext(GradedDiscussionDueDateDefaultValues)
