@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 #
-# Copyright (C) 2018 - present Instructure, Inc.
+# Copyright (C) 2023 - present Instructure, Inc.
 #
 # This file is part of Canvas.
 #
@@ -18,19 +18,10 @@
 # with this program. If not, see <http://www.gnu.org/licenses/>.
 #
 
-require "active_support/cache"
+class AddTypeToAssignments < ActiveRecord::Migration[7.0]
+  tag :predeploy
 
-module CanvasCache
-  module RedisCacheStore
-    module ClassMethods
-      ActiveSupport::Cache::RedisCacheStore.singleton_class.prepend(self)
-
-      def build_redis(**redis_options)
-        Redis.patch
-        return ::Redis::Cluster.new(**redis_options) if redis_options.key?(:nodes)
-
-        super
-      end
-    end
+  def change
+    add_column :assignments, :type, :string, limit: 255, null: false, default: "Assignment"
   end
 end
