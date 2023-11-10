@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 - present Instructure, Inc.
+ * Copyright (C) 2023 - present Instructure, Inc.
  *
  * This file is part of Canvas.
  *
@@ -16,20 +16,14 @@
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-import {MediaAttachment} from './MediaAttachment'
-import React from 'react'
-
-export default {
-  title: 'Examples/Canvas Inbox/Media Attachment',
-  component: MediaAttachment,
-  argTypes: {
-    onRemoveMedia: {action: 'remove media'},
-  },
-}
-
-const Template = args => <MediaAttachment {...args} />
-
-export const Default = Template.bind({})
-Default.args = {
-  mediaTitle: 'This is a super awesome media file',
+export type RubricQueryResponse = {
+  rubricsConnection: {
+    nodes: {
+      id: string
+      criteriaCount: number
+      pointsPossible: number
+      title: string
+      workflowState: string
+    }[]
+  }
 }

@@ -16,13 +16,21 @@
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-import React from 'react'
-import {Heading} from '@instructure/ui-heading'
+import {DocumentNode} from 'graphql'
+import request, {Variables} from 'graphql-request'
+import getCookie from '@instructure/get-cookie'
 
-export const Achievements = () => {
-  return (
-    <div>
-      <Heading level="h2">Achievments</Heading>
-    </div>
-  )
+export interface QueryVariables extends Variables {
+  [key: string]: unknown
+}
+
+export const executeQuery = async <QueryResponse>(
+  query: DocumentNode,
+  variables: QueryVariables
+) => {
+  return request<QueryResponse>('/api/graphql', query, variables, {
+    'X-Requested-With': 'XMLHttpRequest',
+    'GraphQL-Metrics': 'true',
+    'X-CSRF-Token': getCookie('_csrf_token'),
+  })
 }
