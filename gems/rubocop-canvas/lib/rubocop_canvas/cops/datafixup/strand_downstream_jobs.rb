@@ -16,24 +16,23 @@
 #
 # You should have received a copy of the GNU Affero General Public License along
 # with this program. If not, see <http://www.gnu.org/licenses/>.
-#
 
-class AddContextModuleIdToAssignmentOverrides < ActiveRecord::Migration[7.0]
-  tag :predeploy
-  disable_ddl_transaction!
+module RuboCop
+  module Cop
+    module Datafixup
+      class StrandDownstreamJobs < Cop
+        def on_send(node)
+          _receiver, method_name, kwargs = *node
+          return unless method_name == :delay
+          return if kwargs.is_a?(RuboCop::AST::HashNode) &&
+                    kwargs.keys.all?(RuboCop::AST::SymbolNode) &&
+                    kwargs.keys.map(&:value).intersect?(%i[strand n_strand singleton])
 
-  def change
-    add_reference :assignment_overrides,
-                  :context_module,
-                  if_not_exists: true,
-                  foreign_key: true,
-                  index: { algorithm: :concurrently, where: "context_module_id IS NOT NULL", if_not_exists: true }
-
-    add_index :assignment_overrides,
-              [:context_module_id, :set_id],
-              where: "context_module_id IS NOT NULL AND workflow_state = 'active' AND set_type IN ('CourseSection', 'Group')",
-              unique: true,
-              algorithm: :concurrently,
-              if_not_exists: true
+          add_offense(node,
+                      message: "when queuing downstream jobs in a datafixup, they need to be a strand or n_strand",
+                      severity: :error)
+        end
+      end
+    end
   end
 end

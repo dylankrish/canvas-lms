@@ -27,7 +27,7 @@ GEM
     aroi (1.0.0)
       activerecord (>= 5.2)
       activesupport (>= 5.2)
-    base64 (0.1.1)
+    base64 (0.2.0)
     concurrent-ruby (1.2.2)
     crack (0.4.5)
       rexml
@@ -52,7 +52,7 @@ GEM
     minitest (5.20.0)
     multipart-post (2.3.0)
     public_suffix (5.0.3)
-    rake (13.0.6)
+    rake (13.1.0)
     rexml (3.2.6)
     rspec (3.12.0)
       rspec-core (~> 3.12.0)
