@@ -46,13 +46,13 @@ const ignoredErrors = [
   /Can't perform a React state update on an unmounted component/,
   /Function components cannot be given refs/,
   /Invalid prop `heading` of type `object` supplied to `Billboard`/, // https://instructure.atlassian.net/browse/QUIZ-8870
-  /Invariant Violation/,
+  /Invariant Violation/, // https://instructure.atlassian.net/browse/VICE-3968
   /Prop `children` should be supplied unless/, // https://instructure.atlassian.net/browse/FOO-3407
   /The above error occurred in the <.*> component/,
   /You seem to have overlapping act\(\) calls/,
 ]
 const globalWarn = global.console.warn
-const ignoredWarnings = [/value provided is not in a recognized RFC2822 or ISO format/]
+const ignoredWarnings = []
 global.console = {
   log: console.log,
   error: error => {

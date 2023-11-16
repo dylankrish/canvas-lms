@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 - present Instructure, Inc.
+ * Copyright (C) 2023 - present Instructure, Inc.
  *
  * This file is part of Canvas.
  *
@@ -16,17 +16,15 @@
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-import axios from '@canvas/axios'
-// Updates the positions of a given group of contexts asynchronously
-const updatePositions = (newPositions, userId, ajaxLib = axios) => {
-  const request = {}
-  request.dashboard_positions = {}
-  newPositions.forEach((c, i) => {
-    request.dashboard_positions[c.assetString] = i
-  })
-  return ajaxLib.put(`/api/v1/users/${userId}/dashboard_positions`, request)
-}
+import React from 'react'
+import {useMatch} from 'react-router-dom'
+import {PortfolioCreate} from '../components/Portfolios'
 
-export default {
-  updatePositions,
+export function Component() {
+  const pathMatch = useMatch('/users/:userId/*')
+  if (!pathMatch || !pathMatch.params || !pathMatch.params.userId) {
+    throw new Error('user id is not present on path')
+  }
+
+  return <PortfolioCreate />
 }

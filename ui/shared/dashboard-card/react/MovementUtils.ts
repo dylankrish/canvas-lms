@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 - present Instructure, Inc.
+ * Copyright (C) 2016 - present Instructure, Inc.
  *
  * This file is part of Canvas.
  *
@@ -16,19 +16,22 @@
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-import React, {useEffect} from 'react'
-import {useMatch} from 'react-router-dom'
-import {PortfolioLayout} from '../components/Portfolios'
+import axios from '@canvas/axios'
+import type {Card} from '../types'
 
-export function Component() {
-  const pathMatch = useMatch('/users/:userId/*')
-  if (!pathMatch || !pathMatch.params || !pathMatch.params.userId) {
-    throw new Error('user id is not present on path')
+// Updates the positions of a given group of contexts asynchronously
+const updatePositions = (newPositions: Card[], userId: string, ajaxLib = axios) => {
+  const request: {
+    dashboard_positions: Record<string, number>
+  } = {
+    dashboard_positions: {},
   }
+  newPositions.forEach((c: Card, i: number) => {
+    request.dashboard_positions[c.assetString] = i
+  })
+  return ajaxLib.put(`/api/v1/users/${userId}/dashboard_positions`, request)
+}
 
-  useEffect(() => {
-    document.title = 'Learner Passport: Portfolios'
-  }, [])
-
-  return <PortfolioLayout />
+export default {
+  updatePositions,
 }
