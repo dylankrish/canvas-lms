@@ -16,10 +16,46 @@
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-import type {Rubric} from '@canvas/rubrics/react/types/rubric'
+import '@testing-library/jest-dom'
+import Adapter from 'enzyme-adapter-react-16'
+import Enzyme from 'enzyme'
+import {vi} from 'vitest'
 
-export type RubricQueryResponse = {
-  rubricsConnection: {
-    nodes: Rubric[]
+Enzyme.configure({adapter: new Adapter()})
+
+vi.stubGlobal('ENV', {
+  FEATURES: {},
+})
+
+vi.stubGlobal(
+  'IntersectionObserver',
+  class IntersectionObserver {
+    observe() {}
+
+    unobserve() {}
   }
-}
+)
+
+vi.stubGlobal(
+  'ResizeObserver',
+  class ResizeObserver {
+    observe() {}
+
+    unobserve() {}
+
+    disconnect() {}
+  }
+)
+
+vi.stubGlobal('matchMedia', () => ({
+  matches: false,
+  addListener() {},
+  removeListener() {},
+  onchange() {},
+  media: '',
+}))
+
+vi.stubGlobal('jest', vi)
+
+// @ts-expect-error
+HTMLCanvasElement.prototype.getContext = vi.fn()

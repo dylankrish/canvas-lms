@@ -1,3 +1,5 @@
+/// <reference types="vitest" />
+
 /*
  * Copyright (C) 2023 - present Instructure, Inc.
  *
@@ -16,10 +18,18 @@
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-import type {Rubric} from '@canvas/rubrics/react/types/rubric'
+import {defineConfig} from 'vitest/config'
+import handlebarsPlugin from './ui-build/esbuild/handlebars-plugin'
 
-export type RubricQueryResponse = {
-  rubricsConnection: {
-    nodes: Rubric[]
-  }
-}
+export default defineConfig({
+  test: {
+    environment: 'happy-dom',
+    globals: true,
+    setupFiles: 'ui/setup-vitests.tsx',
+    include: ['ui/**/__tests__/**/*.test.?(c|m)[jt]s?(x)'],
+    coverage: {
+      provider: 'istanbul',
+    },
+  },
+  plugins: [handlebarsPlugin()],
+})

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 - present Instructure, Inc.
+ * Copyright (C) 2021 - present Instructure, Inc.
  *
  * This file is part of Canvas.
  *
@@ -16,10 +16,23 @@
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-import type {Rubric} from '@canvas/rubrics/react/types/rubric'
+import i18nLinerHandlebars from '../webpack/i18nLinerHandlebars'
 
-export type RubricQueryResponse = {
-  rubricsConnection: {
-    nodes: Rubric[]
-  }
+const fileRegex = /\.(handlebars|hbs)$/
+
+export default function handlebarsPlugin() {
+  return [
+    {
+      name: 'handlebars',
+
+      formats: ['hbs', 'handlebars'],
+
+      transform(text: string, id: string) {
+        if (fileRegex.test(id)) {
+          return i18nLinerHandlebars.compile(text, id)
+        }
+        return text
+      },
+    },
+  ]
 }

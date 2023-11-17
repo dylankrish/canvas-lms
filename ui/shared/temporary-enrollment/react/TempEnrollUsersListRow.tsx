@@ -50,14 +50,14 @@ export function generateIcon(role: string | null) {
   }
 }
 
-export function generateTitle(enrollmentType: EnrollmentType, name: string) {
+export function generateTooltip(enrollmentType: EnrollmentType, name: string) {
   switch (enrollmentType) {
     case PROVIDER:
-      return I18n.t('%{name}’s Temporary Enrollment Recipients', {name})
+      return I18n.t('Manage %{name}’s Temporary Enrollment Recipients', {name})
     case RECIPIENT:
-      return I18n.t('%{name}’s Temporary Enrollment Providers', {name})
+      return I18n.t('Manage %{name}’s Temporary Enrollment Providers', {name})
     default:
-      return I18n.t('Find a recipient of Temporary Enrollments', {name})
+      return I18n.t('Create Temporary Enrollment Pairing for %{name}', {name})
   }
 }
 
@@ -123,11 +123,10 @@ export default function TempEnrollUsersListRow(props: Props) {
     editModeStatus: boolean,
     toggleOrSetEditModeFunction: () => boolean | void
   ) {
-    const tooltipText = generateTitle(enrollmentType, props.user.name)
+    const tooltipText = generateTooltip(enrollmentType, props.user.name)
 
     return (
       <TempEnrollModal
-        title={generateTitle}
         enrollmentType={enrollmentType}
         user={props.user}
         canReadSIS={props.permissions.can_read_sis}
