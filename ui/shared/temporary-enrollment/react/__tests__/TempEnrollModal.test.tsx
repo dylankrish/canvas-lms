@@ -104,7 +104,7 @@ const enrollmentsByCourse = [
 ]
 
 const ENROLLMENTS_URI = encodeURI(
-  `/api/v1/users/${modalProps.user.id}/courses?enrollment_state=active&include[]=sections&per_page=${MAX_ALLOWED_COURSES_PER_PAGE}`
+  `/api/v1/users/${modalProps.user.id}/courses?enrollment_state[]=active&enrollment_state[]=completed&include[]=sections&per_page=${MAX_ALLOWED_COURSES_PER_PAGE}`
 )
 
 const userListsData = {
@@ -388,29 +388,27 @@ describe('TempEnrollModal', () => {
   })
 
   describe('disabled buttons', () => {
-    it('confirms cancel and next buttons are disabled at the appropriate times', async () => {
+    it('confirms cancel and next buttons are disabled on open', async () => {
       render(
         <TempEnrollModal {...modalProps} defaultOpen={true}>
           <p>child_element</p>
         </TempEnrollModal>
       )
-
-      let cancel = await screen.findByRole('button', {name: 'Cancel'})
-      let next = await screen.findByRole('button', {name: 'Next'})
-
+      const cancel = await screen.findByRole('button', {name: 'Cancel'})
+      const next = await screen.findByRole('button', {name: 'Next'})
       expect(cancel).toBeDisabled()
       expect(next).toBeDisabled()
+    })
 
-      await waitFor(() => {
-        expect(cancel).not.toBeDisabled()
-        expect(next).not.toBeDisabled()
-      })
-
-      userEvent.click(cancel)
-      // we need to re-select the buttons as they were updated/replaced in DOM
-      cancel = await screen.findByRole('button', {name: 'Cancel'})
-      next = await screen.findByRole('button', {name: 'Next'})
-
+    it('confirms cancel and next buttons are disabled on close', async () => {
+      render(
+        <TempEnrollModal {...modalProps} defaultOpen={true}>
+          <p>child_element</p>
+        </TempEnrollModal>
+      )
+      expect(screen.getByText('Create a temporary enrollment')).toBeInTheDocument()
+      const cancel = await screen.findByRole('button', {name: 'Cancel'})
+      const next = await screen.findByRole('button', {name: 'Next'})
       await waitFor(() => {
         expect(cancel).toBeDisabled()
         expect(next).toBeDisabled()
