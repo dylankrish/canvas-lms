@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014 - present Instructure, Inc.
+ * Copyright (C) 2023 - present Instructure, Inc.
  *
  * This file is part of Canvas.
  *
@@ -16,23 +16,24 @@
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-import $ from 'jquery'
-import LoginFormSwitcher from './jquery/LoginFormSwitcher'
-import ready from '@instructure/ready'
-import './jquery/index'
+import {useScope as useI18nScope} from '@canvas/i18n'
+import {generateActionTemplates} from '../generateActionTemplates'
 
-ready(() => {
-  const switcher = new LoginFormSwitcher($('#login_form'), $('#forgot_password_form'))
+const I18n = useI18nScope('permissions_templates_80')
 
-  $('.forgot_password_link').click(event => {
-    event.preventDefault()
-    return switcher.switchToForgotPassword()
-  })
-
-  $('.login_link').click(event => {
-    event.preventDefault()
-    return switcher.switchToLogin()
-  })
-
-  sessionStorage.clear()
-})
+export const template = generateActionTemplates(
+  [
+    {
+      title: I18n.t('Impact - Manage'),
+      description: I18n.t(
+        'Allows an account administrator to manage the Impact service integration.'
+      ),
+    },
+  ],
+  [
+    {
+      title: I18n.t('Impact'),
+      description: I18n.t('Impact is an add-on to Canvas LMS. Contact your CSM if interested.'),
+    },
+  ]
+)
