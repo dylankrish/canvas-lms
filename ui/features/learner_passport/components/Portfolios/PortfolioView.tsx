@@ -45,6 +45,9 @@ import type {
   ExperienceData,
 } from '../types'
 import AchievementCard from '../Achievements/AchievementCard'
+import EducationCard from '../Education/EducationCard'
+import ExperienceCard from '../Experience/ExperienceCard'
+import {compareFromToDates} from '../utils'
 
 function renderSkillTag(skill: SkillData) {
   return (
@@ -73,55 +76,29 @@ function renderLink(link: string) {
 
 function renderAchievement(achievement: AchievementData) {
   return (
-    <AchievementCard
-      isNew={achievement.isNew}
-      title={achievement.title}
-      issuer={achievement.issuer.name}
-      imageUrl={achievement.imageUrl}
-    />
+    <View as="div" shadow="resting">
+      <AchievementCard
+        isNew={achievement.isNew}
+        title={achievement.title}
+        issuer={achievement.issuer.name}
+        imageUrl={achievement.imageUrl}
+      />
+    </View>
   )
-}
-
-const dateFormatter = new Intl.DateTimeFormat(ENV.LOCALE, {
-  month: 'numeric',
-  year: 'numeric',
-}).format
-
-function formatDate(date: string) {
-  return dateFormatter(new Date(date))
 }
 
 function renderEducation(education: EducationData) {
   return (
-    <View as="div" margin="0 0 small 0" padding="x-small" shadow="resting">
-      <Text size="x-small" weight="light">
-        {formatDate(education.from_date)} - {formatDate(education.to_date)}
-      </Text>
-      <Heading level="h4" margin="small 0" themeOverride={{h4FontSize: '1.375rem'}}>
-        {education.institution}
-      </Heading>
-      <Text as="div">{education.location}</Text>
-      <Text as="div">{education.title}</Text>
-      <Text as="div">{education.description}</Text>
+    <View as="div" shadow="resting">
+      <EducationCard education={education} />
     </View>
   )
 }
 
 function renderExperience(experience: ExperienceData) {
   return (
-    <View as="div" margin="0 0 small 0" padding="x-small" shadow="resting">
-      <Text size="x-small" weight="light">
-        {formatDate(experience.from_date)} - {formatDate(experience.to_date)}
-      </Text>
-      <Heading level="h4" margin="small 0 0 0" themeOverride={{h4FontSize: '1.375rem'}}>
-        {experience.where}
-      </Heading>
-      <Text as="div">{experience.title}</Text>
-      <View as="div" margin="medium 0 0 0">
-        <Text as="div" size="small">
-          <div dangerouslySetInnerHTML={{__html: experience.description}} />
-        </Text>
-      </View>
+    <View as="div" shadow="resting">
+      <ExperienceCard experience={experience} />
     </View>
   )
 }
@@ -230,12 +207,12 @@ const PortfolioView = () => {
                   {portfolio.links.map((link: string) => renderLink(link))}
                 </List>
               </View>
-              <View as="div" borderWidth="small 0 0 0" padding="large 0 0 0">
-                <Heading level="h3" themeOverride={{h3FontSize: '1rem'}}>
+              <View as="div" borderWidth="small 0 0 0">
+                <Heading level="h3" themeOverride={{h3FontSize: '1rem'}} margin="large 0 small 0">
                   Education
                 </Heading>
                 <List isUnstyled={true} itemSpacing="small" margin="small 0 0 0">
-                  {portfolio.education.map((education: EducationData) => {
+                  {portfolio.education.sort(compareFromToDates).map((education: EducationData) => {
                     return (
                       <List.Item key={education.institution.replace(/\W+/, '-')}>
                         {renderEducation(education)}
@@ -244,21 +221,19 @@ const PortfolioView = () => {
                   })}
                 </List>
               </View>
-              <View as="div" borderWidth="small 0 0 0" padding="large 0 0 0">
+              <View as="div" borderWidth="small 0 0 0">
                 <Heading level="h3" themeOverride={{h3FontSize: '1rem'}} margin="large 0 small 0">
                   Experience
                 </Heading>
-                <View as="div" shadow="resting" padding="small">
-                  <Flex direction="column" gap="small">
-                    {portfolio.experience.map((experience: ExperienceData) => {
-                      return (
-                        <Flex.Item key={`${experience.where.replace(/\W+/, '-')}`}>
-                          {renderExperience(experience)}
-                        </Flex.Item>
-                      )
-                    })}
-                  </Flex>
-                </View>
+                <List isUnstyled={true} itemSpacing="small" margin="small 0 0 0">
+                  {portfolio.experience.map((experience: ExperienceData) => {
+                    return (
+                      <List.Item key={`${experience.where.replace(/\W+/, '-')}`}>
+                        {renderExperience(experience)}
+                      </List.Item>
+                    )
+                  })}
+                </List>
               </View>
               <View as="div" borderWidth="small 0 0 0">
                 <Heading level="h3" themeOverride={{h3FontSize: '1rem'}} margin="large 0 small 0">

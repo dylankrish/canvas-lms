@@ -130,32 +130,39 @@ class LearnerPassportController < ApplicationController
     links: %w[https://linkedin.com/in/eschiebel https://www.nspe.org https://eschiebel.github.io/],
     education: [
       {
+        id: "1",
         title: "Product Management Certificate",
-        location: "Raleigh, NC",
+        city: "Raleigh",
+        state: "NC",
         institution: "General Assembly",
         from_date: "2023-04",
         to_date: "2023-10",
-        description: "GPA: 3.8"
+        gpa: "3.8"
       },
       {
+        id: "2",
         title: "Bachelor's in Computer Science",
         institution: "The Ohio State University",
-        location: "Columbus, OH",
+        city: "Columbus",
+        state: "OH",
         from_date: "2018-09",
         to_date: "2022-05",
-        description: "GPA: 3.8"
+        gpa: "3.8"
       },
       {
+        id: "3",
         title: "High School Diploma",
         institution: "Walnut Hills High School",
-        locaiton: "Cincinnati, OH",
+        city: "Cincinnati",
+        state: "OH",
         from_date: "2004-09",
         to_date: "2018-05",
-        description: "GPA: 3.7"
+        gpa: "3.7"
       }
     ],
     experience: [
       {
+        id: "1",
         where: "Pendo",
         title: "Software Engineering Team",
         from_date: "2023-08",
@@ -193,11 +200,38 @@ class LearnerPassportController < ApplicationController
           </li></ul>
         ).html_safe,
       },
+      {
+        id: "2",
+        where: "Instructure",
+        title: "Software Engineering Intern",
+        from_date: "2022-08",
+        to_date: "2023-08",
+        description: %(
+          <p>I did some cool stuff here.</p>
+        ).html_safe,
+      },
     ],
-    achievements: @@current_achievements.clone
+    projects: [],
+    achievements: @@current_achievements.first(2).clone
   }
 
-  @@portfolio_template = @@portfolio_sample.clone # some day make a template with less pre-populated data
+  @@portfolio_template = {
+    id: "",
+    title: "",
+    blurb: "",
+    city: "",
+    state: "",
+    phone: "",
+    email: "",
+    heroImageUrl: "",
+    about: "",
+    skills: merge_skills_from_achievements(@@current_achievements),
+    links: [],
+    education: @@portfolio_sample[:education].clone,
+    experience: @@portfolio_sample[:experience].clone,
+    projects: @@portfolio_sample[:projects].clone,
+    achievements: [],
+  }
 
   @@current_portfolios = [@@portfolio_sample.clone]
 
@@ -229,6 +263,8 @@ class LearnerPassportController < ApplicationController
     new_portfolio = @@portfolio_template.clone
     new_portfolio[:id] = (@@current_portfolios.length + 1).to_s
     new_portfolio[:title] = params[:title]
+    new_portfolio[:phone] = @current_user.phone || ""
+    new_portfolio[:email] = @current_user.email || ""
     @@current_portfolios << new_portfolio
     render json: new_portfolio
   end
@@ -239,13 +275,19 @@ class LearnerPassportController < ApplicationController
 
     portfolio[:skills] = []
     portfolio.each do |key, _value|
-      next unless params[key].present?
+      next if params[key].nil?
 
       case key
       when :skills
         params[key].each do |skill|
           portfolio[:skills] << JSON.parse(skill)
         end
+      when :education
+        portfolio[:education] = JSON.parse(params[:education])
+      when :experience
+        portfolio[:experience] = JSON.parse(params[:experience])
+      when :achievements
+        portfolio[:achievements] = @@current_achievements.select { |a| params[key].include?(a[:id]) }
       else
         portfolio[key] = params[key]
       end
