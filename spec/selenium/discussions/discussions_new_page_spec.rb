@@ -856,6 +856,22 @@ describe "discussions" do
         user_session(teacher)
       end
 
+      it "does not display multiple assignTo options for students in multiple sections" do
+        # create and enroll student into a second section
+        section2 = course.course_sections.create! name: "section2"
+        course.enroll_student(student, enrollment_state: "active", section: section2, allow_multiple_enrollments: true)
+
+        get "/courses/#{course.id}/discussion_topics/new"
+
+        force_click('input[type=checkbox][value="graded"]')
+        wait_for_ajaximations
+
+        f("input[data-testid='assign-to-select']").click
+
+        assign_to_option_count = course.all_accepted_students.count + course.course_sections.active.count + 1
+        expect(ff("span[data-testid='assign-to-select-option']").count).to eq assign_to_option_count
+      end
+
       it "creates a discussion topic with an assignment with peer reviews" do
         get "/courses/#{course.id}/discussion_topics/new"
 
@@ -883,6 +899,53 @@ describe "discussions" do
         expect(dt.assignment.peer_review_count).to be 1
         expect(dt.assignment.peer_reviews).to be true
         expect(dt.assignment.automatic_peer_reviews).to be true
+      end
+
+      it "creates a discussion topic with an assignment with Sync to SIS" do
+        @account = @course.root_account
+        @account.set_feature_flag! "post_grades", "on"
+        get "/courses/#{course.id}/discussion_topics/new"
+
+        title = "Graded Discussion Topic with Sync to SIS"
+        message = "replying to topic"
+
+        f("input[placeholder='Topic Title']").send_keys title
+        type_in_tiny("textarea", message)
+
+        force_click('input[type=checkbox][value="graded"]')
+        wait_for_ajaximations
+
+        f("input[data-testid='points-possible-input']").send_keys "12"
+        force_click('input[type=checkbox][value="post_to_sis"]')
+
+        f("button[data-testid='save-and-publish-button']").click
+        wait_for_ajaximations
+
+        dt = DiscussionTopic.last
+        expect(dt.assignment.post_to_sis).to be true
+        expect(dt.assignment.name).to eq title
+      end
+
+      it "edits a topic with an assignment with sync to sis" do
+        @account = @course.root_account
+        @account.set_feature_flag! "post_grades", "on"
+
+        # topic with assignment
+        dt = @course.discussion_topics.create!(title: "no options enabled - topic", message: "test")
+
+        assignment = dt.context.assignments.build(points_possible: 50, post_to_sis: true)
+        dt.assignment = assignment
+        dt.save!
+        dt.reload
+
+        expect(dt.assignment.post_to_sis).to be true
+
+        get "/courses/#{course.id}/discussion_topics/#{dt.id}/edit"
+        force_click('input[type=checkbox][value="post_to_sis"]')
+        f("button[data-testid='save-button']").click
+        wait_for_ajaximations
+
+        expect(dt.reload.assignment.post_to_sis).to be false
       end
 
       it "does not allow submitting, when groups outside of the selected group category are selected" do
