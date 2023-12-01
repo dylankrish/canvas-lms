@@ -2749,27 +2749,7 @@ class UsersController < ApplicationController
       return render json: { message: "Developer key not authorized" }, status: :forbidden
     end
 
-    key = nil
-    sekrit = nil
-    token_prefixes.each do |prefix|
-      next unless params[:app_key] == pandata_credentials["#{prefix}_key"]
-
-      key = pandata_credentials["#{prefix}_key"]
-      sekrit = pandata_credentials["#{prefix}_secret"]
-    end
-
-    unless key
-      return render json: { message: "Invalid app key" }, status: :bad_request
-    end
-
-    expires_at = Time.zone.now + 1.day.to_i
-    auth_body = {
-      iss: key,
-      exp: expires_at.to_i,
-      aud: "PANDATA",
-      sub: @current_user.global_id,
-    }
-
+    service = PandataEvents::CredentialService.new(app_key: params[:app_key], valid_prefixes: token_prefixes)
     props_body = {
       user_id: @current_user.global_id,
       shard: @domain_root_account.shard.id,
@@ -2777,15 +2757,15 @@ class UsersController < ApplicationController
       root_account_uuid: @domain_root_account.uuid
     }
 
-    private_key = OpenSSL::PKey::EC.new(Base64.decode64(sekrit))
-    auth_token = Canvas::Security.create_jwt(auth_body, expires_at, private_key, :ES512)
-    props_token = Canvas::Security.create_jwt(props_body, nil, private_key, :ES512)
+    expires_at = 1.day.from_now
     render json: {
-      url: DynamicSettings.find("pandata/events", service: "canvas")["url"],
-      auth_token:,
-      props_token:,
+      url: PandataEvents.endpoint,
+      auth_token: service.auth_token(@current_user.global_id, expires_at:),
+      props_token: service.token(props_body),
       expires_at: expires_at.to_f * 1000
     }
+  rescue PandataEvents::Errors::InvalidAppKey
+    render json: { message: "Invalid app key" }, status: :bad_request
   end
 
   # @API Get a users most recently graded submissions
@@ -2947,10 +2927,6 @@ class UsersController < ApplicationController
     # nil and '' will get converted to 0 in the .to_i call
     id = period_id.to_i
     (id == 0) ? nil : id
-  end
-
-  def pandata_credentials
-    @pandata_credentials ||= Rails.application.credentials.pandata_creds.with_indifferent_access || {}
   end
 
   def render_new_user_tutorial_statuses(user)
