@@ -34,6 +34,7 @@ class ApplicationController < ActionController::Base
   include LegalInformationHelper
   include FullStoryHelper
   include ObserverEnrollmentsHelper
+  include LtiLaunchDebugLoggerHelper
 
   helper :all
 
@@ -367,6 +368,7 @@ class ApplicationController < ActionController::Base
     granular_permissions_manage_users
     create_course_subaccount_picker
     lti_deep_linking_module_index_menu_modal
+    lti_dynamic_registration
     lti_multiple_assignment_deep_linking
     lti_overwrite_user_url_input_select_content_dialog
     lti_unique_tool_form_ids
@@ -2141,7 +2143,8 @@ class ApplicationController < ActionController::Base
                       expander: variable_expander,
                       include_storage_target: !in_lti_mobile_webview?,
                       opts: opts.merge(
-                        resource_link: @tag.associated_asset_lti_resource_link
+                        resource_link: @tag.associated_asset_lti_resource_link,
+                        lti_launch_debug_logger: make_lti_launch_debug_logger(@tool)
                       )
                     )
                   else

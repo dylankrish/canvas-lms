@@ -16,14 +16,6 @@
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-import React from 'react'
-
-const ProjectEdit = () => {
-  return (
-    <div>
-      <h1>ProjectEdit</h1>
-    </div>
-  )
+#roleSearchSelectGridCol {
+  order: 1
 }
-
-export default ProjectEdit
