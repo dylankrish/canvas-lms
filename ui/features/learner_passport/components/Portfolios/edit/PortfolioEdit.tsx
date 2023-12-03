@@ -17,24 +17,29 @@
  */
 
 import React, {useCallback, useState} from 'react'
-import {useActionData, useLoaderData, useNavigate, useSubmit} from 'react-router-dom'
+import {useActionData, useLoaderData, useSubmit} from 'react-router-dom'
 import {Breadcrumb} from '@instructure/ui-breadcrumb'
 import {Button} from '@instructure/ui-buttons'
 import {Flex} from '@instructure/ui-flex'
-import {Heading} from '@instructure/ui-heading'
 import {IconDragHandleLine, IconReviewScreenLine, IconSaveLine} from '@instructure/ui-icons'
 import {View} from '@instructure/ui-view'
-
+import HeadingEditor from '../../shared/HeadingEditor'
 import PersonalInfo from './personal_info/PersonalInfo'
 import AchievementsEditToggle from './achievements/AchievementsEdit'
 import EducationEdit from './education/EducationEdit'
 import ExperienceEdit from './experience/ExperienceEdit'
 import ProjectsEdit from './ProjectsEdit'
+import PreviewModal from './PreviewModal'
 
-import type {EducationData, ExperienceData, PortfolioEditData, SkillData} from '../../types'
+import type {
+  EducationData,
+  ExperienceData,
+  PortfolioDetailData,
+  PortfolioEditData,
+  SkillData,
+} from '../../types'
 
 const PortfolioEdit = () => {
-  const navigate = useNavigate()
   const submit = useSubmit()
   const create_portfolio = useActionData() as PortfolioEditData
   const edit_portfolio = useLoaderData() as PortfolioEditData
@@ -44,12 +49,37 @@ const PortfolioEdit = () => {
   const [achievementIds, setAchievementIds] = useState<string[]>(() => {
     return portfolio.achievements.map(achievement => achievement.id)
   })
+  const [title, setTitle] = useState(portfolio.title)
   const [education, setEducation] = useState(portfolio.education)
   const [experience, setExperience] = useState(portfolio.experience)
+  const [showPreview, setShowPreview] = useState(false)
+  const [previewPortfolio, setPreviewPortfolio] = useState(portfolio)
 
   const handlePreviewClick = useCallback(() => {
-    navigate(`../view/${portfolio.id}`)
-  }, [navigate, portfolio.id])
+    setPreviewPortfolio({
+      ...previewPortfolio,
+      title,
+      education,
+      experience,
+      achievements: allAchievements.filter(achievement => achievementIds.includes(achievement.id)),
+    })
+    setShowPreview(true)
+  }, [previewPortfolio, title, education, experience, allAchievements, achievementIds])
+
+  const handleClosePreview = useCallback(() => {
+    setShowPreview(false)
+  }, [])
+
+  const handleChangePersonalInfo = useCallback(
+    (newPortfolioData: Partial<PortfolioDetailData>) => {
+      setPreviewPortfolio({...previewPortfolio, ...newPortfolioData})
+    },
+    [previewPortfolio]
+  )
+
+  const handleTitleChange = useCallback((newTitle: string) => {
+    setTitle(newTitle)
+  }, [])
 
   const handleSaveClick = useCallback(() => {
     ;(document.getElementById('edit_portfolio_form') as HTMLFormElement)?.requestSubmit()
@@ -97,15 +127,14 @@ const PortfolioEdit = () => {
               <Breadcrumb.Link
                 href={`/users/${ENV.current_user.id}/passport/portfolios/view/${portfolio.id}`}
               >
-                {portfolio.title}
+                {title}
               </Breadcrumb.Link>
               <Breadcrumb.Link>edit</Breadcrumb.Link>
             </Breadcrumb>
-            <Flex as="div" margin="0 0 medium 0">
+            <Flex as="div" margin="0 0 medium 0" gap="small">
               <Flex.Item shouldGrow={true}>
-                <Heading level="h1" themeOverride={{h1FontWeight: 700}}>
-                  {portfolio.title}
-                </Heading>
+                <HeadingEditor value={title} onChange={handleTitleChange} />
+                <input type="hidden" name="title" value={title} />
               </Flex.Item>
               <Flex.Item>
                 <Button margin="0 x-small 0 0" renderIcon={IconDragHandleLine}>
@@ -124,7 +153,7 @@ const PortfolioEdit = () => {
               </Flex.Item>
             </Flex>
             <View margin="0 medium" borderWidth="small">
-              <PersonalInfo portfolio={portfolio} />
+              <PersonalInfo portfolio={portfolio} onChange={handleChangePersonalInfo} />
             </View>
             <View margin="0 medium" borderWidth="small">
               <input type="hidden" name="education" value={JSON.stringify(education)} />
@@ -165,6 +194,7 @@ const PortfolioEdit = () => {
           </Flex>
         </View>
       </div>
+      <PreviewModal portfolio={previewPortfolio} open={showPreview} onClose={handleClosePreview} />
     </View>
   )
 }

@@ -263,14 +263,16 @@ class LearnerPassportController < ApplicationController
     attachments: [
       {
         id: "1",
-        filename: "99b White Paper.pdf",
+        filename: "99b+White+Paper.pdf",
+        display_name: "99b White Paper.pdf",
         size: "1.2 MB",
         contentType: "application/pdf",
         url: "http://localhost:3000/courses/2/files/11",
       },
       {
         id: "2",
-        filename: "plain text.txt",
+        filename: "plain+text.txt",
+        display_name: "plain text.txt",
         size: "5 KB",
         contentType: "text/plain",
         url: "https://filesamples.com/samples/document/txt/sample3.txt"
@@ -380,6 +382,27 @@ class LearnerPassportController < ApplicationController
     project = @@current_projects.find { |p| p[:id] == params[:project_id] }
     return render json: { message: "Project not found" }, status: :not_found if project.nil?
 
+    project[:skills] = []
+    project[:attachments] = []
+    project.each do |key, _value|
+      next if params[key].nil?
+
+      case key
+      when :skills
+        params[key].each do |skill|
+          project[:skills] << JSON.parse(skill)
+        end
+      when :attachments
+        params[key].each do |attachment|
+          project[:attachments] << JSON.parse(attachment)
+        end
+      when :achievements
+        project[:achievements] = @@current_achievements.select { |a| params[key].include?(a[:id]) }
+      else
+        project[key] = params[key]
+      end
+    end
+
     render json: project
   end
 
@@ -406,9 +429,13 @@ class LearnerPassportController < ApplicationController
   end
 
   def reset
-    @@current_portfolios = [@@portfolio_sample.clone]
-    @@current_projects = [@@project_sample.clone]
-
+    if params.key? :empty
+      @@current_achievements = []
+      @@current_portfolios = []
+    else
+      @@current_portfolios = [@@portfolio_sample.clone]
+      @@current_projects = [@@project_sample.clone]
+    end
     render json: { message: "Portfolios reset" }, status: :accepted
   end
 
