@@ -16,15 +16,8 @@
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-import React, {
-  ChangeEvent,
-  Dispatch,
-  SetStateAction,
-  SyntheticEvent,
-  useEffect,
-  useMemo,
-  useState,
-} from 'react'
+import React, {useEffect, useMemo, useState} from 'react'
+import type {ChangeEvent, Dispatch, SetStateAction, SyntheticEvent} from 'react'
 import {useScope as useI18nScope} from '@canvas/i18n'
 import {ScreenReaderContent} from '@instructure/ui-a11y-content'
 import {Grid} from '@instructure/ui-grid'
@@ -48,23 +41,21 @@ import {
 } from './util/helpers'
 import useDateTimeFormat from '@canvas/use-date-time-format-hook'
 import {createAnalyticPropsGenerator, setAnalyticPropsOnRef} from './util/analytics'
-import {
+import {MODULE_NAME, RECIPIENT, MAX_ALLOWED_COURSES_PER_PAGE} from './types'
+import type {
   Course,
   Enrollment,
   EnrollmentType,
-  MAX_ALLOWED_COURSES_PER_PAGE,
-  MODULE_NAME,
   NodeStructure,
   Permissions,
-  RECIPIENT,
   Role,
   SelectedEnrollment,
   TemporaryEnrollmentPairing,
   User,
 } from './types'
 import {showFlashError} from '@canvas/alerts/react/FlashAlert'
-import {GlobalEnv} from '@canvas/global/env/GlobalEnv'
-import {EnvCommon} from '@canvas/global/env/EnvCommon'
+import type {GlobalEnv} from '@canvas/global/env/GlobalEnv'
+import type {EnvCommon} from '@canvas/global/env/EnvCommon'
 import {TempEnrollAvatar} from './TempEnrollAvatar'
 import {
   createEnrollment,
@@ -279,12 +270,15 @@ export function TempEnrollAssign(props: Props) {
 
   useEffect(() => {
     const fetchData = async () => {
+      const accountId =
+        ENV.ACCOUNT_ID === ENV.ROOT_ACCOUNT_ID ? ENV.ROOT_ACCOUNT_ID : ENV.ACCOUNT_ID
       try {
         const result = await doFetchApi({
           path: `/api/v1/users/${userProps.id}/courses`,
           params: {
             enrollment_state: ['active', 'completed'],
             include: ['sections'],
+            account_id: accountId,
             per_page: MAX_ALLOWED_COURSES_PER_PAGE,
           },
         })
@@ -413,7 +407,7 @@ export function TempEnrollAssign(props: Props) {
     try {
       setErrorMsg('')
       const temporaryEnrollmentPairing: TemporaryEnrollmentPairing =
-        await createTemporaryEnrollmentPairing(ENV.ROOT_ACCOUNT_ID)
+        await createTemporaryEnrollmentPairing(ENV.ACCOUNT_ID)
 
       if (props.tempEnrollmentsPairing && props.tempEnrollmentsPairing.length >= 1) {
         // delete any enrollments that were not selected
