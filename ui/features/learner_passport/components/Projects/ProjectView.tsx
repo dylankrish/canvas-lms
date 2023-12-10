@@ -31,6 +31,8 @@ import {renderAchievement, renderLink} from '../shared/utils'
 import {renderSkillTag} from '../shared/SkillTag'
 import AchievementTray from '../Achievements/AchievementTray'
 
+const css = '.description p:first-child { margin-top: 0; }'
+
 type ProjectViewProps = {
   project: ProjectDetailData
   inTray?: boolean
@@ -38,19 +40,16 @@ type ProjectViewProps = {
 
 const ProjectView = ({project, inTray}: ProjectViewProps) => {
   const navigate = useNavigate()
-  const [showingAchievementDetails, setShowingAchievementDetails] = useState(false)
-  const [activeCard, setActiveCard] = useState<AchievementData | undefined>(undefined)
+  const [activeAchievement, setActiveAchievement] = useState<AchievementData | undefined>(undefined)
 
   const handleDismissAchievementDetails = useCallback(() => {
-    setShowingAchievementDetails(false)
-    setActiveCard(undefined)
+    setActiveAchievement(undefined)
   }, [])
 
   const handleAchievementCardClick = useCallback(
     (achievementId: string) => {
       const card = project.achievements.find(a => a.id === achievementId)
-      setActiveCard(card)
-      setShowingAchievementDetails(card !== undefined)
+      setActiveAchievement(card)
     },
     [project.achievements]
   )
@@ -61,7 +60,8 @@ const ProjectView = ({project, inTray}: ProjectViewProps) => {
 
   return (
     <>
-      <View as="div" margin="0 0 large 0">
+      <style>{css}</style>
+      <View as="div" margin="0 0 x-large 0">
         <div style={{height: '184px', background: '#C7CDD1', overflow: 'hidden', zIndex: -1}}>
           {project.heroImageUrl && (
             <Img src={project.heroImageUrl} alt="Cover image" constrain="cover" height="184px" />
@@ -81,10 +81,8 @@ const ProjectView = ({project, inTray}: ProjectViewProps) => {
               {project.title}
             </Heading>
 
-            <View as="div" margin="0 0 large 0">
-              <Heading level="h3" themeOverride={{h3FontSize: '1rem'}}>
-                By {ENV.current_user.display_name}
-              </Heading>
+            <View as="div" margin="0 0 x-large 0">
+              <Text size="large">By {ENV.current_user.display_name}</Text>
             </View>
           </>
         )}
@@ -93,22 +91,22 @@ const ProjectView = ({project, inTray}: ProjectViewProps) => {
           <Heading level="h3" themeOverride={{h3FontSize: '1rem'}}>
             Skills and tools
           </Heading>
-          <View as="div" margin="small 0">
+          <View as="div" margin="x-small 0 x-large 0">
             {project.skills.map((skill: SkillData) => renderSkillTag(skill))}
           </View>
         </View>
 
-        <View as="div" margin="0 0 large 0">
+        <View as="div" margin="0 0 x-large 0">
           <Heading level="h3" themeOverride={{h3FontSize: '1rem'}} margin="0 0 x-small 0">
             Description
           </Heading>
           <Text as="div" size="small" wrap="break-word">
-            <div dangerouslySetInnerHTML={{__html: project.description}} />
+            <div className="description" dangerouslySetInnerHTML={{__html: project.description}} />
           </Text>
         </View>
         {project.attachments.length > 0 && (
           <View as="div" margin="0 0 large 0">
-            <Heading level="h3" themeOverride={{h3FontSize: '1rem'}}>
+            <Heading level="h3" themeOverride={{h3FontSize: '1rem'}} margin="0 0 x-small 0">
               Attachments
             </Heading>
             <AttachmentsTable attachments={project.attachments} />
@@ -141,13 +139,11 @@ const ProjectView = ({project, inTray}: ProjectViewProps) => {
           </View>
         )}
       </View>
-      {activeCard && (
-        <AchievementTray
-          open={showingAchievementDetails}
-          onDismiss={handleDismissAchievementDetails}
-          activeCard={activeCard}
-        />
-      )}
+      <AchievementTray
+        open={!!activeAchievement}
+        onClose={handleDismissAchievementDetails}
+        activeCard={activeAchievement}
+      />
     </>
   )
 }

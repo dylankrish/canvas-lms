@@ -25,10 +25,12 @@ import {IconPlusLine} from '@instructure/ui-icons'
 import {Text} from '@instructure/ui-text'
 import {View} from '@instructure/ui-view'
 import ProjectDashboardCard, {PROJECT_CARD_WIDTH, PROJECT_CARD_HEIGHT} from './ProjectDashboardCard'
+import {showFlashAlert} from '@canvas/alerts/react/FlashAlert'
 import {showUnimplemented} from '../shared/utils'
 import type {ProjectData} from '../types'
 import NamingModal from '../shared/NamingModal'
 import {renderCardSkeleton} from '../shared/CardSkeleton'
+import confirm from '../shared/Confirmation'
 
 const ProjectDashboard = () => {
   const navigate = useNavigate()
@@ -37,6 +39,18 @@ const ProjectDashboard = () => {
   const [createModalIsOpen, setCreateModalIsOpen] = useState(false)
   const [renameModalIsOpen, setRenameModalIsOpen] = useState(false)
   const [actionProjectId, setActionProjectId] = useState('')
+
+  const url = new URL(window.location.href)
+  if (url.searchParams.has('dupe')) {
+    const title = url.searchParams.get('dupe') || 'Project'
+    showFlashAlert({message: `"${title}" duplicated`, type: 'success'})
+    window.history.replaceState(window.history.state, '', url.pathname)
+  }
+  if (url.searchParams.has('delete')) {
+    const title = url.searchParams.get('delete') || 'Project'
+    showFlashAlert({message: `"${title}" deleted`, type: 'success'})
+    window.history.replaceState(window.history.state, '', url.pathname)
+  }
 
   const handleDismissCreateModal = useCallback(() => {
     setCreateModalIsOpen(false)
@@ -64,10 +78,18 @@ const ProjectDashboard = () => {
   )
 
   const handleCardAction = useCallback(
-    (projectId: string, action: string) => {
+    async (projectId: string, action: string) => {
       switch (action) {
         case 'duplicate':
-          navigate(`duplicate/${projectId}`)
+          {
+            const portfolio = projects.find(p => p.id === projectId)
+            if (portfolio) {
+              submit(
+                {projectId, title: portfolio.title},
+                {method: 'PUT', action: `duplicate/${projectId}`}
+              )
+            }
+          }
           break
         case 'edit':
           navigate(`../edit/${projectId}`)
@@ -76,7 +98,22 @@ const ProjectDashboard = () => {
           navigate(`../view/${projectId}`)
           break
         case 'delete':
-          navigate(`delete/${projectId}`)
+          {
+            const project = projects.find(p => p.id === projectId)
+            if (project) {
+              const ok = await confirm(
+                <div>
+                  <span>Are you sure you want to delete &quot;{project.title}&quot;</span>?
+                </div>
+              )
+              if (ok) {
+                submit(
+                  {projectId, title: project.title},
+                  {method: 'PUT', action: `delete/${projectId}`}
+                )
+              }
+            }
+          }
           break
         case 'rename':
           setActionProjectId(projectId)
@@ -86,11 +123,11 @@ const ProjectDashboard = () => {
           showUnimplemented({currentTarget: {textContent: action}})
       }
     },
-    [navigate]
+    [navigate, projects, submit]
   )
 
   return (
-    <>
+    <View as="div" maxWidth="1260px">
       <Flex justifyItems="space-between">
         <Flex.Item shouldGrow={true}>
           <Heading level="h1" themeOverride={{h1FontWeight: 700}}>
@@ -112,7 +149,7 @@ const ProjectDashboard = () => {
       <View>
         {projects?.length > 0 ? null : (
           <View as="div" margin="0">
-            <Text size="x-small">No projects created</Text>
+            <Text size="medium">No projects created</Text>
           </View>
         )}
         <View as="div" margin="small 0">
@@ -120,9 +157,7 @@ const ProjectDashboard = () => {
             <Flex gap="medium" wrap="wrap">
               {projects.map(project => (
                 <Flex.Item shouldGrow={false} shouldShrink={false} key={project.id}>
-                  <View as="div" shadow="resting">
-                    <ProjectDashboardCard project={project} onAction={handleCardAction} />
-                  </View>
+                  <ProjectDashboardCard project={project} onAction={handleCardAction} />
                 </Flex.Item>
               ))}
             </Flex>
@@ -142,7 +177,7 @@ const ProjectDashboard = () => {
         onDismiss={handleDismissCreateModal}
         onSubmit={createModalIsOpen ? handleCreateNewProject : handleRenameProject}
       />
-    </>
+    </View>
   )
 }
 
