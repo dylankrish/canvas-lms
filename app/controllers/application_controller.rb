@@ -348,12 +348,10 @@ class ApplicationController < ActionController::Base
   JS_ENV_SITE_ADMIN_FEATURES = %i[
     featured_help_links
     lti_platform_storage
-    calendar_series
     account_level_blackout_dates
     render_both_to_do_lists
     course_paces_redesign
     course_paces_for_students
-    module_publish_menu
     explicit_latex_typesetting
     dev_key_oidc_alert
     media_links_use_attachment_id
@@ -2857,7 +2855,7 @@ class ApplicationController < ActionController::Base
       hash = {}
       objtypes.each do |instance_symbol|
         instance_name = instance_symbol.to_s
-        obj = instance_variable_get("@#{instance_name}")
+        obj = instance_variable_get(:"@#{instance_name}")
         policy = obj.check_policy(@current_user, session) unless obj.nil? || !obj.respond_to?(:check_policy)
         hash[:"#{instance_name.upcase}_RIGHTS"] = ActiveSupport::HashWithIndifferentAccess[policy.map { |right| [right, true] }] unless policy.nil?
       end

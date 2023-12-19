@@ -31,7 +31,6 @@ import {Alert} from '@instructure/ui-alerts'
 import {Button} from '@instructure/ui-buttons'
 import {EnrollmentTree} from './EnrollmentTree'
 import {Flex} from '@instructure/ui-flex'
-import {unstable_batchedUpdates} from 'react-dom'
 import {
   getDayBoundaries,
   getFromLocalStorage,
@@ -41,7 +40,6 @@ import {
 } from './util/helpers'
 import useDateTimeFormat from '@canvas/use-date-time-format-hook'
 import {createAnalyticPropsGenerator, setAnalyticPropsOnRef} from './util/analytics'
-import {MODULE_NAME, RECIPIENT, MAX_ALLOWED_COURSES_PER_PAGE} from './types'
 import type {
   Course,
   Enrollment,
@@ -53,6 +51,7 @@ import type {
   TemporaryEnrollmentPairing,
   User,
 } from './types'
+import {MAX_ALLOWED_COURSES_PER_PAGE, MODULE_NAME, RECIPIENT} from './types'
 import {showFlashError} from '@canvas/alerts/react/FlashAlert'
 import type {GlobalEnv} from '@canvas/global/env/GlobalEnv.d'
 import type {EnvCommon} from '@canvas/global/env/EnvCommon'
@@ -117,28 +116,32 @@ const rolePermissionMapping: Record<RoleName, PermissionName> = {
 }
 
 export const tempEnrollAssignData = 'tempEnrollAssignData'
-const defaultRoleChoice: RoleChoice = {
+export const defaultRoleChoice: RoleChoice = {
   id: '',
   name: '',
 }
 
 // get data from local storage or set defaults
-function getStoredData(): StoredData {
-  // destructure result into local variables
+export function getStoredData(roles: Role[]): StoredData {
   const [defaultStartDate, defaultEndDate] = getDayBoundaries()
-
+  const teacherRole = roles.find(
+    role => role.base_role_name === 'TeacherEnrollment' && role.name === 'TeacherEnrollment'
+  )
+  const roleChoice: RoleChoice = teacherRole
+    ? {
+        id: teacherRole.id,
+        name: removeStringAffix(teacherRole.base_role_name, 'Enrollment'),
+      }
+    : defaultRoleChoice
   const defaultStoredData: StoredData = {
-    roleChoice: defaultRoleChoice,
-    // start and end Date of the current day
+    roleChoice,
     startDate: defaultStartDate,
     endDate: defaultEndDate,
   }
   const rawStoredData: Partial<StoredData> =
     getFromLocalStorage<StoredData>(tempEnrollAssignData) || {}
-
   const parsedStartDate = safeDateConversion(rawStoredData.startDate)
   const parsedEndDate = safeDateConversion(rawStoredData.endDate)
-
   // return local data or defaults
   return {
     roleChoice: rawStoredData.roleChoice || defaultStoredData.roleChoice,
@@ -221,7 +224,7 @@ export const deleteMultipleEnrollmentsByNoMatch = (
 }
 
 export function TempEnrollAssign(props: Props) {
-  const storedData = getStoredData()
+  const storedData = getStoredData(props.roles)
 
   const [errorMsg, setErrorMsg] = useState('')
   const [enrollmentsByCourse, setEnrollmentsByCourse] = useState<Course[]>([])
@@ -401,7 +404,7 @@ export function TempEnrollAssign(props: Props) {
   }
 
   const handleProcessEnrollments = async (submitEnrolls: SelectedEnrollment[]): Promise<void> => {
-    let success: boolean
+    let success: boolean = false
     try {
       setErrorMsg('')
       const temporaryEnrollmentPairing: TemporaryEnrollmentPairing =
@@ -443,12 +446,8 @@ export function TempEnrollAssign(props: Props) {
       setErrorMsg(I18n.t('An error occurred, please try again'))
       success = false
     } finally {
-      // using unstable_batchedUpdates to avoid getting the following error:
-      // “Can't perform a React state update on an unmounted component”
-      unstable_batchedUpdates(() => {
-        props.setEnrollmentStatus(success)
-        setLoading(false)
-      })
+      props.setEnrollmentStatus(success)
+      setLoading(false)
     }
   }
 

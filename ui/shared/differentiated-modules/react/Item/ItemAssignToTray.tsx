@@ -78,13 +78,10 @@ export interface ItemAssignToTrayProps {
   open: boolean
   onClose: () => void
   onDismiss: () => void
-  onSave: () => void
   courseId: string
-  moduleItemId: string
-  moduleItemName: string
-  moduleItemType: string
-  moduleItemContentType: string
-  moduleItemContentId: string
+  itemName: string
+  itemType: string
+  itemContentId: string
   pointsPossible: string
   locale: string
   timezone: string
@@ -105,13 +102,10 @@ export default function ItemAssignToTray({
   open,
   onClose,
   onDismiss,
-  onSave,
   courseId,
-  moduleItemId,
-  moduleItemName,
-  moduleItemType,
-  moduleItemContentType,
-  moduleItemContentId,
+  itemName,
+  itemType,
+  itemContentId,
   pointsPossible,
   locale,
   timezone,
@@ -135,7 +129,7 @@ export default function ItemAssignToTray({
   useEffect(() => {
     setFetchInFlight(true)
     doFetchApi({
-      path: itemTypeToApiURL(courseId, moduleItemType, moduleItemContentId),
+      path: itemTypeToApiURL(courseId, itemType, itemContentId),
     })
       .then((response: FetchDueDatesResponse) => {
         // TODO: exhaust pagination
@@ -191,7 +185,7 @@ export default function ItemAssignToTray({
         setFetchInFlight(false)
       })
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [courseId, moduleItemContentId, moduleItemContentType, moduleItemId, moduleItemType])
+  }, [courseId, itemContentId, itemType])
 
   const handleAddCard = useCallback(() => {
     const cardId = makeCardId()
@@ -201,6 +195,9 @@ export default function ItemAssignToTray({
         key: cardId,
         isValid: true,
         hasAssignees: false,
+        due_at: null,
+        unlock_at: null,
+        lock_at: null,
         selectedAssigneeIds: [] as string[],
       } as CardSpec,
     ]
@@ -208,8 +205,8 @@ export default function ItemAssignToTray({
   }, [assignToCards])
 
   const handleUpdate = useCallback(() => {
-    onSave()
-  }, [onSave])
+    // todo: implement save
+  }, [])
 
   const handleDeleteCard = useCallback(
     (cardId: string) => {
@@ -260,7 +257,7 @@ export default function ItemAssignToTray({
   }, [assignToCards])
 
   function Header() {
-    const icon = itemTypeToIcon(moduleItemType)
+    const icon = itemTypeToIcon(itemType)
     return (
       <Flex.Item margin="medium 0" padding="0 medium" width="100%">
         <CloseButton
@@ -270,7 +267,7 @@ export default function ItemAssignToTray({
           offset="small"
         />
         <Heading as="h3">
-          {icon} {moduleItemName}
+          {icon} {itemName}
         </Heading>
         <View data-testid="item-type-text" as="div" margin="medium 0 0 0">
           {renderItemType()} {pointsPossible ? `| ${pointsPossible}` : ''}
@@ -280,7 +277,7 @@ export default function ItemAssignToTray({
   }
 
   function renderItemType() {
-    switch (moduleItemType) {
+    switch (itemType) {
       case 'assignment':
         return I18n.t('Assignment')
       case 'quiz':
@@ -369,7 +366,7 @@ export default function ItemAssignToTray({
       data-testid="module-item-edit-tray"
       onClose={onClose}
       label={I18n.t('Edit assignment %{name}', {
-        name: moduleItemName,
+        name: itemName,
       })}
       open={open}
       placement="end"

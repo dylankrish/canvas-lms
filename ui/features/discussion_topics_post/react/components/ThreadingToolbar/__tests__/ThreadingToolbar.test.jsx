@@ -54,9 +54,9 @@ describe('PostToolbar', () => {
     expect(getByText('Go to Reply')).toBeTruthy()
   })
 
-  it('should not render go to reply button when isIsolatedView prop is true', () => {
+  it('should not render go to reply button when isSplitView prop is true', () => {
     const {queryByText} = render(
-      <ThreadingToolbar searchTerm="" filter="unread" isIsolatedView={true}>
+      <ThreadingToolbar searchTerm="" filter="unread" isSplitView={true}>
         <>First</>
         <>Second</>
       </ThreadingToolbar>
@@ -77,78 +77,67 @@ describe('PostToolbar', () => {
   })
 
   describe('when rootEntryId is present', () => {
-
-    it('calls the onOpenSplitScreenView callback with the isolated entry id', async () => {
-      const onOpenSplitScreenView = jest.fn()
+    it('calls the onOpenSplitView callback with the parent entry id', async () => {
+      const onOpenSplitView = jest.fn()
       const container = render(
         <ThreadingToolbar
           discussionEntry={DiscussionEntry.mock({
             id: '1',
             _id: '1',
             rootEntryId: '2',
-            isolatedEntryId: '3',
             parentId: '3',
           })}
           searchTerm="neato"
-          onOpenIsolatedView={onOpenSplitScreenView}
+          onOpenSplitView={onOpenSplitView}
         />
       )
 
       fireEvent.click(container.getByText('Go to Reply'))
-      await waitFor(() =>
-        expect(onOpenSplitScreenView).toHaveBeenCalledWith('3', '3', false, '1', '1')
-      )
+      await waitFor(() => expect(onOpenSplitView).toHaveBeenCalledWith('3', false, '1', '1'))
     })
   })
 
   describe('when rootEntryId is not present', () => {
-
-    it('calls the onOpenSplitScreenView callback with the entry id', async () => {
-      const onOpenSplitScreenView = jest.fn()
+    it('calls the onOpenSplitView callback with the entry id', async () => {
+      const onOpenSplitView = jest.fn()
       const container = render(
         <ThreadingToolbar
           discussionEntry={DiscussionEntry.mock({
             _id: '1',
             rootEntryId: null,
-            isolatedEntryId: null,
             parentId: null,
           })}
           searchTerm="neato"
-          onOpenIsolatedView={onOpenSplitScreenView}
+          onOpenSplitView={onOpenSplitView}
         />
       )
 
       fireEvent.click(container.getByText('Go to Reply'))
-      await waitFor(() =>
-        expect(onOpenSplitScreenView).toHaveBeenCalledWith('1', null, false, null, '1')
-      )
+      await waitFor(() => expect(onOpenSplitView).toHaveBeenCalledWith('1', false, null, '1'))
     })
   })
 
-  it('calls the onOpenSplitScreenView callback with its own id if it is a root entry', async () => {
-    const onOpenSplitScreenView = jest.fn()
+  it('calls the onOpenSplitView callback with its own id if it is a root entry', async () => {
+    const onOpenSplitView = jest.fn()
     const container = render(
       <ThreadingToolbar
         discussionEntry={DiscussionEntry.mock({
           id: '1',
           _id: '1',
-          isolatedEntryId: null,
           rootEntryId: null,
         })}
         searchTerm="neato"
-        onOpenIsolatedView={onOpenSplitScreenView}
+        onOpenSplitView={onOpenSplitView}
       />
     )
 
     fireEvent.click(container.getByText('Go to Reply'))
-    await waitFor(() =>
-      expect(onOpenSplitScreenView).toHaveBeenCalledWith('1', null, false, null, '1')
-    )
+    await waitFor(() => expect(onOpenSplitView).toHaveBeenCalledWith('1', false, null, '1'))
   })
 
   it('renders provided children', () => {
     const {getByText} = render(
-      <ThreadingToolbar filter="all" searchTerm="" isIsolatedView={false}>
+      <ThreadingToolbar filter="all" searchTerm="" isSplitView={false}>
         <>First</>
         <>Second</>
       </ThreadingToolbar>
