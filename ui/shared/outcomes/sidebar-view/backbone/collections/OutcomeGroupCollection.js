@@ -16,21 +16,16 @@
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-import OutcomeGroup from '@canvas/outcomes/backbone/models/OutcomeGroup'
-import splitAssetString from '@canvas/util/splitAssetString'
+import {extend} from '@canvas/backbone/utils'
+import PaginatedCollection from '@canvas/pagination/backbone/collections/PaginatedCollection'
+import OutcomeGroup from '../../../backbone/models/OutcomeGroup'
 
-function RootOutcomesFinder() {}
+extend(OutcomeGroupCollection, PaginatedCollection)
 
-RootOutcomesFinder.prototype.find = function () {
-  // purposely sharing these across instances of RootOutcomesFinder
-  let contextOutcomeGroups
-  contextOutcomeGroups = null
-  const contextTypeAndId = splitAssetString(ENV.context_asset_string || '')
-  contextOutcomeGroups = new OutcomeGroup()
-  contextOutcomeGroups.url =
-    '/api/v1/' + contextTypeAndId[0] + '/' + contextTypeAndId[1] + '/root_outcome_group'
-  contextOutcomeGroups.fetch()
-  return [contextOutcomeGroups]
+function OutcomeGroupCollection() {
+  return OutcomeGroupCollection.__super__.constructor.apply(this, arguments)
 }
 
-export default RootOutcomesFinder
+OutcomeGroupCollection.prototype.model = OutcomeGroup
+
+export default OutcomeGroupCollection
