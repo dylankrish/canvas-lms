@@ -40,19 +40,14 @@ module Lti
   #   * postMessage Storage: https://www.imsglobal.org/spec/lti-pm-s/v0p1
   #   * Implementation Guide: https://www.imsglobal.org/spec/lti-cs-oidc/v0p1
   class PlatformStorageController < ApplicationController
-    include Lti::Oidc
-
     def post_message_forwarding
       unless Lti::PlatformStorage.flag_enabled?
         render status: :not_found
         return
       end
 
-      js_env({
-               # postMessage origins require a protocol
-               PARENT_ORIGIN: "#{HostUrl.protocol}://#{parent_domain}",
-               IGNORE_LTI_POST_MESSAGES: true,
-             })
+      @parent_origin = "#{HostUrl.protocol}://#{parent_domain}"
+
       set_extra_csp_frame_ancestor!
 
       # cache aggressively since this is rendered on every page
@@ -65,7 +60,7 @@ module Lti
       # (through the RCE), which results in duplicate responses to postMessages,
       # so we extra do not need this here.
       # @headers = false
-      render layout: "bare"
+      render layout: false
     end
 
     # Allow iframe loading for a domain that is different than the already listed
@@ -111,7 +106,7 @@ module Lti
 
     # format: canvas.docker, school.instructure.com, etc.
     def current_domain
-      HostUrl.context_host(@domain_root_account, request.host)
+      HostUrl.context_host(@domain_root_account, request.host_with_port)
     end
   end
 end

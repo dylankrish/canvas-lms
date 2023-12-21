@@ -29,7 +29,7 @@ import {
   isMidnight,
   mergeTimeAndDate,
   setToEndOfMinute,
-} from '@canvas/datetime'
+} from '../index'
 
 // TODO: remove this module and redirect callers to @canvas/datetime
 export default {
