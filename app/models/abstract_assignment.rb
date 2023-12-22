@@ -1093,7 +1093,7 @@ class AbstractAssignment < ActiveRecord::Base
   end
 
   def delete_empty_abandoned_children
-    if saved_change_to_submission_types?
+    if governs_submittable? && saved_change_to_submission_types?
       each_submission_type do |submittable, type|
         unless self.submission_types == type.to_s
           submittable&.unlink!(:assignment)
@@ -1120,7 +1120,7 @@ class AbstractAssignment < ActiveRecord::Base
   def update_submittable
     # If we're updating the assignment's muted status as part of posting
     # grades, don't bother doing this
-    return true if deleted? || grade_posting_in_progress
+    return true if !governs_submittable? || deleted? || grade_posting_in_progress
 
     if self.submission_types == "online_quiz" && @saved_by != :quiz
       quiz = Quizzes::Quiz.where(assignment_id: self).first || context.quizzes.build
@@ -1357,60 +1357,6 @@ class AbstractAssignment < ActiveRecord::Base
 
   def course_broadcast_data
     context&.broadcast_data
-  end
-
-  set_broadcast_policy do |p|
-    p.dispatch :assignment_due_date_changed
-    p.to do |assignment|
-      # everyone who is _not_ covered by an assignment override affecting due_at
-      # (the AssignmentOverride records will take care of notifying those users)
-      excluded_ids = participants_with_overridden_due_at.to_set(&:id)
-      BroadcastPolicies::AssignmentParticipants.new(assignment, excluded_ids).to
-    end
-    p.whenever do |assignment|
-      BroadcastPolicies::AssignmentPolicy.new(assignment)
-                                         .should_dispatch_assignment_due_date_changed?
-    end
-    p.data { course_broadcast_data }
-
-    p.dispatch :assignment_changed
-    p.to do |assignment|
-      BroadcastPolicies::AssignmentParticipants.new(assignment).to
-    end
-    p.whenever do |assignment|
-      BroadcastPolicies::AssignmentPolicy.new(assignment)
-                                         .should_dispatch_assignment_changed?
-    end
-    p.data { course_broadcast_data }
-
-    p.dispatch :assignment_created
-    p.to do |assignment|
-      BroadcastPolicies::AssignmentParticipants.new(assignment).to
-    end
-    p.whenever do |assignment|
-      BroadcastPolicies::AssignmentPolicy.new(assignment)
-                                         .should_dispatch_assignment_created?
-    end
-    p.data { course_broadcast_data }
-    p.filter_asset_by_recipient do |assignment, user|
-      assignment.overridden_for(user, skip_clone: true)
-    end
-
-    p.dispatch :submissions_posted
-    p.to do |assignment|
-      assignment.course.participating_instructors
-    end
-    p.whenever do |assignment|
-      BroadcastPolicies::AssignmentPolicy.new(assignment)
-                                         .should_dispatch_submissions_posted?
-    end
-    p.data do |record|
-      if record.posting_params_for_notifications.present?
-        record.posting_params_for_notifications.merge(course_broadcast_data)
-      else
-        course_broadcast_data
-      end
-    end
   end
 
   def notify_of_update=(val)

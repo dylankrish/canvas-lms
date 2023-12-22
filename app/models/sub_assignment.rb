@@ -25,6 +25,12 @@ class SubAssignment < AbstractAssignment
 
   after_commit :aggregate_checkpoint_assignments, if: :checkpoint_changes?
 
+  set_broadcast_policy do
+    # TODO: define broadcast policies for checkpoints
+  end
+
+  delegate :effective_group_category_id, to: :parent_assignment
+
   def checkpoint?
     true
   end
@@ -43,5 +49,9 @@ class SubAssignment < AbstractAssignment
     tracked_attributes = Checkpoints::AssignmentAggregatorService::AggregateAssignment.members.map(&:to_s) - ["updated_at"]
     relevant_changes = tracked_attributes & previous_changes.keys
     relevant_changes.any?
+  end
+
+  def governs_submittable?
+    false
   end
 end
