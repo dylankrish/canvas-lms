@@ -46,7 +46,6 @@ module.exports = {
         include: [
           path.resolve(canvasDir, 'node_modules/graphql'),
           path.resolve(canvasDir, 'packages/datetime-moment-parser/index.js'),
-          path.resolve(canvasDir, 'packages/datetime/index.js'),
         ],
         resolve: {
           fullySpecified: false,
@@ -63,7 +62,6 @@ module.exports = {
           path.join(canvasDir, 'ui'),
           path.join(canvasDir, 'packages/jquery-kyle-menu'),
           path.join(canvasDir, 'packages/jquery-popover'),
-          path.resolve(canvasDir, 'packages/canvas-planner'),
           path.join(canvasDir, 'packages/jquery-selectmenu'),
           path.resolve(canvasDir, 'packages/convert-case'),
           path.join(canvasDir, 'packages/slickgrid'),

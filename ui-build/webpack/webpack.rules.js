@@ -34,7 +34,6 @@ exports.instUIWorkaround =
     include: [
       resolve(canvasDir, 'node_modules/@instructure'),
       resolve(canvasDir, 'packages/canvas-media/node_modules/@instructure'),
-      resolve(canvasDir, 'packages/canvas-planner/node_modules/@instructure'),
       resolve(canvasDir, 'packages/canvas-rce/node_modules/@instructure'),
       ...globPlugins('/node_modules/@instructure'),
     ],
@@ -61,7 +60,6 @@ exports.webpack5Workaround =
     include: [
       resolve(canvasDir, 'node_modules/graphql'),
       resolve(canvasDir, 'packages/datetime-moment-parser/index.js'),
-      resolve(canvasDir, 'packages/datetime/index.js'),
     ],
     resolve: {
       fullySpecified: false,
@@ -89,7 +87,6 @@ exports.babel = {
     resolve(canvasDir, 'ui'),
     resolve(canvasDir, 'packages/jquery-kyle-menu'),
     resolve(canvasDir, 'packages/jquery-popover'),
-    resolve(canvasDir, 'packages/canvas-planner'),
     resolve(canvasDir, 'packages/jquery-selectmenu'),
     resolve(canvasDir, 'packages/convert-case'),
     resolve(canvasDir, 'packages/slickgrid'),
@@ -183,7 +180,6 @@ exports.istanbul = {
     resolve(canvasDir, 'ui'),
     resolve(canvasDir, 'packages/jquery-kyle-menu'),
     resolve(canvasDir, 'packages/jquery-popover'),
-    resolve(canvasDir, 'packages/canvas-planner'),
     resolve(canvasDir, 'packages/jquery-selectmenu'),
     resolve(canvasDir, 'packages/slickgrid'),
     resolve(canvasDir, 'packages/with-breakpoints'),
