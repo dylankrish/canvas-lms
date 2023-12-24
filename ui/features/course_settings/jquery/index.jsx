@@ -23,11 +23,11 @@ import {tabIdFromElement} from './course_settings_helper'
 import * as tz from '@canvas/datetime'
 import '@canvas/jquery/jquery.ajaxJSON'
 import '@canvas/datetime/jquery' /* datetimeString, date_field */
-import '@canvas/forms/jquery/jquery.instructure_forms' /* formSubmit, fillFormData, getFormData, formErrors */
+import '@canvas/jquery/jquery.instructure_forms' /* formSubmit, fillFormData, getFormData, formErrors */
 import 'jqueryui/dialog'
 import '@canvas/util/jquery/fixDialogButtons'
 import '@canvas/jquery/jquery.instructure_misc_plugins' /* confirmDelete, fragmentChange, showIf */
-import '@canvas/jquery/jquery.keycodes'
+import '@canvas/jquery-keycodes/jquery.keycodes'
 import '@canvas/loading-image'
 import '@canvas/rails-flash-notifications'
 import '@canvas/util/templateData' /* fillTemplateData, getTemplateData */

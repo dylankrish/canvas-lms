@@ -127,14 +127,14 @@ import vericiteInfoTemplate from '../jst/_vericiteInfo.handlebars'
 import vericiteScoreTemplate from '@canvas/grading/jst/_vericiteScore.handlebars'
 import 'jqueryui/draggable'
 import '@canvas/jquery/jquery.ajaxJSON' /* getJSON, ajaxJSON */
-import '@canvas/forms/jquery/jquery.instructure_forms' /* ajaxJSONFiles */
+import '@canvas/jquery/jquery.instructure_forms' /* ajaxJSONFiles */
 import '@canvas/doc-previews' /* loadDocPreview */
 import '@canvas/datetime/jquery' /* datetimeString */
 import 'jqueryui/dialog'
 import 'jqueryui/menu'
 import '@canvas/jquery/jquery.instructure_misc_helpers' /* replaceTags */
 import '@canvas/jquery/jquery.instructure_misc_plugins' /* confirmDelete, showIf, hasScrollbar */
-import '@canvas/jquery/jquery.keycodes'
+import '@canvas/jquery-keycodes/jquery.keycodes'
 import '@canvas/loading-image'
 import '@canvas/util/templateData'
 import '@canvas/media-comments'
@@ -472,6 +472,7 @@ function mergeStudentsAndSubmission() {
         EG.compareStudentsBy(student => {
           const submittedAt = student && student.submission && student.submission.submitted_at
           if (submittedAt) {
+            // @ts-expect-error
             return +tz.parse(submittedAt)
           } else {
             // puts the unsubmitted assignments at the bottom
