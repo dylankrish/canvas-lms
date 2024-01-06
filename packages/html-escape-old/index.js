@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 - present Instructure, Inc.
+ * Copyright (C) 2023 - present Instructure, Inc.
  *
  * This file is part of Canvas.
  *
@@ -16,14 +16,8 @@
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-import urlHelper from 'url-encoding'
+// eslint-disable-next-line import/no-unresolved
+export {default} from '@instructure/html-escape'
 
-QUnit.module('Url Helper')
-
-test('encodes % properly', () => {
-  equal(urlHelper.encodeSpecialChars('/some/path%thing'), '/some/path&#37;thing')
-})
-
-test('decodes the encoded % properly', () => {
-  equal(urlHelper.decodeSpecialChars('/some/path%26%2337%3Bthing'), '/some/path%25thing')
-})
+// eslint-disable-next-line import/no-unresolved
+export * from '@instructure/html-escape'
