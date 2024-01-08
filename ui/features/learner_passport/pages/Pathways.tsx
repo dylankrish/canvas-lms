@@ -27,7 +27,7 @@ export function Component() {
   }
 
   useEffect(() => {
-    document.title = 'Learner Passport: Projects'
+    document.title = 'Learner Passport: Pathways'
   }, [])
 
   return <PathwayLayout />

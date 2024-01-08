@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011 - present Instructure, Inc.
+ * Copyright (C) 2023 - present Instructure, Inc.
  *
  * This file is part of Canvas.
  *
@@ -16,11 +16,15 @@
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-// //
-// if you want underscore in your code. require 'underscore' (this file)
-// eslint-disable-next-line import/no-commonjs
-const _ = require('@instructure/lodash-underscore')
+import React from 'react'
+import {useMatch} from 'react-router-dom'
+import {PathwayEdit} from '../components/Pathways'
 
-// grab the global '_' variable, make it not global and return it
-// eslint-disable-next-line import/no-commonjs
-module.exports = _.noConflict()
+export function Component() {
+  const pathMatch = useMatch('/users/:userId/*')
+  if (!pathMatch || !pathMatch.params || !pathMatch.params.userId) {
+    throw new Error('user id is not present on path')
+  }
+
+  return <PathwayEdit />
+}

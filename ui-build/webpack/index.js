@@ -156,17 +156,9 @@ module.exports = {
   parallelism: 5,
 
   resolve: {
-    alias: {
-      // TODO: replace our underscore usage with lodash
-      underscore$: resolve(canvasDir, 'ui/shims/underscore.js'),
-    },
-
     fallback: {
       // Called for by minimatch but as we use it, minimatch  can work without it
       path: false,
-      // for parse-link-header, which requires "querystring" which is a node
-      // module. btw we have at least 3 implementations of "parse-link-header"!
-      querystring: require.resolve('querystring-es3'),
       // several things need stream
       stream: require.resolve('stream-browserify'),
     },
