@@ -224,6 +224,11 @@ export default function DiscussionTopicForm({
     currentDiscussionTopic?.assignment?.gradingStandard?._id || undefined
   )
 
+  const [intraGroupPeerReviews, setIntraGroupPeerReviews] = useState(
+    // intra_group_peer_reviews
+    !!currentDiscussionTopic?.assignment?.peerReviews?.intraReviews || false
+  )
+
   const handleSettingUsageRightsData = data => {
     setUsageRightsErrorState(false)
     setUsageRightsData(data)
@@ -501,6 +506,7 @@ export default function DiscussionTopicForm({
           count: peerReviewsPerStudent,
           enabled: true,
           dueAt: peerReviewDueDate || null,
+          intraReviews: intraGroupPeerReviews,
         }
   }
 
@@ -551,7 +557,7 @@ export default function DiscussionTopicForm({
         message: rceContent,
         sectionIdsToPostTo,
         discussionAnonymousState,
-        anonymousAuthorState,
+        anonymousAuthorState: discussionAnonymousState === 'off' ? false : anonymousAuthorState,
         requireInitialPost,
         enablePodcastFeed,
         includeRepliesInFeed,
@@ -982,6 +988,8 @@ export default function DiscussionTopicForm({
                   setPostToSis={setPostToSis}
                   gradingSchemeId={gradingSchemeId}
                   setGradingSchemeId={setGradingSchemeId}
+                  intraGroupPeerReviews={intraGroupPeerReviews}
+                  setIntraGroupPeerReviews={setIntraGroupPeerReviews}
                 />
               </GradedDiscussionDueDatesContext.Provider>
             </View>
