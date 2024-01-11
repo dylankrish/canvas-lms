@@ -38,6 +38,8 @@ import type {
   RubricAssessment,
   SubmissionOriginalityData,
 } from '@canvas/grading/grading.d'
+import {SpeedGraderResponse} from '../types'
+import type {SpeedGraderResponseType, SpeedGraderStore} from '../types'
 import React from 'react'
 import ReactDOM from 'react-dom'
 import {IconButton} from '@instructure/ui-buttons'
@@ -149,6 +151,12 @@ import type {GlobalEnv} from '@canvas/global/env/GlobalEnv.d'
 import type {EnvGradebookSpeedGrader} from '@canvas/global/env/EnvGradebook'
 import replaceTags from '@canvas/util/replaceTags'
 import type {GradeStatusUnderscore} from '@canvas/grading/accountGradingStatus'
+
+declare global {
+  interface Window {
+    jsonData: SpeedGraderStore
+  }
+}
 
 // @ts-expect-error
 if (!('INST' in window)) window.INST = {}
@@ -416,6 +424,7 @@ function mergeStudentsAndSubmission() {
           window.jsonData.studentSectionIdsMap[student[anonymizableId]]
         )
         student.submission = submission
+        // @ts-expect-error
         student.submission_state = SpeedgraderHelpers.submissionState(student, ENV.grading_role)
         student.index = index
         students.push(student)
@@ -494,6 +503,7 @@ function mergeStudentsAndSubmission() {
       jsonData.studentsWithSubmissions.sort(
         EG.compareStudentsBy(
           student =>
+            // @ts-expect-error
             student && states[SpeedgraderHelpers.submissionState(student, ENV.grading_role)]
         )
       )
@@ -530,13 +540,13 @@ function handleStudentOrSectionSelected(
 
 function initDropdown() {
   const hideStudentNames = utils.shouldHideStudentNames()
-  // @ts-expect-error
-  $('#hide_student_names').attr('checked', hideStudentNames)
+  $('#hide_student_names').attr('checked', hideStudentNames ? 'checked' : null)
 
   const optionsArray = window.jsonData.studentsWithSubmissions.map(
     (student: StudentWithSubmission) => {
       const {submission_state, submission} = student
       let {name} = student
+      // @ts-expect-error
       const className = SpeedgraderHelpers.classNameBasedOnStudent({submission_state, submission})
       if (hideStudentNames || isAnonymous) {
         name = anonymousName(student)
@@ -1555,6 +1565,7 @@ EG = {
       studentName = student.name
     }
 
+    // @ts-expect-error
     const submissionStatus = SpeedgraderHelpers.classNameBasedOnStudent(student)
     return `${studentName} - ${submissionStatus.formatted}`
   },
@@ -1760,7 +1771,8 @@ EG = {
         const {allowed_attempts} = window.jsonData
         maxAttempts =
           allowed_attempts != null && allowed_attempts > 0
-            ? (this.currentStudent.submission.attempt || 1) >= window.jsonData.allowed_attempts
+            ? (this.currentStudent.submission.attempt || 1) >=
+              (window.jsonData.allowed_attempts || 0)
             : false
         submittedAt = new Date(submittedAt)
         let submissionComments = this.currentStudent.submission.submission_comments
@@ -2001,7 +2013,7 @@ EG = {
         $assignment_submission_originality_report_url
       )
       const tooltip = I18n.t('Similarity Score - See detailed report')
-      let reportUrl = replaceTags(urlContainer.attr('href'), {
+      let reportUrl = replaceTags(urlContainer.attr('href') || '', {
         [anonymizableUserId]: submission[anonymizableUserId],
         asset_string: assetString,
       })
@@ -3526,12 +3538,12 @@ EG = {
       updateSubmissionAndPageEffects()
     }
 
-    if (ENV.assignment_missing_shortcut && grade.toUpperCase() === 'MI') {
+    if (ENV.assignment_missing_shortcut && String(grade).toUpperCase() === 'MI') {
       if (EG.currentStudent.submission.late_policy_status !== 'missing') {
         updateSubmissionAndPageEffects({latePolicyStatus: 'missing'})
       }
       return
-    } else if (grade.toUpperCase() === 'EX') {
+    } else if (String(grade).toUpperCase() === 'EX') {
       formData['submission[excuse]'] = true
     } else if (unexcuseSubmission(grade, EG.currentStudent.submission, window.jsonData)) {
       formData['submission[excuse]'] = false
@@ -3981,6 +3993,7 @@ EG = {
     }
 
     EG.currentStudent.submission_state = SpeedgraderHelpers.submissionState(
+      // @ts-expect-error
       EG.currentStudent,
       ENV.grading_role
     )
@@ -4110,12 +4123,14 @@ function getGradingPeriods() {
 
 function setupSpeedGrader(
   gradingPeriods: GradingPeriod[],
-  speedGraderJsonResponse: {
-    gradingPeriods: GradingPeriod[]
-  }[]
+  speedGraderJsonResponse: SpeedGraderResponseType[]
 ) {
-  const speedGraderJSON = speedGraderJsonResponse[0]
-  // @ts-expect-error
+  if (process.env.NODE_ENV !== 'production') {
+    SpeedGraderResponse.parse(speedGraderJsonResponse[0])
+  }
+
+  const speedGraderJSON = speedGraderJsonResponse[0] as SpeedGraderStore
+
   speedGraderJSON.gradingPeriods = keyBy(gradingPeriods, 'id')
   window.jsonData = speedGraderJSON
   EG.jsonReady()
@@ -4227,6 +4242,7 @@ export default {
     QuizzesNextSpeedGrading.setup(EG, $iframe_holder, registerQuizzesNext, refreshGrades, window)
 
     // fire off the request to get the jsonData
+    // @ts-expect-error
     window.jsonData = {}
     const speedGraderJSONUrl = `${window.location.pathname}.json${window.location.search}`
     const speedGraderJsonDfd = $.ajaxJSON(

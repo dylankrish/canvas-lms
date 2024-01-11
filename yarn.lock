@@ -22240,10 +22240,10 @@ prettier-linter-helpers@^1.0.0:
   dependencies:
     fast-diff "^1.1.2"
 
-prettier@>=1.10, prettier@^2, prettier@^2.2.1, prettier@^2.6.2:
-  version "2.8.4"
-  resolved "https://registry.yarnpkg.com/prettier/-/prettier-2.8.4.tgz#34dd2595629bfbb79d344ac4a91ff948694463c3"
-  integrity sha512-vIS4Rlc2FNh0BySk3Wkd6xmwxB0FpOndW5fisM5H8hsZSxU2VWVB5CWIkIjWvrHjIhxk2g3bfMKM87zNTrZddw==
+prettier@>=1.10, prettier@^2, prettier@^2.2.1, prettier@^2.6.2, prettier@^2.8.8:
+  version "2.8.8"
+  resolved "https://registry.yarnpkg.com/prettier/-/prettier-2.8.8.tgz#e8c5d7e98a4305ffe3de2e1fc4aca1a71c28b1da"
+  integrity sha512-tdN8qQGvNjw4CHbY+XXk0JgCXn9QiF21a55rBe5LJAU+kDyC4WQn4+awm2Xfk2lQMk5fKup9XgzTZtGkjBdP9Q==
 
 "prettier@>=2.2.1 <=2.3.0":
   version "2.3.0"
@@ -25602,6 +25602,11 @@ swc-loader@^0.2.3:
   resolved "https://registry.yarnpkg.com/swc-loader/-/swc-loader-0.2.3.tgz#6792f1c2e4c9ae9bf9b933b3e010210e270c186d"
   integrity sha512-D1p6XXURfSPleZZA/Lipb3A8pZ17fP4NObZvFCDjK/OKljroqDpPmsBdTraWhVBqUNpcWBQY1imWdoPScRlQ7A==
 
+swc-plugin-coverage-instrument@^0.0.20:
+  version "0.0.20"
+  resolved "https://registry.yarnpkg.com/swc-plugin-coverage-instrument/-/swc-plugin-coverage-instrument-0.0.20.tgz#fdbd4b176e405c826c0e5146453ac7a6f1ba1cfa"
+  integrity sha512-WXTGILCZE2hW61yrmxi6doN/UB4RT2K1JJSQVPn9JMJ6X4WJpZsesHi4lHy6qRKVsNIlHZvTWofkpuRi/WQUig==
+
 swfobject@^2.2.1:
   version "2.2.1"
   resolved "https://registry.yarnpkg.com/swfobject/-/swfobject-2.2.1.tgz#e55451d5dde59657335c86b01732c61a923293e2"
@@ -28438,6 +28443,11 @@ zen-observable@0.8.15, zen-observable@^0.8.0:
   version "0.8.15"
   resolved "https://registry.yarnpkg.com/zen-observable/-/zen-observable-0.8.15.tgz#96415c512d8e3ffd920afd3889604e30b9eaac15"
   integrity sha512-PQ2PC7R9rslx84ndNBZB/Dkv8V8fZEpk83RLgXtYd0fwUgEjseMn1Dgajh2x6S8QbZAFa9p2qVCEuYZNgve0dQ==
+
+zod@^3.22.4:
+  version "3.22.4"
+  resolved "https://registry.yarnpkg.com/zod/-/zod-3.22.4.tgz#f31c3a9386f61b1f228af56faa9255e845cf3fff"
+  integrity sha512-iC+8Io04lddc+mVqQ9AZ7OQ2MrUKGN+oIQyq1vemgt46jwCwLfhq7/pwnBnNXXXZb8VTVLKwp9EDkx+ryxIWmg==
 
 zustand@3.7.2:
   version "3.7.2"
