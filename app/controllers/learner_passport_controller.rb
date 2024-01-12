@@ -291,6 +291,89 @@ class LearnerPassportController < ApplicationController
     }
   end
 
+  # ------------- pathways -------------
+
+  def learner_passport_learner_groups
+    [
+      {
+        id: "1",
+        name: "2022-23 Business Foundations",
+        memberCount: 63,
+      },
+      {
+        id: "2",
+        name: "2022-23 Business Foundations Cohort 1",
+        memberCount: 27,
+      },
+      {
+        id: "3",
+        name: "2022-23 Business Foundations Cohort 2",
+        memberCount: 36,
+      },
+      {
+        id: "4",
+        name: "Marketing Test Group",
+        memberCount: 12,
+      }
+    ]
+  end
+
+  def learner_passport_pathway_achievements
+    [
+      {
+        id: "1",
+        title: "Business Foundations Specialization Badge",
+        issuer: {
+          name: "Wharton University of Pennsylvania",
+          url: "https://www.wharton.upenn.edu/"
+        },
+        type: "Canvas Course Assessment Completion",
+        criteria:
+          "To earn this certificate, participants must complete 5 milestones and 10 requirements outlined in the Business Foundations Specialization pathway.",
+        skills: [
+          "Financial Accountint",
+          "Marketing Strategy",
+          "Operations Management",
+          "Change Management",
+          "Decision Making"
+        ]
+      },
+      {
+        id: "2",
+        title: "Product Management Certification",
+        issuer: {
+          name: "Wharton University of Pennsylvania",
+          url: "https://www.wharton.upenn.edu/"
+        },
+        type: "Canvas Course Assessment Completion",
+        criteria: "To earn this certificate, parcipants must pass the course",
+        skills: []
+      },
+      {
+        id: "3",
+        title: "English 101",
+        issuer: {
+          name: "Wharton University of Pennsylvania",
+          url: "https://www.wharton.upenn.edu/"
+        },
+        type: "Canvas Course Assessment Completion",
+        criteria: "To earn this certificate, parcipants must pass the course",
+        skills: []
+      },
+      {
+        id: "4",
+        title: "Pre-Med",
+        issuer: {
+          name: "Wharton University of Pennsylvania",
+          url: "https://www.wharton.upenn.edu/"
+        },
+        type: "Canvas Course Assessment Completion",
+        criteria: "To earn this certificate, parcipants must pass the course",
+        skills: []
+      }
+    ]
+  end
+
   # A pathway is a tree of milestones
   # The pathway is at the root, with first_milestones containing the id's of its children
   # Then each milestone has its data plus next_milestones containing the id's of its children
@@ -306,8 +389,8 @@ class LearnerPassportController < ApplicationController
       completed_count: 0,
       first_milestones: [],
       milestones: [],
-      learning_outcomes: [],
-      achievements_earned: [],
+      completion_award: nil,
+      learner_groups: [],
     }
   end
 
@@ -366,6 +449,7 @@ class LearnerPassportController < ApplicationController
       ],
       learning_outcomes: [],
       achievements_earned: [],
+      learner_groups: ["2", "3"],
     }
   end
 
@@ -599,6 +683,14 @@ class LearnerPassportController < ApplicationController
 
   ###### Pathways ######
 
+  def pathway_learner_groups_index
+    render json: learner_passport_learner_groups
+  end
+
+  def pathway_badges_index
+    render json: learner_passport_pathway_achievements
+  end
+
   def pathways_index
     # return render json: { message: "Permission denied" }, status: :unauthorized unless @current_user.roles.include?("admin")
 
@@ -633,24 +725,7 @@ class LearnerPassportController < ApplicationController
     pathway = current_pathways.find { |p| p[:id] == params[:pathway_id] }
     return render json: { message: "Pathway not found" }, status: :not_found if pathway.nil?
 
-    pathway[:learning_outcomes] = []
-    pathway.each_key do |key|
-      next if params[key].nil?
-
-      case key
-      when :is_private
-        pathway[:is_private] = params[key] == "true"
-      when :learning_outcomes
-        params[key].each do |skill|
-          pathway[:learning_outcomes] << JSON.parse(skill)
-        end
-      when :achievements_earned
-        achievement_ids = JSON.parse(params[key])
-        pathway[:achievements_earned] = Rails.cache.fetch(current_achievements_key) { learner_passport_current_achievements }.select { |a| achievement_ids.include?(a[:id]) }
-      else
-        pathway[key] = params[key]
-      end
-    end
+    pathway.replace(JSON.parse(params[:pathway]).transform_keys(&:to_sym))
     pathway[:published] = (params[:draft] == "true") ? nil : Date.today.to_s
     Rails.cache.write(current_pathways_key, current_pathways, expires_in: CACHE_EXPIRATION)
 

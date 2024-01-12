@@ -23,10 +23,9 @@ import {Button} from '@instructure/ui-buttons'
 import {Flex} from '@instructure/ui-flex'
 import {Heading} from '@instructure/ui-heading'
 import {View} from '@instructure/ui-view'
-import type {PathwayDetailData, PathwayEditData, SkillData} from '../../../types'
-import PathwayCreate from './PathwayCreate'
+import type {PathwayDetailData, PathwayEditData} from '../../../types'
+import PathwayInfo from './PathwayInfo'
 import PathwayBuilder from './PathwayBuilder'
-import Path from '@canvas/conditional-release-editor/react/assignment-path'
 
 type PathwayEditSteps = 'create' | 'add_milestones'
 
@@ -37,7 +36,8 @@ const PathwayEdit = () => {
   const edit_pathway = useLoaderData() as PathwayEditData
   const pathway_data = create_pathway || edit_pathway
   const pathway = pathway_data.pathway
-  const allAchievements = pathway_data.achievements
+  const allBadges = pathway_data.badges
+  const allLearnerGroups = pathway_data.learner_groups
   const [draftPathway, setDraftPathway] = useState(pathway)
   const [currStep, setCurrStep] = useState<PathwayEditSteps>(() => {
     switch (window.location.hash) {
@@ -80,28 +80,10 @@ const PathwayEdit = () => {
 
   const handleSubmit = useCallback(() => {
     const formData = new FormData()
-
-    formData.append('title', draftPathway.title)
-    formData.append('description', draftPathway.description)
-    formData.append('is_private', draftPathway.is_private ? 'true' : 'false')
-    draftPathway.learning_outcomes.forEach((skill: SkillData) => {
-      formData.append('learning_outcomes[]', JSON.stringify(skill))
-    })
-    formData.append(
-      'achievements_earned',
-      JSON.stringify(draftPathway.achievements_earned.map(a => a.id))
-    )
-    formData.append('draft', 'true')
-
+    formData.set('pathway', JSON.stringify(draftPathway))
+    formData.set('draft', 'true')
     submit(formData, {method: 'POST'})
-  }, [
-    draftPathway.achievements_earned,
-    draftPathway.description,
-    draftPathway.is_private,
-    draftPathway.learning_outcomes,
-    draftPathway.title,
-    submit,
-  ])
+  }, [draftPathway, submit])
 
   const handleCancelClick = useCallback(() => {
     navigate('../dashboard')
@@ -114,9 +96,13 @@ const PathwayEdit = () => {
     [handleSubmit]
   )
 
-  const handleNextClick = useCallback(_e => {
-    setCurrStep('add_milestones')
-  }, [])
+  const handleNextClick = useCallback(
+    _e => {
+      if (draftPathway.title === '') return
+      setCurrStep('add_milestones')
+    },
+    [draftPathway.title]
+  )
 
   const handlePathwayChange = useCallback(
     (newPathway: Partial<PathwayDetailData>) => {
@@ -130,9 +116,10 @@ const PathwayEdit = () => {
     switch (currStep) {
       case 'create':
         return (
-          <PathwayCreate
+          <PathwayInfo
             pathway={draftPathway}
-            allAchievements={allAchievements}
+            allBadges={allBadges}
+            allLearnerGroups={allLearnerGroups}
             onChange={handleChange}
           />
         )
@@ -141,7 +128,7 @@ const PathwayEdit = () => {
       default:
         return null
     }
-  }, [currStep, draftPathway, allAchievements, handleChange, handlePathwayChange])
+  }, [currStep, draftPathway, allBadges, allLearnerGroups, handleChange, handlePathwayChange])
 
   const renderBreadcrumbsForStep = useCallback(() => {
     switch (currStep) {

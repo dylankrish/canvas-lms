@@ -325,14 +325,17 @@ export const LearnerPassportRoutes = (
           <Route
             path="edit/:pathwayId"
             loader={async ({params}) => {
-              const p1 = fetch(`/users/${params.userId}/passport/data/achievements`).then(res =>
+              const p1 = fetch(`/users/${params.userId}/passport/data/pathways/badges`).then(res =>
                 res.json()
               )
               const p2 = fetch(
+                `/users/${params.userId}/passport/data/pathways/learner_groups`
+              ).then(res => res.json())
+              const p3 = fetch(
                 `/users/${params.userId}/passport/data/pathways/show/${params.pathwayId}`
               ).then(res => res.json())
-              const [achievements, pathway] = await Promise.all([p1, p2])
-              return {achievements, pathway}
+              const [badges, learner_groups, pathway] = await Promise.all([p1, p2, p3])
+              return {badges, learner_groups, pathway}
             }}
             action={async ({request, params}) => {
               const formData = await request.formData()
