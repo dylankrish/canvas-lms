@@ -19,27 +19,28 @@
 import type JQuery from 'jquery'
 import $ from 'jquery'
 import type {
-  CourseSection,
-  Grade,
-  GradingError,
-  ProvisionalCrocodocUrl,
-  SpeedGrader,
-  StudentWithSubmission,
-} from './speed_grader.d'
-import type {
   Attachment,
   AttachmentData,
+  CourseSection,
+  DocumentPreviewOptions,
+  Grade,
+  GradingError,
   GradingPeriod,
-  Submission,
-  SubmissionComment,
-} from '../../../api.d'
-import type {
+  CommentRenderingOptions,
+  ProvisionalCrocodocUrl,
   ProvisionalGrade,
   RubricAssessment,
-  SubmissionOriginalityData,
-} from '@canvas/grading/grading.d'
-import {SpeedGraderResponse} from '../types'
-import type {SpeedGraderResponseType, SpeedGraderStore} from '../types'
+  ScoringSnapshot,
+  SpeedGrader,
+  HistoricalSubmission,
+  SpeedGraderResponse,
+  SpeedGraderStore,
+  Submission,
+  StudentWithSubmission,
+  SubmissionComment,
+  SubmissionHistoryEntry,
+} from './speed_grader.d'
+import type {SubmissionOriginalityData} from '@canvas/grading/grading.d'
 import React from 'react'
 import ReactDOM from 'react-dom'
 import {IconButton} from '@instructure/ui-buttons'
@@ -87,7 +88,7 @@ import natcompare from '@canvas/util/natcompare'
 import qs from 'qs'
 import * as tz from '@canvas/datetime'
 import userSettings from '@canvas/user-settings'
-import htmlEscape, {raw} from '@instructure/html-escape'
+import htmlEscape from '@instructure/html-escape'
 import rubricAssessment from '@canvas/rubrics/jquery/rubric_assessment'
 import SpeedgraderSelectMenu from './speed_grader_select_menu'
 import type {SelectOptionDefinition} from './speed_grader_select_menu'
@@ -257,14 +258,7 @@ let $selectmenu: SpeedgraderSelectMenu | null
 let $word_count: JQuery
 let originalRubric: JQuery
 let browserableCssClasses: RegExp
-let snapshotCache: Record<
-  string,
-  {
-    user_id: string
-    version_number: string
-    last_question_touched: string
-  } | null
->
+let snapshotCache: Record<string, ScoringSnapshot | null>
 let sectionToShow: string
 let header: Header
 let studentLabel: string
@@ -275,7 +269,7 @@ let isAdmin: boolean
 let showSubmissionOverride: (submission: Submission) => void
 let externalToolLaunchOptions = {singleLtiLaunch: false}
 let externalToolLoaded = false
-let provisionalGraderDisplayNames: Record<string, string>
+let provisionalGraderDisplayNames: Record<string, string | null>
 let EG: SpeedGrader
 
 const customProvisionalGraderLabel = I18n.t('Custom')
@@ -425,7 +419,6 @@ function mergeStudentsAndSubmission() {
           window.jsonData.studentSectionIdsMap[student[anonymizableId]]
         )
         student.submission = submission
-        // @ts-expect-error
         student.submission_state = SpeedgraderHelpers.submissionState(student, ENV.grading_role)
         student.index = index
         students.push(student)
@@ -504,7 +497,6 @@ function mergeStudentsAndSubmission() {
       jsonData.studentsWithSubmissions.sort(
         EG.compareStudentsBy(
           student =>
-            // @ts-expect-error
             student && states[SpeedgraderHelpers.submissionState(student, ENV.grading_role)]
         )
       )
@@ -547,7 +539,6 @@ function initDropdown() {
     (student: StudentWithSubmission) => {
       const {submission_state, submission} = student
       let {name} = student
-      // @ts-expect-error
       const className = SpeedgraderHelpers.classNameBasedOnStudent({submission_state, submission})
       if (hideStudentNames || isAnonymous) {
         name = anonymousName(student)
@@ -576,18 +567,17 @@ function initDropdown() {
     const $selectmenu_list = $selectmenu?.data('selectmenu').list
     const $menu = $('#section-menu')
 
-    $menu.find('ul').append(
-      // @ts-expect-error
-      raw(
+    $menu
+      .find('ul')
+      .append(
         $.map(
           window.jsonData.context.active_course_sections,
           section =>
             `<li><a class="section_${section.id}" data-section-id="${
               section.id
-            }" href="#">${htmlEscape<string>(section.name)}</a></li>`
+            }" href="#">${htmlEscape(section.name)}</a></li>`
         ).join('')
       )
-    )
 
     $menu
       .insertBefore($selectmenu_list)
@@ -1172,11 +1162,7 @@ function refreshGrades(
 
 $.extend(INST, {
   refreshGrades,
-  refreshQuizSubmissionSnapshot(data: {
-    user_id: string
-    version_number: string
-    last_question_touched: string
-  }) {
+  refreshQuizSubmissionSnapshot(data: ScoringSnapshot) {
     snapshotCache[`${data.user_id}_${data.version_number}`] = data
     if (data.last_question_touched) {
       INST.lastQuestionTouched = data.last_question_touched
@@ -1190,17 +1176,15 @@ $.extend(INST, {
   },
 })
 
-function renderSubmissionCommentsDownloadLink(submission: Partial<Submission>) {
+function renderSubmissionCommentsDownloadLink(submission: HistoricalSubmission) {
   const mountPoint = document.getElementById(SPEED_GRADER_SUBMISSION_COMMENTS_DOWNLOAD_MOUNT_POINT)
   if (!mountPoint) throw new Error('SpeedGrader: mount point not found')
   if (isAnonymous) {
     mountPoint.innerHTML = ''
   } else {
-    mountPoint.innerHTML = `<a href="/submissions/${htmlEscape<string>(
+    mountPoint.innerHTML = `<a href="/submissions/${htmlEscape(
       submission.id || ''
-    )}/comments.pdf" target="_blank">${htmlEscape<string>(
-      I18n.t('Download Submission Comments')
-    )}</a>`
+    )}/comments.pdf" target="_blank">${htmlEscape(I18n.t('Download Submission Comments'))}</a>`
   }
   return mountPoint
 }
@@ -1415,9 +1399,7 @@ EG = {
 
       if (ENV.student_group_reason_for_change != null) {
         SpeedGraderAlerts.showStudentGroupChangeAlert({
-          // @ts-expect-error
           selectedStudentGroup: ENV.selected_student_group,
-          // @ts-expect-error
           reasonForChange: ENV.student_group_reason_for_change,
         })
       }
@@ -1566,7 +1548,6 @@ EG = {
       studentName = student.name
     }
 
-    // @ts-expect-error
     const submissionStatus = SpeedgraderHelpers.classNameBasedOnStudent(student)
     return `${studentName} - ${submissionStatus.formatted}`
   },
@@ -1671,17 +1652,15 @@ EG = {
 
     // choose the first ungraded student if the requested one doesn't exist
     if (!window.jsonData.studentMap[String(representativeOrStudentId)]) {
-      const ungradedStudent = find(
-        window.jsonData.studentsWithSubmissions,
+      const ungradedStudent = window.jsonData.studentsWithSubmissions.find(
         (s: StudentWithSubmission) =>
           s.submission &&
           s.submission.workflow_state !== 'graded' &&
           s.submission.submission_type &&
           (!isModerated || s.submission.grade == null)
       )
-      representativeOrStudentId = (ungradedStudent || window.jsonData.studentsWithSubmissions[0])[
-        anonymizableId
-      ]
+      const student = ungradedStudent || window.jsonData.studentsWithSubmissions[0]
+      representativeOrStudentId = student[anonymizableId]
     }
 
     return representativeOrStudentId?.toString()
@@ -1989,7 +1968,7 @@ EG = {
     if (status === 'scored') {
       const $similarityScore = $('<span />')
         .addClass('turnitin_similarity_score')
-        .html(htmlEscape<string>(`${similarity_score}%`))
+        .html(htmlEscape(`${similarity_score}%`))
       $indicator.append($similarityScore)
     }
 
@@ -1997,7 +1976,7 @@ EG = {
   },
 
   populateTurnitin(
-    submission: Partial<Submission>,
+    submission: HistoricalSubmission,
     assetString: string,
     turnitinAsset_: SubmissionOriginalityData,
     $turnitinScoreContainer: JQuery,
@@ -2091,7 +2070,10 @@ EG = {
       $turnitinInfoContainer_.append($turnitinInfo)
 
       if (showLegacyResubmit) {
-        const resubmitUrl = SpeedgraderHelpers.plagiarismResubmitUrl(submission, anonymizableUserId)
+        const resubmitUrl = SpeedgraderHelpers.plagiarismResubmitUrl(
+          submission as HistoricalSubmission,
+          anonymizableUserId
+        )
         $('.turnitin_resubmit_button').on('click', e => {
           SpeedgraderHelpers.plagiarismResubmitHandler(e, resubmitUrl)
         })
@@ -2222,8 +2204,7 @@ EG = {
         count: wordCount,
       })}`
     }
-    // @ts-expect-error
-    $word_count.html(raw(wordCountHTML))
+    $word_count.html(wordCountHTML)
   },
 
   handleSubmissionSelectionChange() {
@@ -2248,13 +2229,14 @@ EG = {
     const $submission_to_view = $('#submission_to_view')
     const submissionToViewVal = $submission_to_view.val()
     const currentSelectedIndex = currentIndex(this, submissionToViewVal)
-    const submissionHolder = this.currentStudent && this.currentStudent.submission
-    const submissionHistory = submissionHolder && submissionHolder.submission_history
+    const submissionHolder = this.currentStudent?.submission
+    const submissionHistory = submissionHolder?.submission_history
     const isMostRecent = submissionHistory && submissionHistory.length - 1 === currentSelectedIndex
     const inlineableAttachments: Attachment[] = []
     const browserableAttachments: Attachment[] = []
 
-    let submission: Partial<Submission> = {graded_at: null}
+    // @ts-expect-error
+    let submission: HistoricalSubmission = {graded_at: null}
     if (submissionHistory && submissionHistory[currentSelectedIndex]) {
       submission =
         submissionHistory[currentSelectedIndex].submission ||
@@ -2268,6 +2250,7 @@ EG = {
 
     SpeedgraderHelpers.plagiarismResubmitButton(
       // TODO: figure out why we're using Object.values here
+      // @ts-expect-error
       submission.has_originality_score &&
         Object.values(submission.turnitin_data as any).every(
           (tiid: any) => tiid.status !== 'error'
@@ -2436,12 +2419,11 @@ EG = {
 
       renderProgressIcon(attachment)
     })
-    // @ts-expect-error
-    $submission_attachment_viewed_at.html(raw(studentViewedAtHTML))
+    $submission_attachment_viewed_at.html(studentViewedAtHTML)
 
     $submission_files_container.showIf(
       submission.submission_type === 'online_text_entry' ||
-        (submission.versioned_attachments && submission.versioned_attachments.length)
+        Boolean(submission.versioned_attachments && submission.versioned_attachments.length > 0)
     )
 
     let preview_attachment: null | Attachment = null
@@ -2481,7 +2463,13 @@ EG = {
     )
     $enrollment_concluded_notice.showIf(isConcluded)
 
-    const gradingPeriod = window.jsonData.gradingPeriods[(submissionHolder || {}).grading_period_id]
+    // because we make .submission absent in some tests
+    const gradingPeriodId = (submissionHolder || {}).grading_period_id
+    const gradingPeriod =
+      // needs confirmation, but the API may only return a string type now
+      typeof gradingPeriodId === 'string' || typeof gradingPeriodId === 'number'
+        ? window.jsonData.gradingPeriods[gradingPeriodId]
+        : undefined
     const isClosedForSubmission = !!gradingPeriod && gradingPeriod.is_closed
     selectors.get('#closed_gp_notice').showIf(isClosedForSubmission)
     SpeedgraderHelpers.setRightBarDisabled(isConcluded)
@@ -2510,7 +2498,7 @@ EG = {
   refreshSubmissionsToView() {
     let innerHTML
     let s: StudentWithSubmission['submission'] = this.currentStudent.submission
-    let submissionHistory: Submission[]
+    let submissionHistory: SubmissionHistoryEntry[]
     let noSubmittedAt: string
     let selectedIndex: number
 
@@ -2585,8 +2573,7 @@ EG = {
         }),
       })
     }
-    // @ts-expect-error
-    $multiple_submissions.html(raw(innerHTML || ''))
+    $multiple_submissions.html(innerHTML || '')
     StatusPill.renderPills(ENV.custom_grade_statuses)
   },
 
@@ -2712,7 +2699,7 @@ EG = {
     }
   },
 
-  loadSubmissionPreview(attachment: Attachment | null, submission: Partial<Submission> | null) {
+  loadSubmissionPreview(attachment: Attachment | null, submission: HistoricalSubmission | null) {
     clearInterval(sessionTimer)
     $submissions_container.children().hide()
     $('.speedgrader_alert').hide()
@@ -2775,15 +2762,14 @@ EG = {
     const queryParams = `${iframePreviewVersion}${hideStudentNames}`
     const src = `/courses/${courseId}/assignments/${assignmentId}/${resourceSegment}/${anonymizableSubmissionId}?preview=true${queryParams}`
     const iframe = SpeedgraderHelpers.buildIframe(
-      htmlEscape<string>(src),
+      htmlEscape(src),
       {frameborder: 0, allowfullscreen: true},
       domElement
     )
-    // @ts-expect-error
-    $iframe_holder.html(raw(iframe)).show()
+    $iframe_holder.html(iframe).show()
   },
 
-  renderLtiLaunch($div, urlBase, submission) {
+  renderLtiLaunch($div: JQuery, urlBase: string, submission: HistoricalSubmission) {
     let externalToolUrl = submission.external_tool_url || submission.url
 
     if (ENV.NQ_GRADE_BY_QUESTION_ENABLED && window.jsonData.quiz_lti && externalToolUrl) {
@@ -2796,13 +2782,12 @@ EG = {
 
     this.emptyIframeHolder()
     const launchUrl = `${urlBase}&url=${encodeURIComponent(externalToolUrl || '')}`
-    const iframe = SpeedgraderHelpers.buildIframe(htmlEscape<string>(launchUrl), {
+    const iframe = SpeedgraderHelpers.buildIframe(htmlEscape(launchUrl), {
       className: 'tool_launch',
       allow: iframeAllowances(),
       allowfullscreen: true,
     })
-    // @ts-expect-error
-    $div.html(raw(iframe)).show()
+    $div.html(iframe).show()
   },
 
   generateWarningTimings(numHours: number): number[] {
@@ -2834,7 +2819,7 @@ EG = {
     // then show the google attachment if there is one
     // then show the first browser viewable attachment if there is one
     this.emptyIframeHolder()
-    let previewOptions = {
+    let previewOptions: DocumentPreviewOptions = {
       height: '100%',
       id: 'speedgrader_iframe',
       mimeType: attachment.content_type,
@@ -2903,7 +2888,7 @@ EG = {
     }
   },
 
-  attachmentIframeContents(attachment, domElement = 'iframe'): string {
+  attachmentIframeContents(attachment: Attachment, domElement = 'iframe'): string {
     let contents
     const href = $submission_file_hidden.find('.display_name').attr('href') as string
     const genericSrc = unescape(href)
@@ -2930,8 +2915,7 @@ EG = {
       contents = SpeedgraderHelpers.buildIframe(htmlEscape(src), options, domElement)
     }
 
-    // @ts-expect-error
-    return raw(contents)
+    return contents
   },
 
   showRubric({validateEnteredData = true} = {}) {
@@ -2941,7 +2925,7 @@ EG = {
       ENV.RUBRIC_ASSESSMENT.assessment_user_id = this.currentStudent[anonymizableId]
 
       const isModerator = ENV.grading_role === 'moderator'
-      const selectMenuOptions: {id: string; name: string}[] = []
+      const selectMenuOptions: {id: string; name: string | null}[] = []
 
       const assessmentsByMe = EG.currentStudent.rubric_assessments.filter(assessment =>
         assessmentBelongsToCurrentUser(assessment)
@@ -3094,7 +3078,9 @@ EG = {
         const commentUpdateSucceeded = function (data: {submission_comment: SubmissionComment}) {
           let updatedComments = []
           const $replacementComment = that.renderComment(data.submission_comment)
+          // @ts-expect-error
           $replacementComment.show()
+          // @ts-expect-error
           commentElement.replaceWith($replacementComment)
 
           updatedComments = map(
@@ -3129,22 +3115,24 @@ EG = {
       .showIf(comment.publishable && !isConcluded)
   },
 
-  renderComment(commentData: SubmissionComment, incomingOpts) {
+  renderComment(commentData: SubmissionComment, incomingOpts?: CommentRenderingOptions) {
     const self = this
     let comment = commentData
     let spokenComment = ''
     let submitCommentButtonText = ''
     let deleteCommentLinkText = ''
     let hideStudentName = false
-    const defaultOpts = {
+    const defaultOpts: CommentRenderingOptions = {
       commentBlank: $comment_blank,
       commentAttachmentBlank: $comment_attachment_blank,
     }
-    const opts = {...defaultOpts, ...incomingOpts}
+    const opts: CommentRenderingOptions = {...defaultOpts, ...incomingOpts}
     let commentElement = opts.commentBlank.clone(true)
 
     // Serialization seems to have changed... not sure if it's changed everywhere, though...
     if (comment.submission_comment) {
+      // eslint-disable-next-line no-console
+      console.warn('SubmissionComment serialization has changed')
       comment = commentData.submission_comment
     }
 
@@ -3163,7 +3151,7 @@ EG = {
     }
     // anonymous commentors
     if (comment.author_name == null) {
-      const {provisional_grade_id} = EG.currentStudent.submission.provisional_grades.find(
+      const {provisional_grade_id} = (EG.currentStudent.submission.provisional_grades || []).find(
         (pg: ProvisionalGrade) => pg.anonymous_grader_id === comment.anonymous_id
       ) as ProvisionalGrade
       if (
@@ -3187,9 +3175,7 @@ EG = {
       commentElement.find('.submit_comment_button').remove()
     }
 
-    commentElement
-      .find('span.comment')
-      .html(raw(htmlEscape<string>(comment.comment).replace(/\n/g, '<br />')))
+    commentElement.find('span.comment').html(htmlEscape(comment.comment).replace(/\n/g, '<br />'))
 
     deleteCommentLinkText = I18n.t('Delete comment: %{commentText}', {commentText: spokenComment})
     commentElement.find('.delete_comment_link .screenreader-only').text(deleteCommentLinkText)
@@ -3220,17 +3206,19 @@ EG = {
     return commentElement
   },
 
-  currentDisplayedSubmission() {
+  currentDisplayedSubmission(): HistoricalSubmission {
     const displayedHistory =
-      this.currentStudent.submission?.submission_history?.[
-        this.currentStudent.submission.currentSelectedIndex
-      ]
+      typeof this.currentStudent.submission?.currentSelectedIndex === 'number'
+        ? this.currentStudent.submission?.submission_history?.[
+            this.currentStudent.submission.currentSelectedIndex
+          ]
+        : undefined
     return displayedHistory?.submission || this.currentStudent.submission
   },
 
   showDiscussion() {
     const that = this
-    const commentRenderingOptions = {
+    const commentRenderingOptions: CommentRenderingOptions = {
       hideStudentNames: utils.shouldHideStudentNames(),
       commentBlank: $comment_blank,
       commentAttachmentBlank: $comment_attachment_blank,
@@ -3256,6 +3244,7 @@ EG = {
           $comments.append($(commentElement).show())
           const $commentLink = $comments.find('.play_comment_link').last()
           $commentLink.data('author', comment.author_name)
+          // @ts-expect-error
           $commentLink.data('created_at', comment.posted_at)
           $commentLink.mediaCommentThumbnail('normal')
         }
@@ -3374,6 +3363,7 @@ EG = {
     }
 
     if (ENV.group_comments_per_attempt) {
+      // @ts-expect-error
       formData['submission[attempt]'] = EG.currentDisplayedSubmission().attempt
     }
 
@@ -3674,6 +3664,7 @@ EG = {
 
     $('#submit_same_score').hide()
     if (typeof submission !== 'undefined' && submission.entered_score !== null) {
+      // @ts-expect-error
       $score.text(I18n.n(round(submission.entered_score, round.DEFAULT)))
       if (!submission.grade_matches_current_submission) {
         $('#submit_same_score').show()
@@ -3847,6 +3838,8 @@ EG = {
           snapshot &&
           $.map(
             window.jsonData.studentsWithSubmissions,
+            // EVAL-3900 - will always return false?
+            // @ts-expect-error
             student => snapshot === student && student.name
           )[0]
       )
@@ -3923,7 +3916,7 @@ EG = {
     $.flashError(errorMessage)
   },
 
-  selectProvisionalGrade(provisionalGradeId: string, refetchOnSuccess: boolean = false) {
+  selectProvisionalGrade(provisionalGradeId?: string, refetchOnSuccess: boolean = false) {
     const selectGradeUrl = replaceTags(ENV.provisional_select_url || '', {
       provisional_grade_id: provisionalGradeId,
     })
@@ -3961,7 +3954,6 @@ EG = {
         const displayName = grade.anonymous_grader_id
           ? ENV.anonymous_identities[grade.anonymous_grader_id].name
           : grade.scorer_name
-        // @ts-expect-error
         provisionalGraderDisplayNames[grade.provisional_grade_id] = displayName
       }
     })
@@ -3998,7 +3990,6 @@ EG = {
     }
 
     EG.currentStudent.submission_state = SpeedgraderHelpers.submissionState(
-      // @ts-expect-error
       EG.currentStudent,
       ENV.grading_role
     )
@@ -4006,7 +3997,7 @@ EG = {
   },
 
   setActiveProvisionalGradeFields({label = '', grade = null} = {}) {
-    $grading_box_selected_grader.text(label)
+    $grading_box_selected_grader.text(label || '')
 
     const submission: Submission = EG.currentStudent.submission || {}
     if (grade !== null) {
@@ -4128,12 +4119,8 @@ function getGradingPeriods() {
 
 function setupSpeedGrader(
   gradingPeriods: GradingPeriod[],
-  speedGraderJsonResponse: SpeedGraderResponseType[]
+  speedGraderJsonResponse: SpeedGraderResponse[]
 ) {
-  if (process.env.NODE_ENV !== 'production') {
-    SpeedGraderResponse.parse(speedGraderJsonResponse[0])
-  }
-
   const speedGraderJSON = speedGraderJsonResponse[0] as SpeedGraderStore
 
   speedGraderJSON.gradingPeriods = keyBy(gradingPeriods, 'id')
