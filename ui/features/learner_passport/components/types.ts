@@ -16,6 +16,11 @@
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+export type PageBreadcrumb = {
+  text: string
+  url?: string
+}
+
 export interface AchievementData {
   id: string
   isNew: boolean
@@ -146,7 +151,7 @@ export type RequirementType =
   | 'experience'
   | 'project'
 
-export type RequirementTypesType = {
+type RequirementTypesType = {
   [Key in RequirementType]: string
 }
 
@@ -160,12 +165,32 @@ export const RequirementTypes: RequirementTypesType = {
   project: 'Project',
 }
 
+export type CanvasRequirementType = 'assignment' | 'course' | 'module'
+type CanvasRequirementTypesType = {
+  [Key in CanvasRequirementType]: string
+}
+
+export const CanvasRequirementTypes: CanvasRequirementTypesType = {
+  assignment: 'assignments',
+  course: 'courses',
+  module: 'modules',
+}
+
+export type CanvasRequirementSearchResultType = {
+  id: string
+  name: string
+  url: string
+  learning_outcome_count: number
+}
+
 export interface RequirementData {
   id: string
   name: string
   description: string
+  learning_outcome_count?: number
   required?: boolean
   type: RequirementType
+  canvas_content?: CanvasRequirementSearchResultType
 }
 
 // this is a node in the pathway tree
@@ -199,6 +224,10 @@ export interface PathwayDetailData extends PathwayData {
   learner_groups: string[] // learner group ids
   first_milestones: string[] // ids of the milestone children of the root pathway
   milestones: MilestoneData[] // all the milestones in the pathway
+}
+
+export interface DraftPathway extends PathwayDetailData {
+  timestamp: number
 }
 
 export interface PathwayEditData {

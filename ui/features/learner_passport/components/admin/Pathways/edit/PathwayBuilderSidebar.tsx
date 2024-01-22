@@ -16,22 +16,22 @@
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-import React, {useEffect, useState} from 'react'
+import React, {useCallback} from 'react'
 import {CondensedButton} from '@instructure/ui-buttons'
 import {Flex} from '@instructure/ui-flex'
 import {IconPlusLine} from '@instructure/ui-icons'
 import {Text} from '@instructure/ui-text'
 import {View} from '@instructure/ui-view'
 import type {PathwayDetailData, MilestoneData} from '../../../types'
-import PathwayCard from './PathwayCard'
+import {PathwayCard, MilestoneCard} from './PathwayBuilderSidebarCards'
 import BlankPathwayBox from './BlankPathwayBox'
 
 const Connector = () => {
   return (
     <div style={{margin: '4px 0 -1px 0'}}>
       <svg xmlns="http://www.w3.org/2000/svg" width="6" height="36" viewBox="0 0 6 36" fill="none">
-        <circle cx="3" cy="3" r="2" transform="rotate(90 3 3)" stroke="#6B7780" strokeWidth="2" />
-        <circle cx="3" cy="33" r="2" transform="rotate(90 3 33)" stroke="#6B7780" strokeWidth="2" />
+        <circle cx="3" cy="3" r="2" stroke="#6B7780" strokeWidth="2" />
+        <circle cx="3" cy="33" r="2" stroke="#6B7780" strokeWidth="2" />
         <path d="M3 6L3 30" stroke="#6B7780" strokeWidth="2" strokeLinecap="square" />
       </svg>
     </div>
@@ -68,10 +68,28 @@ const findChildMilestones = (milestones: MilestoneData[], ids: string[]) => {
   return milestones.filter(m => ids.includes(m.id))
 }
 
+const findSubtreeMilestones = (
+  milestones: MilestoneData[],
+  rootId: string,
+  subtree: string[]
+): string[] => {
+  const root = milestones.find(m => m.id === rootId)
+  if (!root) return subtree
+  subtree.push(rootId)
+  if (root.next_milestones.length === 0) return subtree
+  root?.next_milestones.forEach(nextid => {
+    subtree.concat(findSubtreeMilestones(milestones, nextid, subtree))
+  })
+  return subtree
+}
+
 type PathwayBuilderSidebarProps = {
   pathway: PathwayDetailData
   currentStep: MilestoneData | null // null => the pathway is the current step
   onAddStep: () => void
+  onEditPathway: () => void
+  onEditStep: (id: string) => void
+  onDeleteStep: (subtree: string[]) => void
   onHideSidebar: () => void
 }
 
@@ -79,18 +97,41 @@ const PathwayBuilderSidebar = ({
   currentStep,
   pathway,
   onAddStep,
+  onEditPathway,
+  onEditStep,
+  onDeleteStep,
   onHideSidebar,
 }: PathwayBuilderSidebarProps) => {
   const childSteps = currentStep ? currentStep.next_milestones : pathway.first_milestones
   const childMilestones = findChildMilestones(pathway.milestones, childSteps)
 
+  const handleEditPathway = useCallback(() => {
+    onEditPathway()
+  }, [onEditPathway])
+
+  const handleEditMilestone = useCallback(
+    (milestoneId: string) => {
+      onEditStep(milestoneId)
+    },
+    [onEditStep]
+  )
+
+  const handleDeleteMilestone = useCallback(
+    (milestoneId: string) => {
+      const subtree = findSubtreeMilestones(pathway.milestones, milestoneId, [])
+      onDeleteStep(subtree)
+    },
+    [onDeleteStep, pathway.milestones]
+  )
+
   return (
     <View
+      data-compid="pathway-builder-sidebar"
       as="div"
       padding="large medium large x-large"
       background="secondary"
       shadow="topmost"
-      minHeight="100%"
+      height="100%"
       width="480px"
     >
       <Flex as="div" margin="0 0 medium 0" justifyItems="space-between">
@@ -98,11 +139,20 @@ const PathwayBuilderSidebar = ({
         <CondensedButton onClick={onHideSidebar}>Hide</CondensedButton>
       </Flex>
       <View as="div" textAlign="center">
-        <PathwayCard step={currentStep || pathway} variant="sidebar" />
+        {currentStep === null ? (
+          <PathwayCard step={pathway} onEdit={handleEditPathway} />
+        ) : (
+          <MilestoneCard step={currentStep} variant="root" onEdit={handleEditMilestone} />
+        )}
         <Connector />
         {childMilestones.map((step: MilestoneData) => (
-          <div style={{marginBottom: '30px'}}>
-            <PathwayCard step={step} variant="sidebar" />
+          <div key={step.id} style={{marginBottom: '30px'}}>
+            <MilestoneCard
+              step={step}
+              variant="child"
+              onEdit={handleEditMilestone}
+              onDelete={handleDeleteMilestone}
+            />
           </div>
         ))}
         {childMilestones.length === 0 && <BlankPathwayBox />}

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 - present Instructure, Inc.
+ * Copyright (C) 2023 - present Instructure, Inc.
  *
  * This file is part of Canvas.
  *
@@ -16,10 +16,20 @@
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-// eslint-disable-next-line import/no-commonjs
-module.exports = {
-  // 0 - off, 1 - warning, 2 - error
-  rules: {
-    'import/no-commonjs': [2],
-  },
+import React from 'react'
+import {Portal} from '@instructure/ui-portal'
+import TopNav from './TopNav'
+
+const TopNavPortal = () => {
+  const mountPoint: HTMLElement | null = document.getElementById('react-instui-topnav')
+  if (!mountPoint) {
+    return null
+  }
+  return (
+    <Portal open={true} mountNode={mountPoint}>
+      <TopNav />
+    </Portal>
+  )
 }
+
+export default TopNavPortal

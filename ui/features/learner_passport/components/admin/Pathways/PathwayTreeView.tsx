@@ -20,15 +20,14 @@ import React, {useCallback, useEffect, useLayoutEffect, useMemo, useRef, useStat
 import dagre from 'dagre'
 import type {Node} from 'dagre'
 import bspline from 'b-spline'
-import {CondensedButton} from '@instructure/ui-buttons'
 import {Flex} from '@instructure/ui-flex'
-import {IconBulletListLine} from '@instructure/ui-icons'
+import {IconBulletListLine, IconGroupLine} from '@instructure/ui-icons'
 import {Pill} from '@instructure/ui-pill'
 import {Text} from '@instructure/ui-text'
 import {TruncateText} from '@instructure/ui-truncate-text'
 import {View} from '@instructure/ui-view'
 import type {MilestoneData, PathwayDetailData} from '../../types'
-import {showUnimplemented} from '../../shared/utils'
+import {pluralize} from '../../shared/utils'
 
 const BOX_WIDTH = 322
 
@@ -64,6 +63,8 @@ const DivInSVG: React.FC<NamespacedDiv> = props => {
     </div>
   )
 }
+
+const MILESTONES_HAVE_IMAGES = false
 
 const PathwayTreeView = ({
   pathway,
@@ -142,6 +143,7 @@ const PathwayTreeView = ({
 
   const renderPathwayBoxContent = useCallback(
     (node: GraphNode, type: NodeType, selected: boolean, width: number, height?: number) => {
+      const req_count: number = 'requirement_count' in node ? (node.requirement_count as number) : 0
       return (
         <View
           as="div"
@@ -151,42 +153,57 @@ const PathwayTreeView = ({
           borderWidth="medium"
           width={`${width}px`}
           height={height ? `${height}px` : 'auto'}
+          minHeight="100%"
           borderColor={selected ? 'brand' : undefined}
         >
-          <Flex as="div" direction="column" justifyItems="start" height="100%">
-            <Flex.Item shouldGrow={true} overflowY="visible">
+          <Flex as="div" direction="column" justifyItems="start" height="100%" gap="small">
+            {MILESTONES_HAVE_IMAGES ? (
               <Flex as="div" gap="small">
-                <div style={{width: '30px', height: '30px', background: 'grey'}} />
-                <Flex.Item>
+                <Flex.Item shouldShrink={false} shouldGrow={false}>
+                  <div style={{width: '30px', height: '30px', background: 'grey'}} />
+                </Flex.Item>
+                <Flex.Item shouldShrink={true}>
                   <Text weight="bold">{node.title}</Text>
-                  <div style={{marginTop: '.5rem'}}>
-                    <Text size="small">
-                      <TruncateText maxLines={2} truncate="character">
-                        {node.description}
-                      </TruncateText>
-                    </Text>
-                  </div>
                 </Flex.Item>
               </Flex>
+            ) : (
+              <Flex.Item shouldShrink={true}>
+                <Text weight="bold">{node.title}</Text>
+              </Flex.Item>
+            )}
+            <Flex.Item shouldGrow={true}>
+              <Text as="div" size="small">
+                <TruncateText maxLines={2} truncate="character">
+                  {node.description}
+                </TruncateText>
+              </Text>
               {!('required' in node) || node.required ? null : (
                 <div style={{marginTop: '.5rem'}}>
                   <Pill>Optional</Pill>
                 </div>
               )}
             </Flex.Item>
-            <Flex margin="medium 0 0 0" alignItems="center" justifyItems="space-between">
+            {type === 'pathway' ? (
               <Flex.Item>
-                <IconBulletListLine size="small" />
-                <View margin="0 0 0 x-small">
-                  <Text>2 requirements</Text>
+                <IconGroupLine size="x-small" />
+                <View display="inline-block" margin="0 0 0 x-small">
+                  <Text>
+                    {pluralize(
+                      (node as PathwayDetailData).learner_groups.length,
+                      '1 learner group',
+                      `${(node as PathwayDetailData).learner_groups.length} learner groups`
+                    )}
+                  </Text>
                 </View>
               </Flex.Item>
+            ) : (
               <Flex.Item>
-                <CondensedButton onClick={showUnimplemented}>
-                  <Text color={type === 'pathway' ? 'primary-inverse' : 'brand'}>Show</Text>
-                </CondensedButton>
+                <IconBulletListLine size="x-small" />
+                <View display="inline-block" margin="0 0 0 x-small">
+                  <Text>{pluralize(req_count, '1 requirement', `${req_count} requirements`)}</Text>
+                </View>
               </Flex.Item>
-            </Flex>
+            )}
           </Flex>
         </View>
       )
@@ -216,7 +233,7 @@ const PathwayTreeView = ({
 
   const renderDAG = useCallback(() => {
     // Set an object for the graph label
-    g.setGraph({rankdir: layout})
+    g.setGraph({rankdir: layout, marginx: pathway.first_milestones.length < 2 ? 100 : 0})
 
     // Default to assigning a new object as a label for each new edge.
     g.setDefaultEdgeLabel(function () {
@@ -228,6 +245,7 @@ const PathwayTreeView = ({
       description: pathway.description,
       width: 320,
       height: graphBoxHeights.height,
+      learner_groups: pathway.learner_groups,
     })
     pathway.first_milestones.forEach((m: string) => {
       g.setEdge('0', m)
@@ -239,6 +257,7 @@ const PathwayTreeView = ({
         title: m.title,
         description: m.description,
         required: m.required,
+        requirement_count: m.requirements.length,
         width: 320,
         height: ht || 132,
       })
@@ -249,13 +268,8 @@ const PathwayTreeView = ({
 
     dagre.layout(g)
 
-    let maxX = 0
-    let maxY = 0
-    g.nodes().forEach(n => {
-      const node = g.node(n)
-      maxX = Math.max(maxX, node.x + node.width / 2)
-      maxY = Math.max(maxY, node.y + node.height / 2)
-    })
+    const maxX = g.graph().width as number
+    const maxY = g.graph().height as number
     setViewBox([0, 0, maxX, maxY])
 
     const nodes = g.nodes().map((n, i) => {
@@ -306,6 +320,7 @@ const PathwayTreeView = ({
     layout,
     pathway.description,
     pathway.first_milestones,
+    pathway.learner_groups,
     pathway.milestones,
     pathway.title,
     renderPathwayBoxContent,
@@ -324,7 +339,18 @@ const PathwayTreeView = ({
         commands.push(`L${p[0]} ${p[1]}`)
       }
       commands.push(`L${points[points.length - 1].x} ${points[points.length - 1].y}`)
-      return <path d={commands.join(' ')} fill="none" stroke="#C7CDD1" strokeWidth={2} />
+      return (
+        <g fill="none" stroke="#C7CDD1" key={`edge-${edg.v}-${edg.w}`}>
+          <circle cx={points[0].x} cy={points[0].y} r="2" strokeWidth="2" />
+          <path d={commands.join(' ')} fill="none" strokeWidth={2} />
+          <circle
+            cx={points[points.length - 1].x}
+            cy={points[points.length - 1].y}
+            r="2"
+            strokeWidth="2"
+          />
+        </g>
+      )
     })
     setDagEdges(edges)
   }, [g, firstNodeRef])
@@ -376,28 +402,47 @@ const PathwayTreeView = ({
     renderDAGEdges()
   }, [dagNodes, renderDAGEdges])
 
+  const graphWidth = g.graph()?.width ? `${g.graph().width * zoomLevel}px` : 'auto'
+  const graphHeight = g.graph()?.height ? `${g.graph().height * zoomLevel}px` : 'auto'
+
   return preRendered ? (
     <div
-      ref={viewRef}
+      data-compid="pathway-tree-view"
       style={{
-        position: 'relative',
-        padding: '.5rem',
-        transform: `scale(${zoomLevel})`,
-        transformOrigin: '0 0',
+        minWidth: graphWidth,
+        minHeight: graphHeight,
+        height: '100%',
+        backgroundSize: '40px 40px',
+        backgroundImage: `linear-gradient(to right, rgba(150, 173, 233, .3) 1px, transparent 1px),
+                  linear-gradient(to bottom, rgba(150, 173, 233, .3) 1px, transparent 1px)`,
       }}
     >
-      <svg
-        ref={svgRef}
-        className="dag"
-        viewBox={`${viewBox[0]} ${viewBox[1]} ${viewBox[2]} ${viewBox[3]}`}
-        x={viewBox[0]}
-        y={viewBox[1]}
-        width={viewBox[2]}
-        height={viewBox[3]}
-      >
-        {dagNodes}
-        {dagEdges}
-      </svg>
+      <View as="div" width="fit-content">
+        <div
+          ref={viewRef}
+          style={{
+            position: 'relative',
+            padding: '.5rem',
+            transform: `scale(${zoomLevel})`,
+            transformOrigin: '0 0',
+          }}
+        >
+          <svg
+            ref={svgRef}
+            className="dag"
+            viewBox={`${viewBox[0]} ${viewBox[1]} ${viewBox[2]} ${viewBox[3]}`}
+            x={viewBox[0]}
+            y={viewBox[1]}
+            width={viewBox[2]}
+            height={viewBox[3]}
+          >
+            {dagNodes}
+            <g fill="none" stroke="#C7CDD1">
+              {dagEdges}
+            </g>
+          </svg>
+        </div>
+      </View>
     </div>
   ) : (
     renderPathwayBoxes()
