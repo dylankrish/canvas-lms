@@ -22,8 +22,7 @@ import {Button, CloseButton} from '@instructure/ui-buttons'
 import {Flex} from '@instructure/ui-flex'
 import {FormField} from '@instructure/ui-form-field'
 import {Heading} from '@instructure/ui-heading'
-import {IconAddLine, IconSearchLine} from '@instructure/ui-icons'
-import {ScreenReaderContent} from '@instructure/ui-a11y-content'
+import {IconAddLine} from '@instructure/ui-icons'
 import {Tag} from '@instructure/ui-tag'
 import {Text} from '@instructure/ui-text'
 import {TextArea} from '@instructure/ui-text-area'
@@ -31,9 +30,15 @@ import {TextInput} from '@instructure/ui-text-input'
 import {ToggleDetails} from '@instructure/ui-toggle-details'
 import {Tray} from '@instructure/ui-tray'
 import {View} from '@instructure/ui-view'
-import type {LearnerGroupType, PathwayDetailData, PathwayBadgeType} from '../../../types'
+import type {
+  LearnerGroupType,
+  PathwayDetailData,
+  PathwayBadgeType,
+  CanvasUserSearchResultType,
+} from '../../../types'
 import AddBadgeTray from './AddBadgeTray'
 import AddLearnerGroupsTray, {LearnerGroupCard} from './AddLearnerGroupsTray'
+import CanvasUserFinder from './shares/CanvasUserFinder'
 import {showUnimplemented} from '../../../shared/utils'
 
 type PathwayDetailsTrayProps = {
@@ -61,9 +66,18 @@ const PathwayDetailsTray = ({
   const [selectedLearnerGroupIds, setSelectedLearnerGroupIds] = useState<string[]>(
     pathway.learner_groups
   )
-  const [selectedShareIds, setSelectedShareIds] = useState<string[]>([])
+  const [selectedShares, setSelectedShares] = useState<CanvasUserSearchResultType[]>([])
   const [addBadgeTrayOpenKey, setAddBadgeTrayOpenKey] = useState(0)
   const [addLearnerGroupsTrayOpenKey, setAddLearnerGroupsTrayOpenKey] = useState(0)
+
+  const handleCancel = useCallback(() => {
+    setTitle(pathway.title)
+    setDescription(pathway.description)
+    setCurrSelectedBadgeId(selectedBadgeId)
+    setSelectedLearnerGroupIds(pathway.learner_groups)
+    setSelectedShares([])
+    onClose()
+  }, [onClose, pathway.description, pathway.learner_groups, pathway.title, selectedBadgeId])
 
   const handleSave = useCallback(() => {
     if (!title) return
@@ -101,8 +115,8 @@ const PathwayDetailsTray = ({
     setAddLearnerGroupsTrayOpenKey(0)
   }, [])
 
-  const handleShareSearchChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
-    console.log(event.target.value)
+  const handleChangeSharedUser = useCallback((users: CanvasUserSearchResultType[]) => {
+    setSelectedShares(users)
   }, [])
 
   const renderBadge = (badgeId: string | null) => {
@@ -226,28 +240,16 @@ const PathwayDetailsTray = ({
                 </FormField>
               </View>
               <View as="div" padding="medium 0">
-                <FormField id="pathway-share" label="Share">
-                  <Text as="div" size="small">
-                    Add users to collaborate on, review, or view the pathway.
-                  </Text>
-                  <View as="div" margin="small 0 0 0">
-                    <TextInput
-                      renderLabel={
-                        <ScreenReaderContent>Search for users to share with</ScreenReaderContent>
-                      }
-                      renderBeforeInput={<IconSearchLine />}
-                      placeholder="Search for users"
-                      value=""
-                      onChange={handleShareSearchChange}
-                    />
-                  </View>
-                </FormField>
+                <CanvasUserFinder
+                  selectedUsers={selectedShares}
+                  onChange={handleChangeSharedUser}
+                />
               </View>
             </View>
           </Flex.Item>
           <Flex.Item align="end" width="100%">
             <View as="div" padding="small medium" borderWidth="small 0 0 0" textAlign="end">
-              <Button onClick={onClose}>Cancel</Button>
+              <Button onClick={handleCancel}>Cancel</Button>
               <Button margin="0 0 0 small" onClick={handleSave}>
                 Save Pathway Details
               </Button>
