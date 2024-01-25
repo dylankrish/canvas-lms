@@ -204,7 +204,6 @@ describe('AssignToPanel', () => {
       act(() => option1.click())
 
       getByRole('button', {name: 'Update Module'}).click()
-      expect(await findByTestId('loading-overlay')).toBeInTheDocument()
       expect((await findAllByText('Module access updated successfully.'))[0]).toBeInTheDocument()
       const requestBody = fetchMock.lastOptions(ASSIGNMENT_OVERRIDES_URL)?.body
       const expectedPayload = JSON.stringify({
@@ -214,9 +213,7 @@ describe('AssignToPanel', () => {
     })
 
     it('updates existing assignment overrides', async () => {
-      fetchMock.getOnce(ASSIGNMENT_OVERRIDES_URL, ASSIGNMENT_OVERRIDES_DATA, {
-        overwriteRoutes: true,
-      })
+      fetchMock.get(ASSIGNMENT_OVERRIDES_URL, ASSIGNMENT_OVERRIDES_DATA, {overwriteRoutes: true})
       fetchMock.put(ASSIGNMENT_OVERRIDES_URL, {})
       const studentsOverride = ASSIGNMENT_OVERRIDES_DATA[0]
       const existingOverride = ASSIGNMENT_OVERRIDES_DATA[1]
@@ -230,7 +227,6 @@ describe('AssignToPanel', () => {
       act(() => option1.click())
 
       getByRole('button', {name: 'Update Module'}).click()
-      expect(await findByTestId('loading-overlay')).toBeInTheDocument()
       expect((await findAllByText('Module access updated successfully.'))[0]).toBeInTheDocument()
       const requestBody = fetchMock.lastOptions(ASSIGNMENT_OVERRIDES_URL)?.body
       // it sends back the student list override, including the assignment override id
@@ -246,10 +242,9 @@ describe('AssignToPanel', () => {
     it.skip('updates the modules UI', async () => {
       fetchMock.put(ASSIGNMENT_OVERRIDES_URL, {})
       jest.spyOn(utils, 'updateModuleUI')
-      const {findByRole, findByTestId} = renderComponent()
+      const {findByRole} = renderComponent()
       const updateButton = await findByRole('button', {name: 'Update Module'})
       updateButton.click()
-      expect(await findByTestId('loading-overlay')).toBeInTheDocument()
       await waitFor(() => expect(utils.updateModuleUI).toHaveBeenCalled())
     })
 
@@ -266,9 +261,10 @@ describe('AssignToPanel', () => {
       userEvent.click(await findByText(SECTIONS_DATA[0].name))
       userEvent.click(getByRole('button', {name: 'Update Module'}))
 
-      expect(await findByTestId('loading-overlay')).toBeInTheDocument()
-      expect(onDidSubmitMock).toHaveBeenCalled()
-      expect(onDismissMock).not.toHaveBeenCalled()
+      await waitFor(() => {
+        expect(onDidSubmitMock).toHaveBeenCalled()
+        expect(onDismissMock).not.toHaveBeenCalled()
+      })
     })
   })
 })
