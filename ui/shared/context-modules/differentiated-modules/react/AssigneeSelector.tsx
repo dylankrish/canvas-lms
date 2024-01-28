@@ -21,6 +21,7 @@ import React, {type ReactElement, useEffect, useRef, useState} from 'react'
 import {useScope as useI18nScope} from '@canvas/i18n'
 import {Link} from '@instructure/ui-link'
 import {View} from '@instructure/ui-view'
+import {Text} from '@instructure/ui-text'
 import {debounce} from 'lodash'
 import {ScreenReaderContent} from '@instructure/ui-a11y-content'
 import {setContainScrollBehavior} from '../utils/assignToHelper'
@@ -46,11 +47,13 @@ interface Props {
   customIsLoading?: boolean
   customSetSearchTerm?: (term: string) => void
   onError?: () => void
+  showVisualLabel?: boolean
 }
 
 export interface AssigneeOption {
   id: string
   value: string
+  sisID?: string
   overrideId?: string
   group?: string
 }
@@ -70,6 +73,7 @@ const AssigneeSelector = ({
   customIsLoading,
   customSetSearchTerm,
   onError,
+  showVisualLabel = true,
 }: Props) => {
   const listElementRef = useRef<HTMLElement | null>(null)
   const [options, setOptions] = useState<AssigneeOption[]>(defaultValues)
@@ -118,12 +122,28 @@ const AssigneeSelector = ({
     }, 500)
   }
 
+  const label = I18n.t('Assign To')
+
+  const optionMatcher = (
+    option: {
+      id: string
+    },
+    term: string
+  ): boolean => {
+    const selectedOption = allOptions.find(o => o.id === option.id)
+    return (
+      selectedOption?.value.toLowerCase().includes(term.toLowerCase()) ||
+      selectedOption?.sisID?.toLowerCase().includes(term.toLowerCase()) ||
+      false
+    )
+  }
+
   return (
     <>
       <CanvasMultiSelect
         data-testid="assignee_selector"
         messages={messages}
-        label={I18n.t('Assign To')}
+        label={showVisualLabel ? label : <ScreenReaderContent>{label}</ScreenReaderContent>}
         size={size}
         selectedOptionIds={selectedOptionIds}
         onChange={handleChange}
@@ -149,6 +169,7 @@ const AssigneeSelector = ({
             </View>
           ))
         }
+        customMatcher={optionMatcher}
       >
         {options.map(option => {
           return (
@@ -157,8 +178,14 @@ const AssigneeSelector = ({
               value={option.id}
               key={option.id}
               group={option.group}
+              tagText={option.value}
             >
-              {option.value}
+              <Text as="div">{option.value}</Text>
+              {option.sisID && (
+                <Text as="div" size="small" color="secondary">
+                  {option.sisID}
+                </Text>
+              )}
             </CanvasMultiSelectOption>
           )
         })}

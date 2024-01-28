@@ -127,6 +127,7 @@ export interface ProjectEditData {
 export type PathwayBadgeType = {
   id: string
   title: string
+  image: string | null
   issuer: {
     name: string
     url: string
@@ -213,7 +214,17 @@ export interface MilestoneData {
   description: string
   required?: boolean
   requirements: RequirementData[]
-  achievements: AchievementData[]
+  completion_award: string | null
+  next_milestones: string[] // ids of this milestone's children
+}
+
+export interface MilestoneViewData {
+  id: string
+  title: string
+  description: string
+  required?: boolean
+  requirements: RequirementData[]
+  completion_award: PathwayBadgeType | null
   next_milestones: string[] // ids of this milestone's children
 }
 
@@ -231,13 +242,26 @@ export interface PathwayData {
 
 export interface PathwayDetailData extends PathwayData {
   description: string
+  image_url: string | null
   is_private?: boolean
   learning_outcomes: SkillData[]
-  completion_award: PathwayBadgeType | null
+  completion_award: string | null
   learner_groups: string[] // learner group ids
   shares: PathwayUserShareType[]
   first_milestones: string[] // ids of the milestone children of the root pathway
   milestones: MilestoneData[] // all the milestones in the pathway
+}
+
+export interface PathwayViewDetailData extends PathwayData {
+  description: string
+  image_url: string | null
+  is_private?: boolean
+  learning_outcomes: SkillData[]
+  completion_award: PathwayBadgeType | null
+  learner_groups: LearnerGroupType[]
+  shares: PathwayUserShareType[]
+  first_milestones: string[] // ids of the milestone children of the root pathway
+  milestones: MilestoneViewData[] // all the milestones in the pathway
 }
 
 export interface DraftPathway extends PathwayDetailData {

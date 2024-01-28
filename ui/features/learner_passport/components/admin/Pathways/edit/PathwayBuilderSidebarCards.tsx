@@ -44,7 +44,9 @@ const PathwayCard = ({step, onEdit}: PathwayCardProps) => {
       textAlign="start"
     >
       <Flex as="div" gap="small">
-        <div style={{width: '30px', height: '30px', background: 'grey'}} />
+        {step.image_url && (
+          <img src={step.image_url} alt="" style={{height: '42px', display: 'inline-block'}} />
+        )}
         <Flex.Item shouldGrow={true}>
           <Text as="div" fontStyle="italic">
             End of pathway
@@ -79,7 +81,6 @@ const MilestoneCard = ({step, variant, onEdit, onDelete}: MilestoneCardProps) =>
   return (
     <View
       as="div"
-      background={variant === 'root' ? 'primary-inverse' : 'primary'}
       borderWidth="small"
       borderRadius="medium"
       padding="small"
@@ -87,18 +88,21 @@ const MilestoneCard = ({step, variant, onEdit, onDelete}: MilestoneCardProps) =>
       width="auto"
     >
       <Flex as="div" gap="small">
-        <IconDragHandleLine />
+        {variant === 'child' ? (
+          <IconDragHandleLine />
+        ) : (
+          <div style={{width: '1rem', height: '1rem'}} />
+        )}
         <Flex.Item shouldGrow={true} shouldShrink={true}>
           <Text as="div" weight="bold">
             <TruncateText>{step.title}</TruncateText>
           </Text>
           <Text as="div" size="small">
-            prerequisites go here
+            {step.next_milestones.filter(m => m !== 'blank').length} prerequisites
           </Text>
         </Flex.Item>
         <Flex.Item>
           <IconButton
-            color={variant === 'root' ? 'primary-inverse' : 'primary'}
             screenReaderLabel="edit step"
             size="small"
             withBackground={false}
@@ -125,4 +129,17 @@ const MilestoneCard = ({step, variant, onEdit, onDelete}: MilestoneCardProps) =>
   )
 }
 
-export {PathwayCard, MilestoneCard}
+const BlankPathwayCard = () => {
+  return (
+    <View
+      as="div"
+      background="secondary"
+      borderWidth="small"
+      borderRadius="medium"
+      width="408px"
+      height="56px"
+    />
+  )
+}
+
+export {PathwayCard, MilestoneCard, BlankPathwayCard}

@@ -16,20 +16,19 @@
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-import React from 'react'
-import {View} from '@instructure/ui-view'
-
-const BlankPathwayBox = () => {
-  return (
-    <View
-      as="div"
-      background="secondary"
-      borderWidth="small"
-      borderRadius="medium"
-      width="408px"
-      height="56px"
-    />
-  )
+export function writeToLocalStorage(key: string, value: string): boolean {
+  try {
+    window.sessionStorage.setItem(key, value)
+    return true
+  } catch (_ex) {
+    return false
+  }
 }
 
-export default BlankPathwayBox
+export function readFromLocalStorage(key: string): string | null {
+  try {
+    return window.sessionStorage.getItem(key)
+  } catch (_ex) {
+    return null
+  }
+}
