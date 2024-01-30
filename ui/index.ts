@@ -23,11 +23,9 @@ import '@canvas/jquery/jquery.instructure_jquery_patches' // this needs to be be
 import './boot'
 
 // true modules that we use in this file
-import $ from 'jquery'
 import ready from '@instructure/ready'
 import splitAssetString from '@canvas/util/splitAssetString'
 import {Mathml} from '@instructure/canvas-rce'
-import {isolate} from '@canvas/sentry'
 import {Capabilities as C, up} from '@canvas/engine'
 import {loadReactRouter} from './boot/initializers/router'
 import loadLocale from './loadLocale'
@@ -120,11 +118,14 @@ function afterDocumentReady() {
     advanceReadiness('deferredBundles')
   })
 
-  isolate(loadReactRouter)()
-  isolate(loadNewUserTutorials)()
+  const helpButton = document.querySelector('.help_dialog_trigger')
+  if (helpButton !== null) helpButton.addEventListener('click', openHelpDialog)
+
+  loadReactRouter()
+  loadNewUserTutorials()
 
   if (!ENV.FEATURES.explicit_latex_typesetting) {
-    isolate(setupMathML)()
+    setupMathML()
   }
 }
 
@@ -200,25 +201,27 @@ if (ENV.csp) {
 }
 
 if (ENV.INCOMPLETE_REGISTRATION) {
-  isolate(() => import('./boot/initializers/warnOnIncompleteRegistration'))()
+  import('./boot/initializers/warnOnIncompleteRegistration')
 }
 
 // TODO: remove the need for this
 // it is only used in submissions
 if (ENV.badge_counts) {
-  isolate(() => import('./boot/initializers/showBadgeCounts'))()
+  import('./boot/initializers/showBadgeCounts')
 }
 
-isolate(doRandomThingsToDOM)()
-
-function doRandomThingsToDOM() {
-  $('.help_dialog_trigger').click(event => {
-    event.preventDefault()
-    // eslint-disable-next-line promise/catch-or-return
-    import('./boot/initializers/enableHelpDialog').then(({default: helpDialog}) =>
-      helpDialog.open()
-    )
-  })
+// Load and then display the Canvas help dialog if the user has requested it
+async function openHelpDialog(event: Event): Promise<void> {
+  event.preventDefault()
+  try {
+    const {default: helpDialog} = await import('./boot/initializers/enableHelpDialog')
+    helpDialog.open()
+  } catch (e) {
+    /* eslint-disable no-console */
+    console.error('Help dialog could not be displayed')
+    console.error(e)
+    /* eslint-enable no-console */
+  }
 }
 
 async function loadNewUserTutorials() {
@@ -234,9 +237,7 @@ async function loadNewUserTutorials() {
   }
 }
 
-;(window.requestIdleCallback || window.setTimeout)(
-  isolate(async () => {
-    await import('./boot/initializers/runOnEveryPageButDontBlockAnythingElse')
-    advanceReadiness('asyncInitializers')
-  })
-)
+;(window.requestIdleCallback || window.setTimeout)(async () => {
+  await import('./boot/initializers/runOnEveryPageButDontBlockAnythingElse')
+  advanceReadiness('asyncInitializers')
+})
