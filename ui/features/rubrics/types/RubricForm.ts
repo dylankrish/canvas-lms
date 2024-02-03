@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 - present Instructure, Inc.
+ * Copyright (C) 2024 - present Instructure, Inc.
  *
  * This file is part of Canvas.
  *
@@ -16,11 +16,12 @@
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-export async function up() {
-  const {default: enhanceUserContent} = await import(
-    /* webpackChunkName: "[request]" */
-    '@canvas/enhanced-user-content'
-  )
-
-  enhanceUserContent()
+export type RubricFormProps = {
+  id?: string
+  title: string
+  hidePoints: boolean
+  accountId?: string
+  courseId?: string
 }
+
+export type RubricFormValueTypes = string | boolean

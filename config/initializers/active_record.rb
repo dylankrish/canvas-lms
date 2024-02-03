@@ -747,11 +747,27 @@ class ActiveRecord::Base
     self.updated_at = Time.now.utc if touch
     if new_record?
       self.created_at = updated_at if touch
-      self.id = self.class._insert_record(
-        attributes_with_values(attribute_names_for_partial_inserts)
-          .transform_values { |attr| attr.is_a?(ActiveModel::Attribute) ? attr.value : attr }
-      )
+      if Rails.version < "7.1"
+        self.id = self.class._insert_record(
+          attributes_with_values(attribute_names_for_partial_inserts)
+            .transform_values { |attr| attr.is_a?(ActiveModel::Attribute) ? attr.value : attr }
+        )
+      else
+        returning_values = returning_columns = self.class._returning_columns_for_insert
+        self.class._insert_record(
+          attributes_with_values(attribute_names_for_partial_inserts)
+            .transform_values { |attr| attr.is_a?(ActiveModel::Attribute) ? attr.value : attr },
+          returning_columns
+        )
+
+        if returning_values
+          returning_columns.zip(returning_values).each do |column, value|
+            _write_attribute(column, value) unless _read_attribute(column)
+          end
+        end
+      end
       @new_record = false
+      @previously_new_record = true
     else
       update_columns(
         attributes_with_values(attribute_names_for_partial_updates)
@@ -1319,7 +1335,7 @@ ActiveRecord::Relation.class_eval do
   def union(*scopes, from: false)
     table = connection.quote_local_table_name(table_name)
     scopes.unshift(self)
-    scopes = scopes.reject { |s| s.is_a?(ActiveRecord::NullRelation) }
+    scopes = scopes.reject { |s| (Rails.version < "7.1") ? s.is_a?(ActiveRecord::NullRelation) : s.null_relation? }
     return scopes.first if scopes.length == 1
     return self if scopes.empty?
 
@@ -1472,12 +1488,12 @@ module UpdateAndDeleteWithJoins
     connection.delete(sql, "SQL", [])
   end
 end
-ActiveRecord::Relation.prepend(UpdateAndDeleteWithJoins)
+Switchman::ActiveRecord::Relation.include(UpdateAndDeleteWithJoins)
 
 module UpdateAndDeleteAllWithLimit
   def delete_all(*args)
     if limit_value || offset_value
-      scope = except(:select).select(primary_key)
+      scope = except(:select).select(primary_key).lock
       return unscoped.where(primary_key => scope).delete_all
     end
     super
@@ -1485,13 +1501,13 @@ module UpdateAndDeleteAllWithLimit
 
   def update_all(updates, *args)
     if limit_value || offset_value
-      scope = except(:select).select(primary_key)
+      scope = except(:select).select(primary_key).lock
       return unscoped.where(primary_key => scope).update_all(updates)
     end
     super
   end
 end
-ActiveRecord::Relation.prepend(UpdateAndDeleteAllWithLimit)
+Switchman::ActiveRecord::Relation.include(UpdateAndDeleteAllWithLimit)
 
 ActiveRecord::Associations::CollectionProxy.class_eval do
   def respond_to?(name, include_private = false)
@@ -1705,7 +1721,7 @@ ActiveRecord::ConnectionAdapters::SchemaStatements.class_eval do
     fks = foreign_keys(from_table).select { |fk| fk.defined_for?(**options) }
     # prefer a FK on a column named after the table
     if options[:to_table]
-      column = foreign_key_column_for(options[:to_table])
+      column = (Rails.version < "7.1") ? foreign_key_column_for(options[:to_table]) : foreign_key_column_for(options[:to_table], "id")
       return fks.find { |fk| fk.column == column } || fks.first
     end
     fks.first
@@ -1886,7 +1902,7 @@ module IgnoreOutOfSequenceMigrationDates
   def current_migration_number(dirname)
     migration_lookup_at(dirname).filter_map do |file|
       digits = File.basename(file).split("_").first
-      next if ActiveRecord::Base.timestamped_migrations && digits.length != 14
+      next if ActiveRecord.timestamped_migrations && digits.length != 14
 
       digits.to_i
     end.max.to_i
@@ -1900,7 +1916,7 @@ Autoextend.hook(:"ActiveRecord::Generators::MigrationGenerator",
 
 module AlwaysUseMigrationDates
   def next_migration_number(number)
-    if ActiveRecord::Base.timestamped_migrations
+    if ActiveRecord.timestamped_migrations
       Time.now.utc.strftime("%Y%m%d%H%M%S")
     else
       SchemaMigration.normalize_migration_number(number)
@@ -1949,11 +1965,20 @@ ActiveRecord::Relation.prepend(ExplainAnalyze)
 module TableRename
   RENAMES = {}.freeze
 
-  def columns(table_name)
-    if (old_name = RENAMES[table_name]) && connection.table_exists?(old_name)
-      table_name = old_name
+  if Rails.version < "7.1"
+    def columns(table_name)
+      if (old_name = RENAMES[table_name]) && connection.table_exists?(old_name)
+        table_name = old_name
+      end
+      super
     end
-    super
+  else
+    def columns(connection, table_name)
+      if (old_name = RENAMES[table_name]) && connection.table_exists?(old_name)
+        table_name = old_name
+      end
+      super
+    end
   end
 end
 
@@ -2136,7 +2161,7 @@ module UserContentSerialization
 end
 ActiveRecord::Base.include(UserContentSerialization)
 
-if Rails.version >= "6.1"
+if Rails.version >= "6.1" && Rails.version < "7.1"
   # Hopefully this can be removed with https://github.com/rails/rails/commit/6beee45c3f071c6a17149be0fabb1697609edbe8
   # having made a released version of rails; if not bump the rails version in this comment and leave the comment to be revisited
   # on the next rails bump
@@ -2212,6 +2237,9 @@ module AdditionalIgnoredColumns
 
       cache_class = ActiveRecord::Base.singleton_class
       return super unless cache_class.columns_to_ignore_enabled
+
+      # Ensure table_name doesn't error out
+      set_base_class
 
       cache_class.columns_to_ignore_cache[table_name] ||= DynamicSettings.find("activerecord/ignored_columns", tree: :store, ignore_fallback_overrides: true)[table_name, failsafe: ""]&.split(",") || []
       super + cache_class.columns_to_ignore_cache[table_name]

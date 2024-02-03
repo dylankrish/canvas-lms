@@ -55,7 +55,7 @@ class GuardExcessiveUpdates < ActiveRecord::Migration[7.0]
           max_record_count integer;
       BEGIN
           SELECT count(*) FROM oldtbl INTO record_count;
-          max_record_count := COALESCE(setting_as_int('inst.max_update_limit.' || TG_TABLE_NAME), setting_as_int('inst.max_update_limit'), '1000');
+          max_record_count := COALESCE(setting_as_int('inst.max_update_limit.' || TG_TABLE_NAME), setting_as_int('inst.max_update_limit'), '#{PostgreSQLAdapterExtensions::DEFAULT_MAX_UPDATE_LIMIT}');
           IF record_count > max_record_count THEN
               IF current_setting('inst.max_update_fail', true) IS NOT DISTINCT FROM 'true' THEN
                   RAISE EXCEPTION 'guard_excessive_updates: % to %.% failed. Would update % records but max is %', TG_OP, TG_TABLE_SCHEMA, TG_TABLE_NAME, record_count, max_record_count;
@@ -69,7 +69,9 @@ class GuardExcessiveUpdates < ActiveRecord::Migration[7.0]
     SQL
     set_search_path("guard_excessive_updates")
 
-    ::ActiveRecord::InternalMetadata[:guard_dangerous_changes_installed] = "true"
+    metadata = ActiveRecord::InternalMetadata
+    metadata = metadata.new(connection) if $canvas_rails == "7.1"
+    metadata[:guard_dangerous_changes_installed] = "true"
 
     ActiveRecord::Base.connection.tables.grep_v(/^_/).each do |table|
       add_guard_excessive_updates(table)

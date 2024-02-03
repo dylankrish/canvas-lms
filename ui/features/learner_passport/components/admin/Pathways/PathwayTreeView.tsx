@@ -16,7 +16,15 @@
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-import React, {useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState} from 'react'
+import React, {
+  useCallback,
+  useContext,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react'
 import dagre from 'dagre'
 import type {Node} from 'dagre'
 import bspline from 'b-spline'
@@ -26,13 +34,9 @@ import {Pill} from '@instructure/ui-pill'
 import {Text} from '@instructure/ui-text'
 import {TruncateText} from '@instructure/ui-truncate-text'
 import {View} from '@instructure/ui-view'
-import type {
-  MilestoneData,
-  MilestoneViewData,
-  PathwayDetailData,
-  PathwayViewDetailData,
-} from '../../types'
-import {pluralize} from '../../shared/utils'
+import {isPathwayBadgeType, type MilestoneData, type PathwayDetailData} from '../../types'
+import {pluralize, findSubtreeMilestones} from '../../shared/utils'
+import {DataContext} from './PathwayEditDataContext'
 
 const BOX_WIDTH = 322
 
@@ -41,12 +45,13 @@ type GraphNode = PathwayDetailData | MilestoneData | PathwayNode
 type NodeType = 'pathway' | 'milestone'
 
 type PathwayTreeViewProps = {
-  pathway: PathwayDetailData | PathwayViewDetailData
+  pathway: PathwayDetailData
   selectedStep: string | null
-  onSelected?: (selectedStep: MilestoneData | MilestoneViewData | null) => void
+  onSelected?: (selectedStep: MilestoneData | null) => void
   layout?: 'TB' | 'BT' | 'LR' | 'RL'
   version: string
   zoomLevel?: number
+  renderTreeControls?: () => JSX.Element | null
 }
 
 type BoxHeights = {
@@ -77,7 +82,9 @@ const PathwayTreeView = ({
   layout = 'TB',
   version,
   zoomLevel = 1,
+  renderTreeControls,
 }: PathwayTreeViewProps) => {
+  const {allBadges} = useContext(DataContext)
   const [g] = useState(new dagre.graphlib.Graph())
   const [dagNodes, setDagNodes] = useState<JSX.Element[]>([])
   const [dagEdges, setDagEdges] = useState<JSX.Element[]>([])
@@ -89,9 +96,27 @@ const PathwayTreeView = ({
     height: 0,
     milestones: [],
   })
-  const viewRef = useRef<HTMLDivElement | null>(null)
+  const [boxToScrollTo, setBoxToScrollTo] = useState<string | null>(null)
+  const [selectedSubtree, setSelectedSubtree] = useState<string[]>(() => {
+    return selectedStep ? findSubtreeMilestones(pathway.milestones, selectedStep, []) : []
+  })
+  const [scrollOffset, setScrollOffset] = useState({top: 0, left: 0})
+
   const preRenderNodeRef = useRef<HTMLDivElement | null>(null)
   const svgRef = useRef<SVGSVGElement | null>(null)
+
+  useEffect(() => {
+    const subtree = selectedStep ? findSubtreeMilestones(pathway.milestones, selectedStep, []) : []
+    setSelectedSubtree(subtree)
+  }, [pathway.milestones, selectedStep])
+
+  useEffect(() => {
+    if (preRendered && boxToScrollTo) {
+      const boxId = boxToScrollTo.replace(/blank-/, '')
+      const elem = document.getElementById(boxId)
+      elem?.scrollIntoView({behavior: 'smooth', block: 'center', inline: 'center'})
+    }
+  }, [boxToScrollTo, preRendered])
 
   const resetGraph = useCallback(() => {
     g.nodes().forEach(n => g.removeNode(n))
@@ -102,9 +127,13 @@ const PathwayTreeView = ({
     if (svgRef.current) {
       setPreRendered(false)
     }
-    viewRef.current = null
     preRenderNodeRef.current = null
     svgRef.current = null
+
+    const treeRoot = document.getElementById('pathway-tree-view')
+    if (treeRoot) {
+      setScrollOffset({top: treeRoot.scrollTop, left: treeRoot.scrollLeft})
+    }
   }, [g])
 
   useEffect(() => {
@@ -128,6 +157,7 @@ const PathwayTreeView = ({
   const handleBoxClick = useCallback(
     (e: React.MouseEvent<HTMLDivElement>) => {
       handleSelectBox(e.currentTarget.id)
+      setBoxToScrollTo(e.currentTarget.id)
     },
     [handleSelectBox]
   )
@@ -140,13 +170,7 @@ const PathwayTreeView = ({
     },
     [handleSelectBox]
   )
-  const boxStyle = useMemo(() => {
-    return onSelected
-      ? {
-          cursor: 'pointer',
-        }
-      : {}
-  }, [onSelected])
+
   const boxProps = useMemo(() => {
     return onSelected
       ? {
@@ -173,7 +197,7 @@ const PathwayTreeView = ({
             as="div"
             padding="small"
             background="secondary"
-            borderRadius="medium"
+            borderRadius="large"
             borderWidth="medium"
             width={`${width}px`}
             height={height ? `${height}px` : 'auto'}
@@ -183,12 +207,24 @@ const PathwayTreeView = ({
       }
 
       const req_count: number = 'requirement_count' in node ? (node.requirement_count as number) : 0
+      let img_url
+      if (type === 'pathway') {
+        img_url = (node as PathwayDetailData).image_url
+      } else if (node.completion_award) {
+        if (typeof node.completion_award === 'string') {
+          const badge = allBadges.find(b => b.id === (node as MilestoneData).completion_award)
+          img_url = badge?.image
+        } else if (isPathwayBadgeType(node.completion_award)) {
+          img_url = node.completion_award?.image
+        }
+      }
+
       return (
         <View
           as="div"
           padding="small"
           background={type === 'pathway' ? 'primary-inverse' : 'primary'}
-          borderRadius="medium"
+          borderRadius="large"
           borderWidth="medium"
           width={`${width}px`}
           height={height ? `${height}px` : 'auto'}
@@ -196,22 +232,18 @@ const PathwayTreeView = ({
           borderColor={selected ? 'brand' : undefined}
         >
           <Flex as="div" direction="column" justifyItems="start" height="100%" gap="small">
-            {type === 'pathway' && (node as PathwayDetailData).image_url ? (
-              <Flex as="div" gap="small">
+            {img_url ? (
+              <Flex as="div" gap="small" data-bar="has_image">
                 <Flex.Item shouldShrink={false} shouldGrow={false}>
-                  <img
-                    src={(node as PathwayDetailData).image_url as string}
-                    alt=""
-                    style={{height: '42px'}}
-                  />
+                  <img src={img_url} alt="" style={{height: '40px'}} data-foo="msimg" />
                 </Flex.Item>
                 <Flex.Item shouldShrink={true}>
                   {type === 'pathway' && (
-                    <Text as="div" fontStyle="italic">
+                    <Text as="div" fontStyle="italic" size="x-small">
                       End of pathway
                     </Text>
                   )}
-                  <Text as="div" weight="bold">
+                  <Text as="div" weight="bold" size="medium">
                     {node.title}
                   </Text>
                 </Flex.Item>
@@ -219,25 +251,25 @@ const PathwayTreeView = ({
             ) : (
               <Flex.Item shouldShrink={false} shouldGrow={false}>
                 {type === 'pathway' && (
-                  <Text as="div" fontStyle="italic">
+                  <Text as="div" fontStyle="italic" size="x-small">
                     End of pathway
                   </Text>
                 )}
-                <Text as="div" weight="bold">
+                <Text as="div" weight="bold" size="medium">
                   {node.title}
                 </Text>
               </Flex.Item>
             )}
             <Flex.Item shouldGrow={true}>
               {node.description && (
-                <Text as="div" size="small">
+                <Text as="div" size="x-small">
                   <TruncateText maxLines={2} truncate="character">
                     {node.description}
                   </TruncateText>
                 </Text>
               )}
               {!('required' in node) || node.required ? null : (
-                <div style={{padding: '.5rem'}}>
+                <div style={{padding: '.5rem 0'}}>
                   <Pill>Optional</Pill>
                 </div>
               )}
@@ -246,7 +278,7 @@ const PathwayTreeView = ({
               <Flex.Item>
                 <IconGroupLine size="x-small" />
                 <View display="inline-block" margin="0 0 0 x-small">
-                  <Text>
+                  <Text size="small">
                     {pluralize(
                       (node as PathwayDetailData).learner_groups.length,
                       '1 learner group',
@@ -259,7 +291,9 @@ const PathwayTreeView = ({
               <Flex.Item>
                 <IconBulletListLine size="x-small" />
                 <View display="inline-block" margin="0 0 0 x-small">
-                  <Text>{pluralize(req_count, '1 requirement', `${req_count} requirements`)}</Text>
+                  <Text size="small">
+                    {pluralize(req_count, '1 requirement', `${req_count} requirements`)}
+                  </Text>
                 </View>
               </Flex.Item>
             )}
@@ -267,7 +301,7 @@ const PathwayTreeView = ({
         </View>
       )
     },
-    []
+    [allBadges]
   )
 
   const renderPathwayBox = useCallback(
@@ -314,6 +348,7 @@ const PathwayTreeView = ({
         id: m.id,
         title: m.title,
         description: m.description,
+        completion_award: m.completion_award,
         required: m.required,
         requirement_count: m.requirements.length,
         width: 320,
@@ -321,6 +356,10 @@ const PathwayTreeView = ({
       })
       m.next_milestones.forEach((n: string) => {
         if (n === 'blank') {
+          // this is a bit of a hack to get the scrollIntoView
+          // effect to run, but still have it scroll the blank
+          // node's parent into view.
+          setBoxToScrollTo(`blank-${m.id}`)
           g.setNode('blank', {
             id: 'blank',
             width: 320,
@@ -343,7 +382,6 @@ const PathwayTreeView = ({
     const nodes = g.nodes().map((n, i) => {
       const node = g.node(n)
       const type = i === 0 ? 'pathway' : 'milestone'
-      const opacity = i === 0 && selectedStep !== null ? 0.7 : 1
       return (
         <foreignObject
           key={n}
@@ -351,6 +389,13 @@ const PathwayTreeView = ({
           y={`${node.y - node.height / 2}`}
           width={node.width}
           height={node.height}
+          style={{
+            boxShadow:
+              selectedStep === n
+                ? 'rgba(0, 0, 0, 0.1) 0px 0.375rem 0.4375rem, rgba(0, 0, 0, 0.25) 0px 0.625rem 1.75rem'
+                : undefined,
+            borderRadius: '0.5rem',
+          }}
         >
           <DivInSVG
             xmlns="http://www.w3.org/1999/xhtml"
@@ -358,13 +403,28 @@ const PathwayTreeView = ({
             elementRef={i === 0 ? handleRootNodeRef : undefined}
             id={n}
             style={{
+              display: 'relative',
               left: 0,
               top: 0,
-              ...boxStyle,
-              opacity,
+              cursor: onSelected && n !== 'blank' ? 'pointer' : 'default',
             }}
             {...boxProps}
           >
+            {selectedStep && n !== 'blank' && !selectedSubtree.includes(n) && (
+              <div
+                style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  width: '100%',
+                  height: '100%',
+                  background: '#fff',
+                  opacity: 0.7,
+                  borderRadius: '0.5rem',
+                  zIndex: 1,
+                }}
+              />
+            )}
             {renderPathwayBoxContent(
               node as PathwayNode,
               type,
@@ -380,12 +440,12 @@ const PathwayTreeView = ({
     setDagNodes(nodes)
   }, [
     boxProps,
-    boxStyle,
     g,
     graphBoxHeights.height,
     graphBoxHeights.milestones,
     handleRootNodeRef,
     layout,
+    onSelected,
     pathway.description,
     pathway.first_milestones,
     pathway.image_url,
@@ -395,6 +455,7 @@ const PathwayTreeView = ({
     preRendered,
     renderPathwayBoxContent,
     selectedStep,
+    selectedSubtree,
   ])
 
   const renderDAGEdges = useCallback(() => {
@@ -462,6 +523,15 @@ const PathwayTreeView = ({
     }
   }, [pathway.id, version, preRendered])
 
+  useLayoutEffect(() => {
+    if (preRendered) {
+      const treeRoot = document.getElementById('pathway-tree-view')
+      if (treeRoot) {
+        treeRoot.scrollTo(scrollOffset.left, scrollOffset.top)
+      }
+    }
+  }, [preRendered, scrollOffset.left, scrollOffset.top])
+
   useEffect(() => {
     if (preRendered && graphBoxHeights.height > 0) {
       renderDAG()
@@ -472,49 +542,82 @@ const PathwayTreeView = ({
     renderDAGEdges()
   }, [dagNodes, renderDAGEdges])
 
+  const probablyRenderTreeControls = useCallback(() => {
+    const treeRoot = document.getElementById('pathway-tree-view')
+    if (treeRoot === null) return null
+    if (!renderTreeControls) return null
+
+    const box = treeRoot.getBoundingClientRect()
+
+    return (
+      <div
+        style={{
+          position: 'fixed',
+          top: `${box.top + window.scrollY + 8}px`,
+          left: `${box.left + window.scrollX + 8}px`,
+          right: '8px',
+          height: 'auto',
+          zIndex: 1,
+        }}
+      >
+        {renderTreeControls()}
+      </div>
+    )
+  }, [renderTreeControls])
+
   const graphWidth = g.graph()?.width ? `${g.graph().width * zoomLevel}px` : 'auto'
   const graphHeight = g.graph()?.height ? `${g.graph().height * zoomLevel}px` : 'auto'
 
   return preRendered ? (
-    <div
-      data-compid="pathway-tree-view"
-      style={{
-        minWidth: graphWidth,
-        minHeight: graphHeight,
-        height: '100%',
-        backgroundSize: '40px 40px',
-        backgroundImage: `linear-gradient(to right, rgba(150, 173, 233, .3) 1px, transparent 1px),
-                  linear-gradient(to bottom, rgba(150, 173, 233, .3) 1px, transparent 1px)`,
-      }}
-    >
-      <View as="div" width="fit-content">
+    <>
+      {probablyRenderTreeControls()}
+      <View
+        id="pathway-tree-view"
+        as="div"
+        height="100%"
+        margin="0"
+        position="relative"
+        overflowY="auto"
+      >
         <div
-          ref={viewRef}
           style={{
-            position: 'relative',
-            padding: '.5rem',
-            transform: `scale(${zoomLevel})`,
-            transformOrigin: '0 0',
+            minWidth: graphWidth,
             minHeight: graphHeight,
+            height: '100%',
+            backgroundSize: '24px 24px',
+            backgroundImage: `linear-gradient(to right, rgba(245, 245, 245, 1.0) 1px, transparent 1px),
+                  linear-gradient(to bottom, rgba(245, 245, 245, 1.0) 1px, transparent 1px)`,
           }}
         >
-          <svg
-            ref={svgRef}
-            className="dag"
-            viewBox={`${viewBox[0]} ${viewBox[1]} ${viewBox[2]} ${viewBox[3]}`}
-            x={viewBox[0]}
-            y={viewBox[1]}
-            width={viewBox[2]}
-            height={viewBox[3]}
-          >
-            {dagNodes}
-            <g fill="none" stroke="#C7CDD1">
-              {dagEdges}
-            </g>
-          </svg>
+          <View as="div" width="fit-content">
+            <div
+              style={{
+                position: 'relative',
+                padding: '.5rem',
+                transform: `scale(${zoomLevel})`,
+                transformOrigin: '0 0',
+                minHeight: graphHeight,
+              }}
+            >
+              <svg
+                ref={svgRef}
+                className="dag"
+                viewBox={`${viewBox[0]} ${viewBox[1]} ${viewBox[2]} ${viewBox[3]}`}
+                x={viewBox[0]}
+                y={viewBox[1]}
+                width={viewBox[2]}
+                height={viewBox[3]}
+              >
+                {dagNodes}
+                <g fill="none" stroke="#C7CDD1">
+                  {dagEdges}
+                </g>
+              </svg>
+            </div>
+          </View>
         </div>
       </View>
-    </div>
+    </>
   ) : (
     preRenderPathwayBoxes()
   )

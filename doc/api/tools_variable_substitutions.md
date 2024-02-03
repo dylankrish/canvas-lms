@@ -738,6 +738,15 @@ returns the current course's term name.
 ```
 "W1 2017"
 ```
+## Canvas.term.id
+returns the current course's term numerical id.
+
+**Availability**: **  
+**Launch Parameter**: *canvas_term_id*  
+
+```
+123
+```
 ## CourseSection.sourcedId
 returns the current course sis source id
 to return the section source id use Canvas.course.sectionIds.
@@ -1146,15 +1155,20 @@ It may not hold all the sis info needed in other launch substitutions.
 420000000000042
 ```
 ## Canvas.masqueradingUser.userId
-Returns the 40 character opaque user_id for masquerading user.
-This is the pseudonym the user is actually logged in as.
-It may not hold all the sis info needed in other launch substitutions.
+Returns the opaque user_id for the masquerading user. This is the
+pseudonym the user is actually logged in as. It may not hold all the sis
+info needed in other launch substitutions.
+
+For LTI 1.3 tools, the opaque user IDs are UUIDv4 values (also used in
+the "sub" claim in LTI 1.3 launches), while for other LTI versions, the
+user ID will be the user's 40 character opaque LTI id.
 
 **Availability**: *when the user is being masqueraded*  
 
 
 ```
-"da12345678cb37ba1e522fc7c5ef086b7704eff9"
+ LTI 1.3: "8b9f8327-aa32-fa90-9ea2-2fa8ef79e0f9",
+ All Others: "da12345678cb37ba1e522fc7c5ef086b7704eff9"
 ```
 ## Canvas.xapi.url
 Returns the xapi url for the user.

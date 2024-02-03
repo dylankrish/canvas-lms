@@ -92,6 +92,7 @@ module Lti
         @context.enrollment_term.end_at
     end
     TERM_NAME_GUARD = -> { @context.is_a?(Course) && @context.enrollment_term&.name }
+    TERM_ID_GUARD = -> { @context.is_a?(Course) && @context.enrollment_term_id }
     USER_GUARD = -> { @current_user }
     SIS_USER_GUARD = -> { sis_pseudonym&.sis_user_id }
     PSEUDONYM_GUARD = -> { sis_pseudonym }
@@ -278,8 +279,9 @@ module Lti
     register_expansion "com.instructure.User.observees",
                        [],
                        lambda {
-                         observed_users = ObserverEnrollment.observed_students(@context, @current_user)
-                                                            .keys
+                         observed_users =
+                           ObserverEnrollment.observed_students(@context, @current_user)
+                                             .keys
                          if @tool.use_1_3?
                            observed_users.map { |u| u.lookup_lti_id(@context) }.join(",")
                          else
@@ -970,6 +972,17 @@ module Lti
                        TERM_NAME_GUARD,
                        default_name: "canvas_term_name"
 
+    # returns the current course's term numerical id.
+    # @example
+    #   ```
+    #   123
+    #   ```
+    register_expansion "Canvas.term.id",
+                       [],
+                       -> { @context.enrollment_term_id },
+                       TERM_ID_GUARD,
+                       default_name: "canvas_term_id"
+
     # returns the current course sis source id
     # to return the section source id use Canvas.course.sectionIds
     # @launch_parameter lis_course_section_sourcedid
@@ -1477,17 +1490,29 @@ module Lti
                        -> { @controller.logged_in_user.id },
                        MASQUERADING_GUARD
 
-    # Returns the 40 character opaque user_id for masquerading user.
-    # This is the pseudonym the user is actually logged in as.
-    # It may not hold all the sis info needed in other launch substitutions.
+    # Returns the opaque user_id for the masquerading user. This is the
+    # pseudonym the user is actually logged in as. It may not hold all the sis
+    # info needed in other launch substitutions.
+    #
+    # For LTI 1.3 tools, the opaque user IDs are UUIDv4 values (also used in
+    # the "sub" claim in LTI 1.3 launches), while for other LTI versions, the
+    # user ID will be the user's 40 character opaque LTI id.
     #
     # @example
     #   ```
-    #   "da12345678cb37ba1e522fc7c5ef086b7704eff9"
+    #    LTI 1.3: "8b9f8327-aa32-fa90-9ea2-2fa8ef79e0f9",
+    #    All Others: "da12345678cb37ba1e522fc7c5ef086b7704eff9"
     #   ```
     register_expansion "Canvas.masqueradingUser.userId",
                        [],
-                       -> { @tool.opaque_identifier_for(@controller.logged_in_user, context: @context) },
+                       lambda {
+                         u = @controller.logged_in_user
+                         if lti_1_3?
+                           u.lookup_lti_id(@context)
+                         else
+                           @tool.opaque_identifier_for(u, context: @context)
+                         end
+                       },
                        MASQUERADING_GUARD
 
     # Returns the xapi url for the user.

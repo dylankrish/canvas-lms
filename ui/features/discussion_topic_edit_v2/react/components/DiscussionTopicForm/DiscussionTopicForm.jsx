@@ -297,6 +297,8 @@ export default function DiscussionTopicForm({
   const shouldShowPodcastFeedOption =
     ENV.DISCUSSION_TOPIC?.PERMISSIONS?.CAN_MODERATE && !ENV.K5_HOMEROOM_COURSE
 
+  const canGroupDiscussion = !isEditing || currentDiscussionTopic?.canGroup || false
+
   const validateTitle = newTitle => {
     if (newTitle.length > 255) {
       setTitleValidationMessages([
@@ -855,8 +857,8 @@ export default function DiscussionTopicForm({
               invalidDateTimeMessage={I18n.t('Invalid date and time')}
               layout="columns"
               datePlaceholder={I18n.t('Select Date')}
-              dateRenderLabel=""
-              timeRenderLabel=""
+              dateRenderLabel={I18n.t('Date')}
+              timeRenderLabel={I18n.t('Time')}
             />
           )}
           {shouldShowAnnouncementOnlyOptions && (
@@ -953,11 +955,12 @@ export default function DiscussionTopicForm({
                   display="block"
                   padding="none none none large"
                   data-testid="todo-date-section"
+                  margin="small 0 0 0"
                 >
                   <DateTimeInput
                     description=""
-                    dateRenderLabel=""
-                    timeRenderLabel=""
+                    dateRenderLabel={I18n.t('Date')}
+                    timeRenderLabel={I18n.t('Time')}
                     prevMonthLabel={I18n.t('previous')}
                     nextMonthLabel={I18n.t('next')}
                     onChange={(_event, newDate) => setTodoDate(newDate)}
@@ -979,6 +982,7 @@ export default function DiscussionTopicForm({
                 setGroupCategoryId(!isGroupDiscussion ? '' : groupCategoryId)
                 setIsGroupDiscussion(!isGroupDiscussion)
               }}
+              disabled={!canGroupDiscussion}
             />
           )}
           {shouldShowGroupOptions && isGroupDiscussion && (
@@ -1000,6 +1004,7 @@ export default function DiscussionTopicForm({
                 messages={groupCategorySelectError}
                 placeholder={I18n.t('Select a group category')}
                 width={inputWidth}
+                disabled={!canGroupDiscussion}
               >
                 {groupCategories.map(({_id: id, name: label}) => (
                   <SimpleSelect.Option
@@ -1039,7 +1044,23 @@ export default function DiscussionTopicForm({
               )}
             </View>
           )}
+          {!canGroupDiscussion && isEditing && (
+            <View display="block" data-testid="group-category-not-editable">
+              <Alert variant="warning" margin="small none small none">
+                {I18n.t(
+                  'Students have already submitted to this discussion, so group settings cannot be changed.'
+                )}
+              </Alert>
+            </View>
+          )}
         </FormFieldGroup>
+        {discussionAnonymousState.includes('anonymity') && !isEditing && (
+          <View width="580px" display="block" data-testid="groups_grading_not_allowed">
+            <Alert variant="info" margin="small">
+              {I18n.t('Grading and Groups are not supported in Anonymous Discussions.')}
+            </Alert>
+          </View>
+        )}
         {shouldShowAvailabilityOptions &&
           (isGraded ? (
             <View as="div" data-testid="assignment-settings-section">
@@ -1071,8 +1092,8 @@ export default function DiscussionTopicForm({
             <FormFieldGroup description="" width={inputWidth}>
               <DateTimeInput
                 description={I18n.t('Available from')}
-                dateRenderLabel=""
-                timeRenderLabel=""
+                dateRenderLabel={I18n.t('Date')}
+                timeRenderLabel={I18n.t('Time')}
                 prevMonthLabel={I18n.t('previous')}
                 nextMonthLabel={I18n.t('next')}
                 value={availableFrom}
@@ -1086,9 +1107,9 @@ export default function DiscussionTopicForm({
               />
               <DateTimeInput
                 description={I18n.t('Until')}
-                dateRenderLabel=""
-                timeRenderLabel=""
-                prevMonthLabel={I18n.t('previous')}
+                dateRenderLabel={I18n.t('Date')}
+                timeRenderLabel={I18n.t('Time')}
+                prevMonthLabel={I18n.t('Time')}
                 nextMonthLabel={I18n.t('next')}
                 value={availableUntil}
                 onChange={(_event, newAvailableUntil) => {

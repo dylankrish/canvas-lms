@@ -121,7 +121,7 @@ class AuthenticationProvider < ActiveRecord::Base
   end
 
   def self.recognized_params
-    %i[mfa_required skip_internal_mfa].freeze
+    %i[mfa_required skip_internal_mfa otp_via_sms].freeze
   end
 
   def self.site_admin_params
@@ -218,6 +218,20 @@ class AuthenticationProvider < ActiveRecord::Base
     settings["skip_internal_mfa"] = ::Canvas::Plugin.value_to_boolean(value)
   end
 
+  # Default to true if not set, for backwards compatibility/opt-out
+  def otp_via_sms?
+    if settings.key?("otp_via_sms")
+      !!settings["otp_via_sms"]
+    else
+      true
+    end
+  end
+  alias_method :otp_via_sms, :otp_via_sms?
+
+  def otp_via_sms=(value)
+    settings["otp_via_sms"] = ::Canvas::Plugin.value_to_boolean(value)
+  end
+
   def federated_attributes_for_api
     if jit_provisioning?
       federated_attributes
@@ -299,6 +313,8 @@ class AuthenticationProvider < ActiveRecord::Base
         account_users_to_delete.each(&:destroy)
         account_users_to_activate.each(&:reactivate)
       when "sis_user_id", "integration_id"
+        next if value.empty?
+
         pseudonym[attribute] = value
       when "display_name"
         user.short_name = value

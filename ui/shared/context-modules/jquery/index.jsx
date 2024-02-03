@@ -331,6 +331,8 @@ window.modules = (function () {
               } else {
                 $context_module_item.find('.mc_objectives').remove()
               }
+
+              $context_module_item.addClass('rendered')
             })
 
             vddTooltip()
@@ -661,7 +663,7 @@ window.modules = (function () {
       if (cyoe.isReleased) {
         const fullText = I18n.t('Released by Mastery Path: %{path}', {path: cyoe.releasedLabel})
         const $pathIcon = $(
-          '<span class="pill mastery-path-icon" aria-hidden="true" data-tooltip><i class="icon-mastery-path" /></span>'
+          '<span class="pill mastery-path-icon" aria-hidden="true" data-tooltip><i class="icon-mastery-paths" /></span>'
         )
           .attr('title', fullText)
           .append(htmlEscape(cyoe.releasedLabel))
@@ -2608,6 +2610,7 @@ $(document).ready(function () {
   function parseModuleItemElement(element) {
     const pointsPossibleElem = element?.querySelector('.points_possible_display')
     const points = parseFloat(pointsPossibleElem?.textContent)
+    // eslint-disable-next-line no-restricted-globals
     return {pointsPossible: isNaN(points) ? undefined : points}
   }
 

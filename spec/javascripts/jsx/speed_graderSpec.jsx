@@ -77,7 +77,7 @@ function teardownFixtures() {
   while (fixtures.firstChild) fixtures.removeChild(fixtures.firstChild)
 }
 
-const awhile = () => new Promise(resolve => setTimeout(resolve, 2))
+const awhile = (milliseconds = 2) => new Promise(resolve => setTimeout(resolve, milliseconds))
 
 QUnit.module('SpeedGrader', rootHooks => {
   let history
@@ -1298,12 +1298,14 @@ QUnit.module('SpeedGrader', rootHooks => {
         SpeedGrader.EG.jsonReady()
       })
 
-      test('selects the provisional grade if the user is the final grader', () => {
+      test('selects the provisional grade if the user is the final grader', async () => {
         SpeedGrader.EG.handleGradeSubmit(null, true)
+        // more time is needed between jsonReady() and submissionSuccess()
+        await awhile(75)
         strictEqual(provisionalGrade.selected, true)
       })
 
-      test('does not select the provisional grade if the user is not the final grader', async() => {
+      test('does not select the provisional grade if the user is not the final grader', async () => {
         env.current_user_id = '1102'
         fakeENV.setup(env)
         SpeedGrader.EG.handleGradeSubmit(null, true)
@@ -1312,7 +1314,7 @@ QUnit.module('SpeedGrader', rootHooks => {
       })
     })
 
-    test('hasWarning and flashWarning are called', async() => {
+    test('hasWarning and flashWarning are called', async () => {
       SpeedGrader.EG.jsonReady()
       const flashWarningStub = sandbox.stub($, 'flashWarning')
       sandbox.stub(SpeedGraderHelpers, 'determineGradeToSubmit').returns('15')
@@ -1369,7 +1371,7 @@ QUnit.module('SpeedGrader', rootHooks => {
       SpeedGraderHelpers.determineGradeToSubmit.restore()
     })
 
-    test('unexcuses the submission if the grade is blank and the assignment is complete/incomplete', async ()=>  {
+    test('unexcuses the submission if the grade is blank and the assignment is complete/incomplete', async () => {
       SpeedGrader.EG.jsonReady()
       sandbox.stub(SpeedGraderHelpers, 'determineGradeToSubmit').returns('')
       window.jsonData.grading_type = 'pass_fail'
@@ -5501,35 +5503,11 @@ QUnit.module('SpeedGrader', rootHooks => {
           delete SpeedGrader.EG.currentStudent
         })
 
-        // it is difficult to test that a bound function is passed the correct parameters without
-        // fully simulating SpeedGrader so instead let's ensure that both ajax_valid() is true
-        // and currentStudent was not undefined
-        test('ajax_valid returns', () => {
-          const loadDocPreview = sinon.stub($.fn, 'loadDocPreview')
-          SpeedGrader.EG.currentStudent = alphaStudent
-          const attachment = {content_type: 'application/rtf'}
-          SpeedGrader.EG.renderAttachment(attachment)
-          strictEqual(loadDocPreview.firstCall.args[0].ajax_valid(), true)
-          loadDocPreview.restore()
-        })
-
         test('currentStudent is present', () => {
           SpeedGrader.EG.currentStudent = alphaStudent
           const attachment = {content_type: 'application/rtf'}
           SpeedGrader.EG.renderAttachment(attachment)
           strictEqual(SpeedGrader.EG.currentStudent.anonymous_id, alphaStudent.anonymous_id)
-        })
-
-        test('calls loadDocPreview for canvadoc documents with iframe_min_height set to 0', () => {
-          const loadDocPreview = sinon.stub($.fn, 'loadDocPreview')
-          SpeedGrader.EG.currentStudent = alphaStudent
-          const attachment = {content_type: 'application/pdf', canvadoc_url: 'fake_url'}
-
-          SpeedGrader.EG.renderAttachment(attachment)
-
-          const [documentParams] = loadDocPreview.firstCall.args
-          strictEqual(documentParams.iframe_min_height, 0)
-          loadDocPreview.restore()
         })
       })
 

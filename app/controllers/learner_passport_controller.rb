@@ -590,7 +590,6 @@ class LearnerPassportController < ApplicationController
 
   def index
     js_env[:FEATURES][:learner_passport] = @domain_root_account.feature_enabled?(:learner_passport)
-    js_env[:FEATURES][:learner_passport_r2] = @domain_root_account.feature_enabled?(:learner_passport_r2)
 
     # hide the breadcrumbs application.html.erb renders
     render html: "<style>.ic-app-nav-toggle-and-crumbs.no-print {display: none;}</style>".html_safe,
@@ -853,7 +852,11 @@ class LearnerPassportController < ApplicationController
     pathway[:completion_award] = learner_passport_pathway_achievements.find { |a| a[:id] == pathway[:completion_award] } if pathway[:completion_award].present?
     pathway[:learner_groups] = learner_passport_learner_groups.select { |lg| pathway[:learner_groups].include?(lg[:id]) } if pathway[:learner_groups].count > 0
     pathway[:milestones] = pathway[:milestones].each do |milestone|
-      milestone[:completion_award] = learner_passport_pathway_achievements.find { |a| a[:id] == milestone[:completion_award] } if milestone[:completion_award].present?
+      next unless milestone.with_indifferent_access[:completion_award].present?
+
+      milestone[:completion_award] = learner_passport_pathway_achievements.find do |a|
+        a[:id] == milestone.with_indifferent_access[:completion_award]
+      end
     end
     render json: pathway
   end
