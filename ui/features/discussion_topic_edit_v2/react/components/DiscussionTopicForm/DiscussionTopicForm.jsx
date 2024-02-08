@@ -48,6 +48,7 @@ import {AttachmentDisplay} from '@canvas/discussions/react/components/Attachment
 import {responsiveQuerySizes} from '@canvas/discussions/react/utils'
 import {UsageRightsContainer} from '../../containers/usageRights/UsageRightsContainer'
 import {AlertManagerContext} from '@canvas/alerts/react/AlertManager'
+import {ScreenReaderContent} from '@instructure/ui-a11y-content'
 
 import {
   addNewGroupCategoryToCache,
@@ -72,10 +73,10 @@ export default function DiscussionTopicForm({
   const rceRef = useRef()
   const {setOnFailure} = useContext(AlertManagerContext)
 
-  const isAnnouncement = ENV.DISCUSSION_TOPIC?.ATTRIBUTES?.is_announcement ?? false
+  const isAnnouncement = ENV?.DISCUSSION_TOPIC?.ATTRIBUTES?.is_announcement ?? false
   const isUnpublishedAnnouncement =
     isAnnouncement && !ENV.DISCUSSION_TOPIC?.ATTRIBUTES.course_published
-  const isEditingAnnouncement = isAnnouncement && ENV.DISCUSSION_TOPIC?.ATTRIBUTES.id
+  const isEditingAnnouncement = isAnnouncement && ENV?.DISCUSSION_TOPIC?.ATTRIBUTES.id
   const published = currentDiscussionTopic?.published ?? false
 
   const announcementAlertProps = () => {
@@ -554,7 +555,7 @@ export default function DiscussionTopicForm({
       ? null
       : {
           automaticReviews: peerReviewAssignment === 'automatically',
-          count: peerReviewsPerStudent,
+          count: !isEditing && peerReviewAssignment === 'manually' ? 0 : peerReviewsPerStudent,
           enabled: true,
           dueAt: peerReviewDueDate || null,
           intraReviews: intraGroupPeerReviews,
@@ -583,10 +584,7 @@ export default function DiscussionTopicForm({
       dueAt: everyoneOverride.dueDate || null,
       lockAt: everyoneOverride.availableUntil || null,
       unlockAt: everyoneOverride.availableFrom || null,
-      onlyVisibleToOverrides: assignedInfoList.every(
-        info =>
-          info.assignedList.length === 1 && info.assignedList[0] === defaultEveryoneOption.assetCode
-      ),
+      onlyVisibleToOverrides: !Object.keys(everyoneOverride).length,
       gradingStandardId: gradingSchemeId || null,
     }
     // Additional properties for creation of a graded assignment
@@ -595,7 +593,6 @@ export default function DiscussionTopicForm({
         ...payload,
         courseId: ENV.context_id,
         name: title,
-        groupCategoryId: isGroupDiscussion ? groupCategoryId : null,
       }
     }
     return payload
@@ -703,6 +700,13 @@ export default function DiscussionTopicForm({
 
   return (
     <>
+      <ScreenReaderContent>
+        {title ? (
+          <h1>{title}</h1>
+        ) : (
+          <h1>{isAnnouncement ? I18n.t('New Announcement') : I18n.t('New Discussion')}</h1>
+        )}
+      </ScreenReaderContent>
       <FormFieldGroup description="" rowSpacing="small">
         {(isUnpublishedAnnouncement || isEditingAnnouncement) && (
           <Alert variant={announcementAlertProps().variant}>{announcementAlertProps().text}</Alert>
