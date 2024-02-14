@@ -16,14 +16,22 @@
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-import type {RubricCriterion} from '@canvas/rubrics/react/types/rubric'
+import React from 'react'
+import {Heading} from '@instructure/ui-heading'
+import {Flex} from '@instructure/ui-flex'
 
-export type RubricFormProps = {
-  id?: string
+type Props = {
   title: string
-  hidePoints: boolean
-  accountId?: string
-  courseId?: string
-  criteria: RubricCriterion[]
-  pointsPossible: number
 }
+
+const EditCalendarEventHeader = ({title}: Props) => {
+  return (
+    <Flex margin="0 0 medium">
+      <Flex.Item>
+        <Heading level="h1">{title}</Heading>
+      </Flex.Item>
+    </Flex>
+  )
+}
+
+export default EditCalendarEventHeader
