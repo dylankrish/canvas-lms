@@ -40,7 +40,7 @@ import '@canvas/util/jquery/fixDialogButtons'
 import '@canvas/media-comments/jquery/mediaCommentThumbnail'
 import 'date-js'
 import 'jquery-tinypubsub' /* /\.publish\(/ */
-import 'jqueryui-unpatched/resizable'
+import 'jqueryui/resizable'
 import 'jqueryui/sortable'
 import 'jqueryui/tabs'
 import {captureException} from '@sentry/browser'
@@ -300,7 +300,7 @@ function openDialogsWhenClicked() {
     $('#' + $(this).attr('aria-controls')).ifExists($dialog => {
       event.preventDefault()
       // if the linked dialog has not already been initialized, initialize it (passing in opts)
-      if (!$dialog.data('dialog')) {
+      if (!$dialog.data('ui-dialog')) {
         $dialog.dialog(
           $.extend(
             {

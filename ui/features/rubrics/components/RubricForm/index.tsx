@@ -54,6 +54,7 @@ const defaultRubricForm: RubricFormProps = {
   hidePoints: false,
   criteria: [],
   pointsPossible: 0,
+  buttonDisplay: 'numeric',
 }
 
 const translateRubricData = (fields: RubricQueryResponse): RubricFormProps => {
@@ -63,6 +64,7 @@ const translateRubricData = (fields: RubricQueryResponse): RubricFormProps => {
     hidePoints: fields.hidePoints ?? false,
     criteria: fields.criteria ?? [],
     pointsPossible: fields.pointsPossible ?? 0,
+    buttonDisplay: fields.buttonDisplay ?? 'numeric',
   }
 }
 
@@ -118,6 +120,19 @@ export const RubricForm = () => {
   const openCriterionModal = (criterion?: RubricCriterion) => {
     setSelectedCriterion(criterion)
     setIsCriterionModalOpen(true)
+  }
+
+  const duplicateCriterion = (criterion: RubricCriterion) => {
+    const newCriterion = {...criterion, id: ``}
+    setSelectedCriterion(newCriterion)
+    setIsCriterionModalOpen(true)
+  }
+
+  const deleteCriterion = (criterion: RubricCriterion) => {
+    const criteria = rubricForm.criteria.filter(c => c.id !== criterion.id)
+    const newPointsPossible = criteria.reduce((acc, c) => acc + c.points, 0)
+    setRubricFormField('pointsPossible', newPointsPossible)
+    setRubricFormField('criteria', criteria)
   }
 
   const handleSaveCriterion = (updatedCriteria: RubricCriterion) => {
@@ -210,7 +225,12 @@ export const RubricForm = () => {
                 <Text weight="bold">{I18n.t('Button Display')}:</Text>
               </Flex.Item>
               <Flex.Item margin="0 0 0 small">
-                <RubricButtonDisplaySelect />
+                <RubricButtonDisplaySelect
+                  button_display={rubricForm.buttonDisplay}
+                  onChangeButtonDisplay={buttonDisplay =>
+                    setRubricFormField('buttonDisplay', buttonDisplay)
+                  }
+                />
               </Flex.Item>
             </Flex>
           </Flex.Item>
@@ -252,6 +272,8 @@ export const RubricForm = () => {
               key={criterion.id}
               criterion={criterion}
               rowIndex={index + 1}
+              onDeleteCriterion={() => deleteCriterion(criterion)}
+              onDuplicateCriterion={() => duplicateCriterion(criterion)}
               onEditCriterion={() => openCriterionModal(criterion)}
             />
           ))}
@@ -371,12 +393,25 @@ const RubricRatingOrderSelect = () => {
   )
 }
 
-const RubricButtonDisplaySelect = () => {
+type RubricButtonDisplaySelectProps = {
+  button_display: string
+  onChangeButtonDisplay: (button_display: string) => void
+}
+const RubricButtonDisplaySelect = ({
+  button_display,
+  onChangeButtonDisplay,
+}: RubricButtonDisplaySelectProps) => {
+  const onChange = (value: string) => {
+    onChangeButtonDisplay(value)
+  }
+
   return (
     <SimpleSelect
       renderLabel={<ScreenReaderContent>{I18n.t('Rubric Button Display')}</ScreenReaderContent>}
       size="small"
       width="8.125rem"
+      value={button_display}
+      onChange={(e, {value}) => onChange(value !== undefined ? value.toString() : '')}
     >
       <SimpleSelectOption id="numericOption" value="numeric">
         {I18n.t('Numeric')}

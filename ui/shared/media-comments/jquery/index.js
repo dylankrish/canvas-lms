@@ -26,7 +26,7 @@ import '@canvas/jquery/jquery.ajaxJSON'
 import 'jqueryui/dialog'
 import '@canvas/jquery/jquery.instructure_misc_helpers' /* /\$\.h/ */
 import '@canvas/jquery/jquery.instructure_misc_plugins' /* .dim, /\.log\(/ */
-import 'jqueryui-unpatched/progressbar'
+import 'jqueryui/progressbar'
 import {each} from 'lodash'
 
 const I18n = useI18nScope('media_comments_publicjs')
@@ -618,6 +618,7 @@ $.mediaComment.init = function (mediaType, opts) {
           width: 470,
           height: 300,
           modal: true,
+          zIndex: 1000,
         })
 
         // **********************************************************************
