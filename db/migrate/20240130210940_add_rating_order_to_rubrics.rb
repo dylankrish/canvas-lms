@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 #
-# Copyright (C) 2011 - present Instructure, Inc.
+# Copyright (C) 2024 - present Instructure, Inc.
 #
 # This file is part of Canvas.
 #
@@ -16,21 +16,11 @@
 #
 # You should have received a copy of the GNU Affero General Public License along
 # with this program. If not, see <http://www.gnu.org/licenses/>.
-#
+class AddRatingOrderToRubrics < ActiveRecord::Migration[7.0]
+  tag :predeploy
 
-module UserNotesHelper
-  def pageless(total_pages, url = nil)
-    js_env user_note_list_pageless_options: {
-      totalPages: total_pages,
-      url:,
-      loaderHtml: <<~HTML
-        <div id="pageless-loader" style="display:none;text-align:center;width:100%;">
-          <div class="msg" style="color: #666;font-size:2em">
-            #{t("#user_notes.messages.loading_more", "Loading more entries")}
-          </div>
-          <img src="/images/load.gif" title="load" alt="#{t("#user_notes.tooltips.loading_more", "loading more results")}" style="margin: 10px auto" />
-        </div>
-      HTML
-    }
+  def change
+    add_column :rubrics, :rating_order, :string, default: "descending", null: false
+    add_check_constraint :rubrics, "rating_order IN ('descending', 'ascending')", name: "check_rating_order"
   end
 end
