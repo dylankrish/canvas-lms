@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 - present Instructure, Inc.
+ * Copyright (C) 2024 - present Instructure, Inc.
  *
  * This file is part of Canvas.
  *
@@ -15,8 +15,23 @@
  * You should have received a copy of the GNU Affero General Public License along
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
-module.exports = {
-  presets: [
-    ['@babel/preset-env', { modules: 'commonjs' }],
-  ]
-}
+
+import React from 'react'
+import {render} from '@testing-library/react'
+import ExportCSVButton from '../ExportCSVButton'
+
+describe('ExportCSVButton', () => {
+  const defaultProps = (props = {}) => {
+    return {
+      courseId: "1",
+      gradebookFilters: [],
+      ...props
+    }
+  }
+
+  it('renders the export button correctly on the page', () => {
+    const {getByTestId} = render(<ExportCSVButton {...defaultProps()} />)
+    expect(getByTestId('export-button')).toBeInTheDocument()
+    expect(getByTestId('csv-link')).toBeInTheDocument()
+  })
+})
