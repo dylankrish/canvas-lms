@@ -2619,6 +2619,10 @@ CanvasRails::Application.routes.draw do
       get "courses/:course_id/smartsearch", action: :search, as: :course_smart_search_query
       # TODO: add account level search
     end
+
+    scope(controller: "user_notes") do
+      put "users/:user_id/user_notes/suppress_deprecation_notice", action: :suppress_deprecation_notice
+    end
   end
 
   # this is not a "normal" api endpoint in the sense that it is not documented or
@@ -2665,6 +2669,8 @@ CanvasRails::Application.routes.draw do
   get "login/oauth2/jwks" => "security#jwks", :as => :oauth2_jwks
 
   get "post_message_forwarding", controller: "lti/platform_storage", action: :post_message_forwarding, as: :lti_post_message_forwarding
+
+  get "lti/tool_default_icon" => "lti/tool_default_icon#show"
 
   ApiRouteSet.draw(self, "/api/lti/v1") do
     post "tools/:tool_id/grade_passback", controller: :lti_api, action: :grade_passback, as: "lti_grade_passback_api"
