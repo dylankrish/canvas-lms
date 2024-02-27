@@ -893,6 +893,7 @@ describe "threaded discussions" do
       driver.switch_to.alert.accept
       wait_for_ajax_requests
       entry.reload
+      expect(fj("span:contains('Deleted by teacher')")).to be_present
       expect(entry.workflow_state).to eq "deleted"
     end
 
@@ -1037,6 +1038,18 @@ describe "threaded discussions" do
         wait_for_ajaximations
         expect(f("body")).to contain_jqcss("div:contains('students can only see this if they reply')")
         expect(f("body")).to contain_jqcss("div:contains('student here')")
+      end
+    end
+
+    context "locked for comments" do
+      it "displays message for students in a discussion that is closed for comments" do
+        @topic.lock!
+        @topic.message = "This is visible"
+        @topic.save!
+        user_session(@student)
+
+        get "/courses/#{@course.id}/discussion_topics/#{@topic.id}"
+        expect(fj("span:contains('#{@topic.message}')")).to be_present
       end
     end
   end
