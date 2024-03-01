@@ -43,7 +43,7 @@ gem "bigdecimal", "~> 3.1"
 gem "browser", "~> 5.3", require: false
 gem "business_time", "0.13.0"
 gem "canvas_connect", "0.3.16"
-gem "canvas_link_migrator", "~> 1.0.5"
+gem "canvas_link_migrator", "~> 1.0.6"
 gem "canvas_webex", "0.18.2"
 gem "crocodoc-ruby", "0.0.1", require: false
 gem "code_ownership", "~> 1.33"
@@ -88,7 +88,11 @@ gem "prawn-emoji", "~> 5.3", require: false
 gem "prawn-rails", "~> 1.4"
   gem "matrix", "0.4.2" # Used to be a default gem but is no more, but prawn depends on it implicitly
 gem "prosopite", "~> 1.3"
-gem "rack-brotli", "~> 1.2"
+if $canvas_rails == "7.1"
+  gem "rack3-brotli", "~> 1.0", require: "rack/brotli"
+else
+  gem "rack-brotli", "~> 1.2"
+end
 gem "rails-observers", "0.1.5"
 gem "ratom-nokogiri", "0.10.11", require: false
   gem "nokogiri", "1.15.5" # see https://github.com/sparklemotion/nokogiri/issues/3102

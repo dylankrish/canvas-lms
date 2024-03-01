@@ -474,6 +474,7 @@ CanvasRails::Application.routes.draw do
     resources :content_exports, only: %i[create index destroy show]
     get "offline_web_exports" => "courses#offline_web_exports"
     post "start_offline_web_export" => "courses#start_offline_web_export"
+    get "start_offline_web_export" => "courses#start_offline_web_export"
     get "modules/items/assignment_info" => "context_modules#content_tag_assignment_data", :as => :context_modules_assignment_info
     get "modules/items/master_course_info" => "context_modules#content_tag_master_course_data", :as => :context_modules_master_course_info
     get "modules/items/:id" => "context_modules#item_redirect", :as => :context_modules_item_redirect
@@ -1648,6 +1649,9 @@ CanvasRails::Application.routes.draw do
         get "courses/:course_id/assignments/:assignment_id/date_details", action: :show, as: "course_assignment_date_details"
         get "courses/:course_id/quizzes/:quiz_id/date_details", action: :show, as: "course_quizzes_quiz_date_details"
         get "courses/:course_id/modules/:context_module_id/date_details", action: :show, as: "course_context_module_date_details"
+        get "courses/:course_id/discussion_topics/:discussion_topic_id/date_details", action: :show, as: "course_discussion_topic_date_details"
+        get "courses/:course_id/pages/:page_id/date_details", action: :show, as: "course_wiki_page_date_details"
+        get "courses/:course_id/files/:attachment_id/date_details", action: :show, as: "course_attachment_date_details"
         put "courses/:course_id/assignments/:assignment_id/date_details", action: :update
         put "courses/:course_id/quizzes/:quiz_id/date_details", action: :update
       end

@@ -442,7 +442,7 @@ GEM
     canvas_connect (0.3.16)
       adobe_connect (~> 1.0.0)
       rake (>= 0.9.6)
-    canvas_link_migrator (1.0.5)
+    canvas_link_migrator (1.0.6)
       activesupport
       addressable
       nokogiri
@@ -841,7 +841,7 @@ GEM
     pygments.rb (2.4.1)
     raabro (1.4.0)
     racc (1.7.3)
-    rack (2.2.8)
+    rack (2.2.8.1)
     rack-brotli (1.2.0)
       brotli (>= 0.1.7)
       rack (>= 1.4)
@@ -1004,7 +1004,7 @@ GEM
     rubycas-client (2.3.9)
       activesupport
     rubyzip (2.3.2)
-    saml2 (3.1.5)
+    saml2 (3.1.6)
       activesupport (>= 3.2, < 7.2)
       nokogiri (>= 1.5.8, < 2.0)
       nokogiri-xmlsec-instructure (~> 0.9, >= 0.9.5)
@@ -1194,7 +1194,7 @@ DEPENDENCIES
   canvas_ext!
   canvas_http!
   canvas_kaltura!
-  canvas_link_migrator (~> 1.0.5)
+  canvas_link_migrator (~> 1.0.6)
   canvas_mimetype_fu!
   canvas_panda_pub!
   canvas_partman!
