@@ -1595,6 +1595,7 @@ CanvasRails::Application.routes.draw do
 
       get "users/:id", action: :api_show
       put "users/:id", action: :update
+      delete "users/mobile_sessions", action: :expire_mobile_sessions
       delete "users/:id", action: :destroy, as: "destroy_user"
       delete "users/:id/sessions", action: :terminate_sessions
 
@@ -1633,8 +1634,6 @@ CanvasRails::Application.routes.draw do
 
       post "users/:id/clear_cache", action: :clear_cache, as: "clear_cache"
 
-      delete "users/mobile_sessions", controller: "users", action: :expire_mobile_sessions
-
       scope(controller: :user_observees) do
         get    "users/:user_id/observers", action: :observers, as: "user_observers"
         get    "users/:user_id/observees", action: :index, as: "user_observees"
@@ -1646,14 +1645,17 @@ CanvasRails::Application.routes.draw do
       end
 
       scope(controller: :learning_object_dates) do
+        get "courses/:course_id/modules/:context_module_id/date_details", action: :show, as: "course_context_module_date_details"
         get "courses/:course_id/assignments/:assignment_id/date_details", action: :show, as: "course_assignment_date_details"
         get "courses/:course_id/quizzes/:quiz_id/date_details", action: :show, as: "course_quizzes_quiz_date_details"
-        get "courses/:course_id/modules/:context_module_id/date_details", action: :show, as: "course_context_module_date_details"
         get "courses/:course_id/discussion_topics/:discussion_topic_id/date_details", action: :show, as: "course_discussion_topic_date_details"
         get "courses/:course_id/pages/:page_id/date_details", action: :show, as: "course_wiki_page_date_details"
         get "courses/:course_id/files/:attachment_id/date_details", action: :show, as: "course_attachment_date_details"
         put "courses/:course_id/assignments/:assignment_id/date_details", action: :update
         put "courses/:course_id/quizzes/:quiz_id/date_details", action: :update
+        put "courses/:course_id/discussion_topics/:discussion_topic_id/date_details", action: :update
+        put "courses/:course_id/pages/:page_id/date_details", action: :update
+        put "courses/:course_id/files/:attachment_id/date_details", action: :update
       end
 
       scope(controller: :login) do

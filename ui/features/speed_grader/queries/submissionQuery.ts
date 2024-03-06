@@ -39,8 +39,10 @@ const SUBMISSION_QUERY = gql`
           score
           excused
           id
+          _id
           postedAt
           previewUrl
+          wordCount
           commentsConnection {
             nodes {
               id
@@ -58,6 +60,8 @@ const SUBMISSION_QUERY = gql`
       name
       gradingType
       pointsPossible
+      late
+      submissionStatus
     }
   }
 `
