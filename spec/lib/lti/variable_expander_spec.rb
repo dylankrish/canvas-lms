@@ -65,6 +65,7 @@ module Lti
       allow(request_mock).to receive_messages(url: "https://localhost", host_with_port: "https://localhost", host: "/my/url", scheme: "https", parameters: {
         com_instructure_course_accept_canvas_resource_types: ["page", "module"],
         com_instructure_course_canvas_resource_type: "page",
+        com_instructure_course_canvas_resource_id: "112233",
         com_instructure_course_allow_canvas_resource_selection: "true",
         com_instructure_course_available_canvas_resources: available_canvas_resources
       }.with_indifferent_access)
@@ -897,6 +898,10 @@ module Lti
         expect(expand!("$com.instructure.Course.canvas_resource_type")).to eq "page"
       end
 
+      it "has substitution for $com.instructure.Course.canvas_resource_id" do
+        expect(expand!("$com.instructure.Course.canvas_resource_id")).to eq "112233"
+      end
+
       it "has substitution for $com.instructure.Course.allow_canvas_resource_selection" do
         expect(expand!("$com.instructure.Course.allow_canvas_resource_selection")).to eq "true"
       end
@@ -1171,6 +1176,20 @@ module Lti
             create_enrollment(course, user, { section: course.course_sections.find_by(name: "section two") })
             expect(JSON.parse(expand!("$com.instructure.User.sectionNames"))).to \
               match_array ["section one", "section two"]
+          end
+
+          it "orders the names by section id" do
+            add_section("section three", { course: })
+            s1 = course.course_sections.find_by(name: "section one")
+            s2 = course.course_sections.find_by(name: "section two")
+            s3 = course.course_sections.find_by(name: "section three")
+            create_enrollment(course, user, { section: s3 }) # Create the enrollment "out of order" based on section id
+            create_enrollment(course, user, { section: s2 })
+            exp_hash = { test: "$com.instructure.User.sectionNames" }
+            variable_expander.expand_variables!(exp_hash)
+            expect(s1.id).to be < s2.id
+            expect(s2.id).to be < s3.id
+            expect(JSON.parse(exp_hash[:test])).to eq ["section one", "section two", "section three"]
           end
         end
 

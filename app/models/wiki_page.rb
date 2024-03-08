@@ -108,7 +108,7 @@ class WikiPage < ActiveRecord::Base
 
   def should_generate_embeddings?
     return false if deleted?
-    return false unless OpenAi.smart_search_available?(root_account)
+    return false unless OpenAi.smart_search_available?(context)
 
     saved_change_to_body? ||
       saved_change_to_title? ||
@@ -123,8 +123,8 @@ class WikiPage < ActiveRecord::Base
       while remaining_text
         # Find the last space before the max length
         last_space = remaining_text.rindex(/\b/, max_character_length)
-        if last_space.nil?
-          # No space found, just split at max length
+        if last_space.nil? || last_space < max_character_length / 2
+          # No space found, or no space found in a reasonable distance, so just split at max length
           last_space = max_character_length
         end
         yield title + "\n" + remaining_text[0..last_space]

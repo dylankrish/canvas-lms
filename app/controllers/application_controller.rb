@@ -352,7 +352,6 @@ class ApplicationController < ActionController::Base
   JS_ENV_SITE_ADMIN_FEATURES = %i[
     featured_help_links
     account_level_blackout_dates
-    deleted_user_tools
     render_both_to_do_lists
     course_paces_redesign
     course_paces_for_students
@@ -387,6 +386,7 @@ class ApplicationController < ActionController::Base
     react_discussions_post
     instui_nav
     enhanced_developer_keys_tables
+    lti_registrations_discover_page
   ].freeze
   JS_ENV_BRAND_ACCOUNT_FEATURES = [
     :embedded_release_notes

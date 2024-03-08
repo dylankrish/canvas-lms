@@ -28,6 +28,7 @@ const SUBMISSION_QUERY = gql`
         filter: {includeUnsubmitted: true, userId: $userId, applyGradebookEnrollmentFilters: true}
       ) {
         nodes {
+          _id
           id
           cachedDueDate
           gradingStatus
@@ -43,6 +44,8 @@ const SUBMISSION_QUERY = gql`
           postedAt
           previewUrl
           wordCount
+          late
+          submissionStatus
           commentsConnection {
             nodes {
               id
@@ -60,8 +63,6 @@ const SUBMISSION_QUERY = gql`
       name
       gradingType
       pointsPossible
-      late
-      submissionStatus
     }
   }
 `

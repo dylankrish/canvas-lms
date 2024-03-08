@@ -292,7 +292,8 @@ module Lti
                        default_name: "com_instructure_user_observees"
 
     # Returns an array of the section names in a JSON-escaped format that the user is enrolled in, if the
-    # context of the tool launch is within a course.
+    # context of the tool launch is within a course. The names are sorted by the course_section_id, so that
+    # they are useful in conjunction with the Canvas.course.sectionIds substitution.
     #
     # @example
     #   ```
@@ -300,7 +301,7 @@ module Lti
     #   ```
     register_expansion "com.instructure.User.sectionNames",
                        [],
-                       -> { @context.enrollments.active.joins(:course_section).where(user_id: @current_user.id).pluck(:name)&.to_json },
+                       -> { @context.enrollments.active.joins(:course_section).where(user_id: @current_user.id).order(:course_section_id).pluck(:name)&.to_json },
                        ENROLLMENT_GUARD,
                        default_name: "com_instructure_user_section_names"
 
@@ -1989,6 +1990,18 @@ module Lti
     register_expansion "com.instructure.Course.canvas_resource_type",
                        [],
                        -> { @request.parameters["com_instructure_course_canvas_resource_type"] }
+
+    # Returns the target resource id for the current page, forwarded from the request. Only functional when
+    # `com_instructure_course_canvas_resource_type` is included as a query param. Currently, this is not
+    # supported generally, and is only implemented for specific use cases.
+    #
+    # @example
+    #   ```
+    #   123123
+    #   ```
+    register_expansion "com.instructure.Course.canvas_resource_id",
+                       [],
+                       -> { @request.parameters["com_instructure_course_canvas_resource_id"] }
 
     # Returns whether a content can be imported into a specific group on the page, forwarded from the request.
     # True for Modules page and Assignment Groups page. False for other content index pages.
