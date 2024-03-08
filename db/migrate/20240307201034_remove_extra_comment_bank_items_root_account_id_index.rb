@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
-# Copyright (C) 2021 - present Instructure, Inc.
+#
+# Copyright (C) 2024 - present Instructure, Inc.
 #
 # This file is part of Canvas.
 #
@@ -15,11 +16,12 @@
 #
 # You should have received a copy of the GNU Affero General Public License along
 # with this program. If not, see <http://www.gnu.org/licenses/>.
+#
 
-class EnsureDummyEnrollmentTerm < ActiveRecord::Migration[6.0]
-  tag :predeploy
+class RemoveExtraCommentBankItemsRootAccountIdIndex < ActiveRecord::Migration[7.0]
+  tag :postdeploy
 
-  def up
-    EnrollmentTerm.ensure_dummy_enrollment_term
+  def change
+    remove_index :comment_bank_items, :root_account_id
   end
 end
