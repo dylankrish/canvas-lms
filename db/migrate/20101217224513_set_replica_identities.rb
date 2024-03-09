@@ -20,10 +20,6 @@
 class SetReplicaIdentities < ActiveRecord::Migration[7.0]
   tag :predeploy
 
-  def set_replica_identity(table, identity = "index_#{table}_replica_identity")
-    super
-  end
-
   def up
     return if connection.index_exists?(:content_tags, replica_identity: true)
 
@@ -40,9 +36,11 @@ class SetReplicaIdentities < ActiveRecord::Migration[7.0]
     set_replica_identity :course_paces
     set_replica_identity :course_sections
     set_replica_identity :courses
+    set_replica_identity :custom_grade_statuses
     set_replica_identity :developer_key_account_bindings
     set_replica_identity :developer_keys
     set_replica_identity :discussion_entries
+    set_replica_identity :discussion_entry_versions
     set_replica_identity :discussion_entry_participants
     set_replica_identity :discussion_topic_participants
     set_replica_identity :discussion_topics
@@ -55,6 +53,7 @@ class SetReplicaIdentities < ActiveRecord::Migration[7.0]
     set_replica_identity :group_categories
     set_replica_identity :group_memberships
     set_replica_identity :groups
+    set_replica_identity :lti_ims_registrations
     set_replica_identity :lti_line_items
     set_replica_identity :lti_resource_links
     set_replica_identity :lti_results
@@ -66,11 +65,14 @@ class SetReplicaIdentities < ActiveRecord::Migration[7.0]
     set_replica_identity :pseudonyms
     set_replica_identity :role_overrides
     set_replica_identity :roles
+    set_replica_identity :standard_grade_statuses
     set_replica_identity :user_account_associations
+    set_replica_identity :user_lmgb_outcome_orderings
     set_replica_identity :user_notes
     set_replica_identity :users
     set_replica_identity :web_conference_participants
     set_replica_identity :web_conferences
+    set_replica_identity :wiki_page_lookups
   end
 
   def down

@@ -255,8 +255,8 @@ module PostgreSQLAdapterExtensions
     super
   end
 
-  def add_replica_identity_index(table, column = :root_account_id, primary_key: :id, **kwargs)
-    add_index table, [column, primary_key], unique: true, name: "index_#{table}_replica_identity", **kwargs
+  def set_replica_identity(table, identity = "index_#{table}_replica_identity")
+    super
   end
 
   def add_column(table_name, column_name, type, if_not_exists: false, **options)

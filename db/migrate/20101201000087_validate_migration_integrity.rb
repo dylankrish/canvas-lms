@@ -27,10 +27,11 @@
 # bump the version in the filename of this migration so it runs again.
 class ValidateMigrationIntegrity < ActiveRecord::Migration[4.2]
   tag :predeploy
+  disable_ddl_transaction!
 
   def self.up
     initial_migration_version = "20101210192618"
-    last_squashed_migration_version = "20220629220426"
+    last_squashed_migration_version = "20230921192335"
 
     versions = if $canvas_rails == "7.1"
                  ActiveRecord::SchemaMigration.new(ActiveRecord::Base.connection).versions

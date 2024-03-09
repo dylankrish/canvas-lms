@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU Affero General Public License along
 # with this program. If not, see <http://www.gnu.org/licenses/>.
 
-module OpenAi
+module SmartSearch
   class << self
     def api_key
       Rails.application.credentials.dig(:smart_search, :openai_api_token)
@@ -62,11 +62,6 @@ module OpenAi
       JSON.parse(response.body)["choices"][0]["text"].strip
     end
 
-    def with_pgvector(&)
-      vector_schema = ActiveRecord::Base.connection.extension("vector").schema
-      ActiveRecord::Base.connection.add_schema_to_search_path(vector_schema, &)
-    end
-
     def index_account(root_account)
       # by default, index all courses updated in the last year
       date_cutoff = Setting.get("smart_search_index_days_ago", "365").to_i.days.ago
@@ -80,7 +75,7 @@ module OpenAi
     def index_course(course)
       # index non-deleted pages (that have not already been indexed)
       course.wiki_pages.not_deleted
-            .where.missing(:wiki_page_embeddings)
+            .where.missing(:embeddings)
             .find_each do |page|
         page.generate_embeddings(synchronous: true)
       end
