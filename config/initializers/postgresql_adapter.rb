@@ -286,12 +286,6 @@ module PostgreSQLAdapterExtensions
 
     ["UPDATE", "DELETE"].each do |operation|
       trigger_name = "guard_excessive_#{operation.downcase}s"
-      already_installed_sql = <<~SQL.squish
-        SELECT count(*) FROM pg_trigger
-          WHERE tgrelid = '#{quote_table_name(table_name)}'::regclass
-            AND tgname = '#{trigger_name}'
-      SQL
-      next if select_value(already_installed_sql).to_i.positive?
 
       execute(<<~SQL.squish)
         CREATE TRIGGER #{trigger_name}
@@ -464,6 +458,8 @@ module SchemaCreationExtensions
     sql << " REFERENCES #{quote_table_name(o.to_table)} (#{quote_column_name(o.primary_key)})"
     sql << " #{action_sql("DELETE", o.on_delete)}" if o.on_delete
     sql << " #{action_sql("UPDATE", o.on_update)}" if o.on_update
+    sql << " DEFERRABLE INITIALLY #{o.deferrable.to_s.upcase}" if o.deferrable
+
     sql
   end
 

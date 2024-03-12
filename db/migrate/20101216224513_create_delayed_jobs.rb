@@ -42,50 +42,40 @@ class CreateDelayedJobs < ActiveRecord::Migration[7.0]
       # Set when all retries have failed
       t.timestamp :failed_at
       # Who is working on this object (if locked)
-      t.string :locked_by, limit: 255
+      t.string :locked_by, limit: 255, index: { where: "locked_by IS NOT NULL" }
 
       t.timestamps precision: nil
 
-      t.string :tag, limit: 255
+      t.string :tag, limit: 255, index: true
       t.integer :max_attempts
       t.string :strand, limit: 255
       t.boolean :next_in_strand, default: true, null: false
-      t.bigint :shard_id
+      t.bigint :shard_id, index: true
       t.string :source, limit: 255
       t.integer :max_concurrent, default: 1, null: false
       t.timestamp :expires_at
       t.integer :strand_order_override, default: 0, null: false
-      t.string :singleton
-    end
+      t.string :singleton, index: { where: "singleton IS NOT NULL AND (locked_by IS NULL OR locked_by = '#{::Delayed::Backend::Base::ON_HOLD_LOCKED_BY}')",
+                                    unique: true,
+                                    name: "index_delayed_jobs_on_singleton_not_running" }
 
-    add_index :delayed_jobs,
-              %i[priority run_at id],
+      t.index %i[priority run_at id],
               algorithm: :concurrently,
               where: "queue = 'canvas_queue' AND locked_at IS NULL AND next_in_strand",
               name: "get_delayed_jobs_index"
-    add_index :delayed_jobs, [:tag]
-    add_index :delayed_jobs, %i[strand id], name: "index_delayed_jobs_on_strand"
-    add_index :delayed_jobs, :locked_by, where: "locked_by IS NOT NULL"
-    add_index :delayed_jobs, %i[run_at tag]
-    add_index :delayed_jobs, :shard_id
-    add_index :delayed_jobs,
-              %i[strand strand_order_override id],
-              where: "strand IS NOT NULL",
-              name: "next_in_strand_index"
-    add_index :delayed_jobs,
-              %i[strand next_in_strand id],
+      t.index %i[strand id], name: "index_delayed_jobs_on_strand"
+      t.index %i[run_at tag]
+      t.index               %i[strand strand_order_override id],
+                            where: "strand IS NOT NULL",
+                            name: "next_in_strand_index"
+      t.index %i[strand next_in_strand id],
               name: "n_strand_index",
               where: "strand IS NOT NULL"
-    add_index :delayed_jobs,
-              :singleton,
-              where: "singleton IS NOT NULL AND (locked_by IS NULL OR locked_by = '#{::Delayed::Backend::Base::ON_HOLD_LOCKED_BY}')",
-              unique: true,
-              name: "index_delayed_jobs_on_singleton_not_running"
-    add_index :delayed_jobs,
-              :singleton,
+      t.index :singleton,
               where: "singleton IS NOT NULL AND locked_by IS NOT NULL AND locked_by <> '#{::Delayed::Backend::Base::ON_HOLD_LOCKED_BY}'",
               unique: true,
               name: "index_delayed_jobs_on_singleton_running"
+    end
 
     search_path = Shard.current.name
 
@@ -265,27 +255,22 @@ class CreateDelayedJobs < ActiveRecord::Migration[7.0]
       t.string :queue, limit: 255
       t.timestamp :run_at
       t.timestamp :locked_at
-      t.timestamp :failed_at
+      t.timestamp :failed_at, index: true
       t.string :locked_by, limit: 255
       t.timestamps null: true, precision: nil
-      t.string :tag, limit: 255
+      t.string :tag, limit: 255, index: true
       t.integer :max_attempts
-      t.string :strand, limit: 255
-      t.bigint :shard_id
+      t.string :strand, limit: 255, index: { where: "strand IS NOT NULL" }
+      # This column exists in switchman-inst-jobs, although not in Canvas. For the purposes of this migration, mirror
+      # the lack of a WHERE constraint to mirror switchman-inst-jobs to prevent any surprises later.
+      t.bigint :shard_id, index: true
       t.bigint :original_job_id
       t.string :source, limit: 255
       t.timestamp :expires_at
       t.integer :strand_order_override, default: 0, null: false
-      t.string :singleton
+      t.string :singleton, index: { where: "singleton IS NOT NULL" }
       t.bigint :requeued_job_id
     end
-    add_index :failed_jobs, :failed_at
-    add_index :failed_jobs, :strand, where: "strand IS NOT NULL"
-    add_index :failed_jobs, :singleton, where: "singleton IS NOT NULL"
-    add_index :failed_jobs, :tag
-    # This column exists in switchman-inst-jobs, although not in Canvas. For the purposes of this migration, mirror
-    # the lack of a WHERE constraint to mirror switchman-inst-jobs to prevent any surprises later.
-    add_index :failed_jobs, :shard_id
   end
 
   def down
