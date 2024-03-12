@@ -19,10 +19,10 @@
 #
 
 # rubocop:disable Migration/Execute, Migration/RootAccountId
-class CreateDelayedJobs < ActiveRecord::Migration[4.2]
+class CreateDelayedJobs < ActiveRecord::Migration[7.0]
   tag :predeploy
 
-  def self.up
+  def up
     create_table :delayed_jobs do |t|
       # Allows some jobs to jump to the front of the queue
       t.integer :priority, default: 0
@@ -36,15 +36,15 @@ class CreateDelayedJobs < ActiveRecord::Migration[4.2]
       t.string :queue, limit: 255, null: false
       # When to run.
       # Could be Time.zone.now for immediately, or sometime in the future.
-      t.datetime :run_at, null: false
+      t.timestamp :run_at, null: false
       # Set when a client is working on this object
-      t.datetime :locked_at
+      t.timestamp :locked_at
       # Set when all retries have failed
-      t.datetime :failed_at
+      t.timestamp :failed_at
       # Who is working on this object (if locked)
       t.string :locked_by, limit: 255
 
-      t.timestamps null: false
+      t.timestamps precision: nil
 
       t.string :tag, limit: 255
       t.integer :max_attempts
@@ -53,7 +53,7 @@ class CreateDelayedJobs < ActiveRecord::Migration[4.2]
       t.bigint :shard_id
       t.string :source, limit: 255
       t.integer :max_concurrent, default: 1, null: false
-      t.datetime :expires_at
+      t.timestamp :expires_at
       t.integer :strand_order_override, default: 0, null: false
       t.string :singleton
     end
@@ -263,19 +263,18 @@ class CreateDelayedJobs < ActiveRecord::Migration[4.2]
       t.text :handler
       t.text :last_error
       t.string :queue, limit: 255
-      t.datetime :run_at
-      t.datetime :locked_at
-      t.datetime :failed_at
+      t.timestamp :run_at
+      t.timestamp :locked_at
+      t.timestamp :failed_at
       t.string :locked_by, limit: 255
-      t.datetime :created_at
-      t.datetime :updated_at
+      t.timestamps null: true, precision: nil
       t.string :tag, limit: 255
       t.integer :max_attempts
       t.string :strand, limit: 255
       t.bigint :shard_id
       t.bigint :original_job_id
       t.string :source, limit: 255
-      t.datetime :expires_at
+      t.timestamp :expires_at
       t.integer :strand_order_override, default: 0, null: false
       t.string :singleton
       t.bigint :requeued_job_id
@@ -289,7 +288,7 @@ class CreateDelayedJobs < ActiveRecord::Migration[4.2]
     add_index :failed_jobs, :shard_id
   end
 
-  def self.down
+  def down
     raise ActiveRecord::IrreversibleMigration
   end
 end
