@@ -17,16 +17,25 @@
 # You should have received a copy of the GNU Affero General Public License along
 # with this program. If not, see <http://www.gnu.org/licenses/>.
 
-class CreateInitialQuizSubmissionEventPartitions < ActiveRecord::Migration[4.2]
+class CreateInitialPartitions < ActiveRecord::Migration[7.0]
   tag :predeploy
 
   def up
+    [Auditors::ActiveRecord::AuthenticationRecord,
+     Auditors::ActiveRecord::CourseRecord,
+     Auditors::ActiveRecord::FeatureFlagRecord,
+     Auditors::ActiveRecord::GradeChangeRecord,
+     Auditors::ActiveRecord::PseudonymRecord].each do |klass|
+      CanvasPartman::PartitionManager.create(klass).create_initial_partitions
+    end
+    CanvasPartman::PartitionManager.create(Message)
+                                   .create_initial_partitions(Messages::Partitioner::PRECREATE_TABLES)
     Quizzes::QuizSubmissionEventPartitioner.process(true)
+    CanvasPartman::PartitionManager.create(SimplyVersioned::Version)
+                                   .create_initial_partitions(SimplyVersioned::Partitioner::PRECREATE_TABLES)
   end
 
   def down
-    # We can't delete the partitions because we no longer know which partitions
-    # we created in this first place at this stage; Time.now() which was used
-    # in #up may not be in the same month #down() is called.
+    raise ActiveRecord::IrreversibleMigration
   end
 end

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 #
-# Copyright (C) 2016 - present Instructure, Inc.
+# Copyright (C) 2024 - present Instructure, Inc.
 #
 # This file is part of Canvas.
 #
@@ -16,19 +16,22 @@
 #
 # You should have received a copy of the GNU Affero General Public License along
 # with this program. If not, see <http://www.gnu.org/licenses/>.
+#
 
-class CreateMessagePartitions < ActiveRecord::Migration[5.1]
-  tag :predeploy
+class RemoveGuardTriggersFromInternalMetadataTables < ActiveRecord::Migration[7.0]
+  tag :postdeploy
 
   def up
-    partman = CanvasPartman::PartitionManager.create(Message)
-    partman.create_initial_partitions(Messages::Partitioner::PRECREATE_TABLES)
-  end
+    # these triggers may have been accidentally added due to using constant
+    # table names instead of `ActiveRecord::Base.internal_metadata_table_name`
+    operations = ["UPDATE", "DELETE"]
+    [ActiveRecord::Base.internal_metadata_table_name,
+     ActiveRecord::Base.schema_migrations_table_name].each do |t|
+      operations.each do |operation|
+        trigger_name = "guard_excessive_#{operation.downcase}s"
 
-  def down
-    partman = CanvasPartman::PartitionManager.create(Message)
-    partman.partition_tables.each do |partition|
-      drop_table partition
+        execute("DROP TRIGGER IF EXISTS #{trigger_name} ON #{connection.quote_table_name(t)}")
+      end
     end
   end
 end

@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
-# Copyright (C) 2021 - present Instructure, Inc.
+#
+# Copyright (C) 2024 - present Instructure, Inc.
 #
 # This file is part of Canvas.
 #
@@ -15,21 +16,13 @@
 #
 # You should have received a copy of the GNU Affero General Public License along
 # with this program. If not, see <http://www.gnu.org/licenses/>.
+#
 
-class AddFlagAuditorPartitions < ActiveRecord::Migration[6.0]
-  tag :predeploy
+class MakeUserProfilesUserIdNotNull < ActiveRecord::Migration[7.0]
+  tag :postdeploy
+  disable_ddl_transaction!
 
-  def up
-    auditor_cls = Auditors::ActiveRecord::FeatureFlagRecord
-    partman = CanvasPartman::PartitionManager.create(auditor_cls)
-    partman.create_initial_partitions
-  end
-
-  def down
-    auditor_cls = Auditors::ActiveRecord::FeatureFlagRecord
-    partman = CanvasPartman::PartitionManager.create(auditor_cls)
-    partman.partition_tables.each do |partition|
-      drop_table partition
-    end
+  def change
+    change_column_null :user_profiles, :user_id, false
   end
 end
