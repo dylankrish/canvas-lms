@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
-#
-# Copyright (C) 2023 - present Instructure, Inc.
+# Copyright (C) 2024 - present Instructure, Inc.
 #
 # This file is part of Canvas.
 #
@@ -16,13 +15,19 @@
 #
 # You should have received a copy of the GNU Affero General Public License along
 # with this program. If not, see <http://www.gnu.org/licenses/>.
-#
-class BackfillManageImpactPermission < ActiveRecord::Migration[7.0]
-  tag :postdeploy
 
-  def up
-    DataFixup::AddRoleOverridesForNewPermission.run(:become_user, :manage_impact)
+class AddReplicaIdentityToAssignmentEmbeddings < ActiveRecord::Migration[7.0]
+  tag :predeploy
+
+  def self.runnable?
+    connection.extension_available?(:vector)
   end
 
-  def down; end
+  def up
+    set_replica_identity :assignment_embeddings
+  end
+
+  def down
+    set_replica_identity :assignment_embeddings, :default
+  end
 end

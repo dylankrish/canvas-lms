@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
-#
-# Copyright (C) 2023 - present Instructure, Inc.
+# Copyright (C) 2024 - present Instructure, Inc.
 #
 # This file is part of Canvas.
 #
@@ -17,14 +16,10 @@
 # You should have received a copy of the GNU Affero General Public License along
 # with this program. If not, see <http://www.gnu.org/licenses/>.
 
-class AddBooleanFieldsToCustomGradeStatuses < ActiveRecord::Migration[7.0]
-  tag :predeploy
+class DiscussionTopicEmbedding < ApplicationRecord
+  belongs_to :discussion_topic, inverse_of: :embeddings
+  has_neighbors :embedding
 
-  def change
-    change_table :custom_grade_statuses, bulk: true do |t|
-      t.boolean :applies_to_submissions, default: true, null: false
-      t.boolean :applies_to_final_grade, default: true, null: false
-      t.boolean :allow_final_grade_value, default: true, null: false
-    end
-  end
+  extend RootAccountResolver
+  resolves_root_account through: :discussion_topic
 end

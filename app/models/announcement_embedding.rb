@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
-#
-# Copyright (C) 2023 - present Instructure, Inc.
+# Copyright (C) 2024 - present Instructure, Inc.
 #
 # This file is part of Canvas.
 #
@@ -16,15 +15,6 @@
 #
 # You should have received a copy of the GNU Affero General Public License along
 # with this program. If not, see <http://www.gnu.org/licenses/>.
-#
 
-class AddRoleOverridesToOutcomesServiceUser < ActiveRecord::Migration[7.0]
-  tag :postdeploy
-
-  def up
-    DataFixup::GranularPermissions::AddRoleOverridesToOutcomesServiceUser.delay_if_production(
-      priority: Delayed::LOWER_PRIORITY,
-      n_strand: ["add_role_overrides_to_outcomes_service", Shard.current.database_server.id]
-    ).run
-  end
+class AnnouncementEmbedding < DiscussionTopicEmbedding
 end

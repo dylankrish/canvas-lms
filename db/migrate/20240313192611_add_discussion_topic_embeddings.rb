@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
-#
-# Copyright (C) 2023 - present Instructure, Inc.
+# Copyright (C) 2024 - present Instructure, Inc.
 #
 # This file is part of Canvas.
 #
@@ -16,12 +15,22 @@
 #
 # You should have received a copy of the GNU Affero General Public License along
 # with this program. If not, see <http://www.gnu.org/licenses/>.
+#
 
-class AddArchivedAtToLearningOutcome < ActiveRecord::Migration[7.0]
+class AddDiscussionTopicEmbeddings < ActiveRecord::Migration[7.0]
   tag :predeploy
 
+  def self.runnable?
+    connection.extension_available?(:vector)
+  end
+
   def change
-    add_column :learning_outcomes, :archived_at, :timestamp, default: nil, precision: 6
-    add_column :learning_outcome_groups, :archived_at, :timestamp, default: nil, precision: 6
+    create_table :discussion_topic_embeddings do |t|
+      t.references :discussion_topic, null: false, foreign_key: true
+      t.column :embedding, "#{connection.extension("vector").schema}.vector", limit: 1536, null: false
+      t.timestamps
+      t.references :root_account, foreign_key: { to_table: :accounts }, index: false, null: false
+      t.replica_identity_index
+    end
   end
 end
