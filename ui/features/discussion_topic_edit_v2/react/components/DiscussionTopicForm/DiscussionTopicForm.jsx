@@ -25,7 +25,6 @@ import {View} from '@instructure/ui-view'
 import {Flex} from '@instructure/ui-flex'
 import {TextInput} from '@instructure/ui-text-input'
 import {FormFieldGroup} from '@instructure/ui-form-field'
-import {Button} from '@instructure/ui-buttons'
 import {IconAddLine, IconPublishSolid, IconUnpublishedLine} from '@instructure/ui-icons'
 import {Text} from '@instructure/ui-text'
 import {Checkbox} from '@instructure/ui-checkbox'
@@ -35,7 +34,9 @@ import CanvasMultiSelect from '@canvas/multi-select'
 import CanvasRce from '@canvas/rce/react/CanvasRce'
 import {Alert} from '@instructure/ui-alerts'
 
+import {FormControlButtons} from './FormControlButtons'
 import {GradedDiscussionOptions} from '../DiscussionOptions/GradedDiscussionOptions'
+import {NonGradedDateOptions} from '../DiscussionOptions/NonGradedDateOptions'
 import {AnonymousSelector} from '../DiscussionOptions/AnonymousSelector'
 import {
   GradedDiscussionDueDatesContext,
@@ -52,7 +53,7 @@ import {AlertManagerContext} from '@canvas/alerts/react/AlertManager'
 import {ScreenReaderContent} from '@instructure/ui-a11y-content'
 
 import {prepareAssignmentPayload} from '../../util/payloadPreparations'
-import {validateTitle, validateAvailability, validateFormFields} from '../../util/formValidation'
+import {validateTitle, validateFormFields} from '../../util/formValidation'
 
 import {
   addNewGroupCategoryToCache,
@@ -854,118 +855,29 @@ export default function DiscussionTopicForm({
               </GradedDiscussionDueDatesContext.Provider>
             </View>
           ) : (
-            <FormFieldGroup description="" width={inputWidth}>
-              <DateTimeInput
-                timezone={ENV.TIMEZONE}
-                description={I18n.t('Available from')}
-                dateRenderLabel={I18n.t('Date')}
-                timeRenderLabel={I18n.t('Time')}
-                prevMonthLabel={I18n.t('previous')}
-                nextMonthLabel={I18n.t('next')}
-                value={availableFrom}
-                onChange={(_event, newAvailableFrom) => {
-                  validateAvailability(
-                    newAvailableFrom,
-                    availableUntil,
-                    isGraded,
-                    setAvailabilityValidationMessages
-                  )
-                  setAvailableFrom(newAvailableFrom)
-                }}
-                datePlaceholder={I18n.t('Select Date')}
-                invalidDateTimeMessage={I18n.t('Invalid date and time')}
-                layout="columns"
-              />
-              <DateTimeInput
-                timezone={ENV.TIMEZONE}
-                description={I18n.t('Until')}
-                dateRenderLabel={I18n.t('Date')}
-                timeRenderLabel={I18n.t('Time')}
-                prevMonthLabel={I18n.t('Time')}
-                nextMonthLabel={I18n.t('next')}
-                value={availableUntil}
-                onChange={(_event, newAvailableUntil) => {
-                  validateAvailability(
-                    availableFrom,
-                    newAvailableUntil,
-                    isGraded,
-                    setAvailabilityValidationMessages
-                  )
-                  setAvailableUntil(newAvailableUntil)
-                }}
-                datePlaceholder={I18n.t('Select Date')}
-                invalidDateTimeMessage={I18n.t('Invalid date and time')}
-                messages={availabilityValidationMessages}
-                layout="columns"
-                dateInputRef={ref => {
-                  dateInputRef.current = ref
-                }}
-              />
-            </FormFieldGroup>
-          ))}
-        <View
-          display="block"
-          textAlign="end"
-          borderWidth="small none none none"
-          margin="xx-large none"
-          padding="large none"
-        >
-          <View margin="0 x-small 0 0">
-            <Button
-              type="button"
-              color="secondary"
-              onClick={() => {
-                window.location.assign(ENV.CANCEL_TO)
+            <NonGradedDateOptions
+              availableFrom={availableFrom}
+              setAvailableFrom={setAvailableFrom}
+              availableUntil={availableUntil}
+              setAvailableUntil={setAvailableUntil}
+              isGraded={isGraded}
+              setAvailabilityValidationMessages={setAvailabilityValidationMessages}
+              availabilityValidationMessages={availabilityValidationMessages}
+              inputWidth={inputWidth}
+              setDateInputRef={ref => {
+                dateInputRef.current = ref
               }}
-              disabled={isSubmitting}
-            >
-              {I18n.t('Cancel')}
-            </Button>
-          </View>
-          {shouldShowSaveAndPublishButton && (
-            <View margin="0 x-small 0 0">
-              <Button
-                type="submit"
-                onClick={() => submitForm(true)}
-                color="secondary"
-                margin="xxx-small"
-                data-testid="save-and-publish-button"
-                disabled={isSubmitting}
-              >
-                {I18n.t('Save and Publish')}
-              </Button>
-            </View>
-          )}
-          {/* for announcements, show publish when the available until da */}
-          {isAnnouncement ? (
-            <Button
-              type="submit"
-              // we always process announcements as published.
-              onClick={() => submitForm(true)}
-              color="primary"
-              margin="xxx-small"
-              data-testid="announcement-submit-button"
-              disabled={isSubmitting}
-            >
-              {willAnnouncementPostRightAway ? I18n.t('Publish') : I18n.t('Save')}
-            </Button>
-          ) : (
-            <Button
-              type="submit"
-              data-testid="save-button"
-              // when editing, use the current published state, otherwise:
-              // students will always save as published while for moderators in this case they
-              // can save as unpublished
-              onClick={() =>
-                submitForm(isEditing ? published : !ENV.DISCUSSION_TOPIC?.PERMISSIONS?.CAN_MODERATE)
-              }
-              color="primary"
-              disabled={isSubmitting}
-            >
-              {I18n.t('Save')}
-            </Button>
-          )}
-        </View>
+            />
+          ))}
+        <FormControlButtons
+          isAnnouncement={isAnnouncement}
+          isEditing={isEditing}
+          published={published}
+          shouldShowSaveAndPublishButton={shouldShowSaveAndPublishButton}
+          submitForm={submitForm}
+          isSubmitting={isSubmitting}
+          willAnnouncementPostRightAway={willAnnouncementPostRightAway}
+        />
       </FormFieldGroup>
       {shouldShowMissingSectionsWarning && (
         <MissingSectionsWarningModal

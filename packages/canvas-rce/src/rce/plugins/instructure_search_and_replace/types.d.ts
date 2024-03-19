@@ -16,21 +16,15 @@
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-import React, {useMemo} from 'react'
-import {Portal} from '@instructure/ui-portal'
-import SideNav from './SideNav'
-import {getExternalTools, type ExternalTool} from './utils'
-
-export function Component() {
-  const externalTools = useMemo<ExternalTool[]>(() => getExternalTools(), [])
-  const mountPoint: HTMLElement | null = document.getElementById('header')
-  if (!mountPoint) {
-    return null
-  }
-  mountPoint.innerHTML = ''
-  return (
-    <Portal open={true} mountNode={mountPoint}>
-      <SideNav externalTools={externalTools} />
-    </Portal>
-  )
+export type SearchReplacePlugin = {
+  // clears highlighted text and find state
+  done: (keepEditorSelection?: boolean) => void
+  // highlights all text occurences in RCE, do not call with blank string
+  find: (text: string, matchCase?: boolean, wholeWord?: boolean, inSelection?: boolean) => number
+  next: () => void
+  prev: () => void
+  // replaces current selection, does nothing if find has no state
+  // forward moves selection to next (true) or previous (false)
+  // returns true if more results, false if no more
+  replace: (newText: string, forward?: boolean, all?: boolean) => boolean
 }
