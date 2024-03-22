@@ -455,15 +455,20 @@ export function buildStudentColumn(
   gradebookColumnSizeSetting: string,
   defaultWidth: number
 ): GridColumn {
-  const studentColumnWidth = gradebookColumnSizeSetting
+  let studentColumnWidth = gradebookColumnSizeSetting
     ? parseInt(gradebookColumnSizeSetting, 10)
     : defaultWidth
+  if (Number.isNaN(studentColumnWidth)) {
+    studentColumnWidth = defaultWidth
+    // eslint-disable-next-line no-console
+    console.warn('invalid student column width')
+  }
   return {
     cssClass: 'meta-cell primary-column student',
     headerCssClass: 'primary-column student',
     id: columnId,
     object: {},
-    resizable: false,
+    resizable: true,
     type: columnId,
     width: studentColumnWidth,
   }
@@ -481,7 +486,7 @@ export function buildCustomColumn(customColumn: CustomColumn): GridColumn {
     id: columnId,
     object: {},
     maxLength: 255,
-    resizable: false,
+    resizable: true,
     type: 'custom_column',
     width: 100,
   }
