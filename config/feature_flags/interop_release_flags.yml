@@ -100,15 +100,6 @@ deep_linking_use_window_parent:
       state: allowed_on
     ci:
       state: on
-consistent_ags_ids_based_on_account_principal_domain:
-  state: hidden
-  display_name: Consistent LTI AGS IDs based on Account's principal domain
-  description: |-
-    If enabled, AGS will use the Account's principal domain for Line Items IDs
-    throughout the AGS API and LTI Launches, regardless of which domain the LTI
-    launch happens on or the API is accessed through. For schools with multiple
-    domains, this ensures consistency in Line Item IDs.
-  applies_to: RootAccount
 lti_dynamic_registration:
   state: hidden
   display_name: LTI Dynamic Registration
@@ -320,3 +311,18 @@ lti_registrations_discover_page:
     development:
       state: hidden
   custom_transition_proc: lti_registrations_discover_page_hook
+lti_ags_remove_top_submitted_at:
+  state: hidden
+  applies_to: RootAccount
+  shadow: true
+  display_name: Remove top-level submittedAt from LTI AGS Score API
+  description: |-
+    When enabled, removes support for passing submittedAt as a top-level parameter in an
+    LTI AGS Score request, to better conform to LTI AGS spec.
+  environments:
+    development:
+      state: allowed_on
+    test:
+      state: allowed_on
+    ci:
+      state: allowed_on

@@ -75,6 +75,10 @@ class SmartSearchController < ApplicationController
   # @argument q [String, required]
   #   The search query
   #
+  # @argument filter[] [String, optional]
+  #   Types of objects to search. By default, all supported types are searched. Supported types
+  #   include +pages+, +assignments+, +announcements+, and +discussion_topics+.
+  #
   # @returns [SearchResult]
   def search
     return render_unauthorized_action unless @context.grants_right?(@current_user, session, :read)
@@ -91,6 +95,9 @@ class SmartSearchController < ApplicationController
 
         collections = []
         SmartSearch.search_scopes(@context, @current_user) do |klass, item_scope|
+          item_scope = apply_filter(klass, item_scope, Array(params[:filter]))
+          next unless item_scope
+
           item_scope = item_scope.select(
             ActiveRecord::Base.send(:sanitize_sql, ["#{klass.table_name}.*, MIN(embedding <=> ?) AS distance", embedding.to_s])
           )
@@ -112,6 +119,18 @@ class SmartSearchController < ApplicationController
     end
   end
 
+  def log
+    # TODO: do something more with these params than logging them in the request logs
+    # params[:a]
+    # params[:c]
+    # params[:course_id]
+    # params[:oid]
+    # params[:ot]
+    # params[:q]
+
+    head :no_content
+  end
+
   def show
     @context = Course.find(params[:course_id])
 
@@ -123,5 +142,23 @@ class SmartSearchController < ApplicationController
     js_env({
              COURSE_ID: @context.id.to_s
            })
+  end
+
+  private
+
+  def apply_filter(klass, scope, filter)
+    return scope if filter.empty?
+
+    if klass == DiscussionTopic
+      if filter.include?("discussion_topics") && filter.include?("announcements")
+        scope
+      elsif filter.include?("discussion_topics")
+        scope.where(type: nil)
+      elsif filter.include?("announcements")
+        scope.where(type: "Announcement")
+      end
+    elsif filter.include?(Context.api_type_name(klass))
+      scope
+    end
   end
 end
