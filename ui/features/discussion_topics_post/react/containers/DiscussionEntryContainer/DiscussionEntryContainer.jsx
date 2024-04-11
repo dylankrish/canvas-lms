@@ -176,6 +176,7 @@ export const DiscussionEntryContainer = props => {
               onSave={props.onSave}
               onCancel={props.onCancel}
               isSplitView={props.isSplitView}
+              discussionTopic={props.discussionTopic}
             >
               {props.attachment && (
                 <View as="div" padding="small none none">

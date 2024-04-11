@@ -696,6 +696,12 @@ class Account < ActiveRecord::Base
     SettingsWrapper.new(self, {}.freeze)
   end
 
+  def setting_enabled?(setting)
+    return false unless has_attribute?(:settings)
+
+    !!settings[setting.to_sym]
+  end
+
   def domain(current_host = nil)
     HostUrl.context_host(self, current_host)
   end
@@ -1752,7 +1758,7 @@ class Account < ActiveRecord::Base
   end
 
   def dummy?
-    local_id.zero?
+    local_id == 0
   end
 
   def unless_dummy

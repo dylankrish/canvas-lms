@@ -254,6 +254,10 @@ export default function DiscussionTopicForm({
     replyToEntryRequiredCount,
     setReplyToEntryRequiredCount,
     setReplyToEntryRequiredRef,
+    title,
+    assignmentID: currentDiscussionTopic?.assignment?._id || null,
+    importantDates: currentDiscussionTopic?.assignment?.importantDates || false,
+    pointsPossible,
   }
   const [showGroupCategoryModal, setShowGroupCategoryModal] = useState(false)
 
@@ -565,6 +569,8 @@ export default function DiscussionTopicForm({
           height={300}
           defaultContent={isEditing ? currentDiscussionTopic?.message : ''}
           autosave={false}
+          resourceType={isAnnouncement ? 'announcement.body' : 'discussion_topic.body'}
+          resourceId={currentDiscussionTopic?._id}
         />
         {ENV.DISCUSSION_TOPIC.PERMISSIONS.CAN_ATTACH && (
           <AttachmentDisplay

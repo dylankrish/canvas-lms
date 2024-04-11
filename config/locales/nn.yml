@@ -507,6 +507,7 @@ nn:
   account_id_2c3b4f15: konto-ID
   account_id_73966078: konto_id
   account_id_f6e26867: Konto-ID
+  account_level_3c2a42a5: Kontonivå
   account_level_notification_preferences_require_an__66467cd7: "Innstillingar for kontovarsel krev ein konto_id for å oppdatere"
   account_level_notification_preferences_ui_update_f5e189a4: "Oppdatering av brukargrensesnitt til innstillingar for kontovarsel"
   account_level_notifications_apply_to_all_courses_n_8b99c5b0: "Innstillingar på konto-nivå vil gjelde for alle emne. Du kan stille inn varslingar på kvart enkelt emne, og då overstyre desse innstillingane."
@@ -3847,6 +3848,8 @@ nn:
   assignment_id_b040cee0: Oppgåve-ID
   assignment_information_e871d0e0: Oppgåveinformasjon
   assignment_is_reassigned_dd6b6ef2: "Oppgåva er tilordna på nytt."
+  assignment_is_reassigned_ebb31807: "%{assignment} er tilordna på nytt"
+  assignment_itemtitle_fee53607: "Oppgåve, %{itemTitle}"
   assignment_locked_a6233228: "Oppgåve låst"
   assignment_locked_until_future_date_80cd0df2: "Oppgåva er låst fram til framtidig dato"
   assignment_locked_with_prerequisite_5b8cb148: "Oppgåve er låst med førehandskrav"
