@@ -32,10 +32,20 @@ const {Head, Row, Cell, ColHeader, Body} = Table
 
 export type RubricTableProps = {
   rubrics: Rubric[]
+  onLocationsClick: (rubricId: string) => void
   onPreviewClick: (rubricId: string) => void
+  handleArchiveRubricChange: (rubricId: string) => void
+  active: boolean
 }
 
-export const RubricTable = ({rubrics, onPreviewClick}: RubricTableProps) => {
+export const RubricTable = ({
+  rubrics,
+  handleArchiveRubricChange,
+  active,
+  onLocationsClick,
+  onPreviewClick,
+}: RubricTableProps) => {
+  const navigate = useNavigate()
   const {accountId, courseId} = useParams()
   const [sortDirection, setSortDirection] = useState<'ascending' | 'descending' | 'none'>('none')
   const [sortedColumn, setSortedColumn] = useState<string>() // Track the column being sorted
@@ -117,7 +127,7 @@ export const RubricTable = ({rubrics, onPreviewClick}: RubricTableProps) => {
       </Head>
       <Body>
         {sortedRubrics.map((rubric, index) => (
-          <Row key={rubric.id}>
+          <Row key={rubric.id} data-testid={`rubric-row-${rubric.id}`}>
             <Cell data-testid={`rubric-title-${index}`}>
               <Link
                 forceButtonRole={true}
@@ -133,7 +143,11 @@ export const RubricTable = ({rubrics, onPreviewClick}: RubricTableProps) => {
             <Cell data-testid={`rubric-criterion-count-${index}`}>{rubric.criteriaCount}</Cell>
             <Cell data-testid={`rubric-locations-${index}`}>
               {rubric.hasRubricAssociations ? (
-                <Link forceButtonRole={true} isWithinText={false} onClick={() => {}}>
+                <Link
+                  forceButtonRole={true}
+                  isWithinText={false}
+                  onClick={() => onLocationsClick(rubric.id)}
+                >
                   {I18n.t('courses and assignments')}
                 </Link>
               ) : (
@@ -152,6 +166,8 @@ export const RubricTable = ({rubrics, onPreviewClick}: RubricTableProps) => {
                 buttonDisplay={rubric.buttonDisplay}
                 ratingOrder={rubric.ratingOrder}
                 hasRubricAssociations={rubric.hasRubricAssociations}
+                onArchiveRubricChange={() => handleArchiveRubricChange(rubric.id)}
+                active={active}
               />
             </Cell>
           </Row>
