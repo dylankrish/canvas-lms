@@ -84,14 +84,13 @@ describe CC::CCHelper do
         html = %(
           <iframe style="width: 400px; height: 225px; display: inline-block;" title="this is a media comment" data-media-type="video" src="/media_attachments_iframe/#{att.id}?type=video&embedded=true" allow="fullscreen" data-media-id="#{att.media_entry_id}"></iframe>
           <iframe style="width: 400px; height: 225px; display: inline-block;" title="this is a media comment" data-media-type="video" src="/media_objects_iframe/#{att.media_entry_id}?type=video&embedded=true" allow="fullscreen" data-media-id="#{att.media_entry_id}"></iframe>
-          <a id="media_comment_abcde" class="instructure_inline_media_comment video_comment" data-media_comment_type="video" data-alt=""></a>
+          <a id="media_comment_abcde" class="instructure_inline_media_comment video_comment" href="/media_objects/abcde" data-media_comment_type="video" data-alt=""></a>
         )
-        sources = Nokogiri::HTML5(@exporter.html_content(html)).css("source").pluck("src")
-        expect(sources.length).to eq 2
-        expect(sources).to eq([
-                                "$IMS-CC-FILEBASE$/Uploaded%20Media/some_media.mp4?canvas_=1&canvas_qs_embedded=true&canvas_qs_type=video&media_attachment=true",
-                                "$IMS-CC-FILEBASE$/Uploaded Media/some_media.mp4"
-                              ])
+
+        exported_html = @exporter.html_content(html).split("\n").map(&:strip).select(&:present?)
+        expect(exported_html[0]).to eq(%(<video style="width: 400px; height: 225px; display: inline-block;" title="this is a media comment" data-media-type="video" allow="fullscreen" data-media-id="abcde"><source src="$IMS-CC-FILEBASE$/Uploaded%20Media/some_media.mp4?canvas_=1&amp;canvas_qs_type=video&amp;canvas_qs_embedded=true" data-media-id="abcde" data-media-type="video"></video>))
+        expect(exported_html[1]).to eq(%(<video style="width: 400px; height: 225px; display: inline-block;" title="this is a media comment" data-media-type="video" allow="fullscreen" data-media-id="abcde"><source src="$IMS-CC-FILEBASE$/Uploaded Media/some_media.mp4" data-media-id="abcde" data-media-type="video"></video>))
+        expect(exported_html[2]).to eq(%(<a id="media_comment_abcde" class="instructure_inline_media_comment video_comment" href="$IMS-CC-FILEBASE$/Uploaded Media/some_media.mp4" data-media_comment_type="video" data-alt=""></a>))
       end
 
       it "are not translated on export when pointing at user media" do
@@ -139,15 +138,7 @@ describe CC::CCHelper do
       expect(@exporter.media_object_infos[@obj.id][:asset][:id]).to eq "one"
     end
 
-    it "does not touch media links on course copy" do
-      @exporter = CC::CCHelper::HtmlContentExporter.new(@course, @user, for_course_copy: true)
-      orig = <<~HTML
-        <p><a id="media_comment_abcde" class="instructure_inline_media_comment">this is a media comment</a></p>
-      HTML
-      translated = @exporter.html_content(orig)
-      expect(translated).to eq orig
-    end
-
+    # TODO: tests for media_comment_ links can be removed after the datafix up for LF-1335 is complete
     it "does not touch links to deleted media objects" do
       @exporter = CC::CCHelper::HtmlContentExporter.new(@course, @user)
       @obj.destroy

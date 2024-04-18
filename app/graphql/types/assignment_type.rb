@@ -45,8 +45,6 @@ module Types
       value "failed_to_clone_outcome_alignment"
     end
 
-    GRADING_TYPES = Assignment::ALLOWED_GRADING_TYPES.zip(Assignment::ALLOWED_GRADING_TYPES).to_h
-
     class AssignmentGradingType < Types::BaseEnum
       graphql_name "GradingType"
       Assignment::ALLOWED_GRADING_TYPES.each { |type| value(type) }
@@ -379,7 +377,9 @@ module Types
 
     field :grading_type, AssignmentGradingType, null: true
     def grading_type
-      GRADING_TYPES[assignment.grading_type]
+      return nil unless Assignment::ALLOWED_GRADING_TYPES.include?(assignment.grading_type)
+
+      assignment.grading_type
     end
 
     field :grading_period_id, String, null: true
@@ -440,6 +440,10 @@ module Types
           "specifies that this assignment is only assigned to students for whom an
        `AssignmentOverride` applies.",
           null: false
+    field :visible_to_everyone,
+          Boolean,
+          "specifies all other variables that can determine visiblity.",
+          null: false
 
     field :assignment_overrides, AssignmentOverrideType.connection_type, null: true
     def assignment_overrides
@@ -469,6 +473,15 @@ module Types
       filter[:states] = filter[:states] + ["unsubmitted"].freeze if filter[:include_unsubmitted]
       filter[:order_by] = order_by.map(&:to_h)
       SubmissionSearch.new(assignment, current_user, session, filter).search
+    end
+
+    field :my_sub_assignment_submissions_connection, SubmissionType.connection_type, null: true
+    def my_sub_assignment_submissions_connection
+      return nil if current_user.nil?
+
+      load_association(:sub_assignment_submissions).then do |submissions|
+        submissions.active.where(user_id: current_user)
+      end
     end
 
     field :grading_standard, GradingStandardType, null: true

@@ -43,7 +43,7 @@ gem "bigdecimal", "~> 3.1"
 gem "browser", "~> 5.3", require: false
 gem "business_time", "0.13.0"
 gem "canvas_connect", "0.3.16"
-gem "canvas_link_migrator", "~> 1.0.6"
+gem "canvas_link_migrator", "~> 1.0.8"
 gem "canvas_webex", "0.18.2"
 gem "crocodoc-ruby", "0.0.1", require: false
 gem "code_ownership", "~> 1.33"
@@ -52,7 +52,7 @@ gem "docx", "~> 0.8"
 gem "encrypted_cookie_store-instructure", "~> 1.2", require: "encrypted_cookie_store"
 gem "gepub", "1.0.15"
 gem "apollo-federation", "~> 3.8"
-gem "graphql", "~> 1.13.23"
+gem "graphql", "~> 2.3.0"
 gem "graphql-batch", "~> 0.5"
 gem "highline", "~> 3.0", require: false
 gem "httparty", "~> 0.21"
