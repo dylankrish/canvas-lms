@@ -30,29 +30,6 @@ describe "discussions" do
   include ItemsAssignToTray
   include ContextModulesCommon
 
-  def generate_expected_overrides(assignment)
-    expected_overrides = []
-
-    if assignment.assignment_overrides.active.empty?
-      expected_overrides << ["Everyone"]
-    else
-      unless assignment.only_visible_to_overrides
-        expected_overrides << ["Everyone else"]
-      end
-
-      assignment.assignment_overrides.active.each do |override|
-        if override.set_type == "CourseSection"
-          expected_overrides << [override.title]
-        elsif override.set_type == "ADHOC"
-          student_names = override.assignment_override_students.map { |student| student.user.name }
-          expected_overrides << student_names
-        end
-      end
-    end
-
-    expected_overrides
-  end
-
   let(:course) { course_model.tap(&:offer!) }
   let(:teacher) { teacher_in_course(course:, name: "teacher", active_all: true).user }
   let(:teacher_topic) { course.discussion_topics.create!(user: teacher, title: "teacher topic title", message: "teacher topic message") }
@@ -657,26 +634,6 @@ describe "discussions" do
       end
 
       context "graded" do
-        def create_graded_discussion(discussion_course, assignment_options = {})
-          default_assignment_options = {
-            name: "Default Assignment",
-            points_possible: 10,
-            assignment_group: discussion_course.assignment_groups.create!(name: "Default Assignment Group"),
-            only_visible_to_overrides: false
-          }
-          options = default_assignment_options.merge(assignment_options)
-
-          discussion_assignment = discussion_course.assignments.create!(options)
-          all_graded_discussion_options = {
-            user: teacher,
-            title: "assignment topic title",
-            message: "assignment topic message",
-            discussion_type: "threaded",
-            assignment: discussion_assignment,
-          }
-          discussion_course.discussion_topics.create!(all_graded_discussion_options)
-        end
-
         it "displays graded assignment options correctly when initially opening edit page" do
           grading_standard = course.grading_standards.create!(title: "Win/Lose", data: [["Winner", 0.94], ["Loser", 0]])
 
@@ -738,6 +695,18 @@ describe "discussions" do
           # Just checking for a value. Formatting and TZ differences between front-end and back-end
           # makes an exact comparison too fragile.
           expect(f("input[placeholder='Select Assignment Due Date']").attribute("value")).not_to be_empty
+        end
+
+        it "allows settings a graded discussion to an ungraded discussion" do
+          skip("VICE-4225")
+          graded_discussion = create_graded_discussion(course)
+          get "/courses/#{course.id}/discussion_topics/#{graded_discussion.id}/edit"
+
+          # Uncheck the "graded" checkbox
+          force_click_native('input[type=checkbox][value="graded"]')
+          fj("button:contains('Save')").click
+
+          expect(DiscussionTopic.last.assignment).to be_nil
         end
 
         it "allows editing the assignment group for the graded discussion" do
@@ -1138,6 +1107,53 @@ describe "discussions" do
             expect(DiscussionTopic.last.reply_to_entry_required_count).to eq 0
             expect(assignment.sub_assignments.count).to eq 0
             expect(Assignment.last.has_sub_assignments).to be(false)
+          end
+
+          it "can edit a non-checkpointed discussion into a checkpointed discussion" do
+            graded_discussion = create_graded_discussion(course)
+
+            get "/courses/#{course.id}/discussion_topics/#{graded_discussion.id}/edit"
+
+            force_click_native('input[type=checkbox][value="checkpoints"]')
+
+            f("input[data-testid='points-possible-input-reply-to-topic']").send_keys :backspace
+            f("input[data-testid='points-possible-input-reply-to-topic']").send_keys "5"
+            f("input[data-testid='reply-to-entry-required-count']").send_keys :backspace
+            f("input[data-testid='reply-to-entry-required-count']").send_keys "6"
+            f("input[data-testid='points-possible-input-reply-to-entry']").send_keys :backspace
+            f("input[data-testid='points-possible-input-reply-to-entry']").send_keys "7"
+
+            fj("button:contains('Save')").click
+
+            assignment = Assignment.last
+
+            expect(assignment.has_sub_assignments?).to be true
+            expect(DiscussionTopic.last.reply_to_entry_required_count).to eq 6
+
+            sub_assignments = SubAssignment.where(parent_assignment_id: assignment.id)
+            sub_assignment1 = sub_assignments.find_by(sub_assignment_tag: CheckpointLabels::REPLY_TO_TOPIC)
+            sub_assignment2 = sub_assignments.find_by(sub_assignment_tag: CheckpointLabels::REPLY_TO_ENTRY)
+
+            expect(sub_assignment1.points_possible).to eq 5
+            expect(sub_assignment2.points_possible).to eq 7
+          end
+
+          it "deletes checkpoints if the graded checkbox is unselected on an exisitng discussion with checkpoints" do
+            skip("VICE-4225")
+            assignment = Assignment.last
+            expect(assignment.sub_assignments.count).to eq 2
+
+            get "/courses/#{course.id}/discussion_topics/#{@checkpointed_discussion.id}/edit"
+
+            # Uncheck the "graded" checkbox
+            force_click_native('input[type=checkbox][value="graded"]')
+            fj("button:contains('Save')").click
+
+            # Expect the assignment an the checkpoints to no longer exist
+            expect(DiscussionTopic.last.reply_to_entry_required_count).to eq 0
+            expect(assignment.sub_assignments.count).to eq 0
+            expect(Assignment.last.has_sub_assignments).to be(false)
+            expect(DiscussionTopic.last.assignment).to be_nil
           end
         end
       end

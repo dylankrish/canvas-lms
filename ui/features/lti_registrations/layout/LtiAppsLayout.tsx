@@ -19,6 +19,7 @@
 import React from 'react'
 import ReactDOM from 'react-dom'
 import {createBrowserRouter, RouterProvider, Link, Outlet, useMatch} from 'react-router-dom'
+import {QueryClient, QueryClientProvider} from '@tanstack/react-query'
 import {useScope as useI18nScope} from '@canvas/i18n'
 import {Heading} from '@instructure/ui-heading'
 import {Spinner} from '@instructure/ui-spinner'
@@ -31,8 +32,10 @@ const I18n = useI18nScope('lti_registrations')
 export const LtiAppsLayout = () => {
   const isManage = useMatch('/manage/*')
 
+  const queryClient = new QueryClient()
+
   return (
-    <>
+    <QueryClientProvider client={queryClient}>
       <View as="div" margin="0 0 small 0" padding="none">
         <Heading level="h1">{I18n.t('Extensions')}</Heading>
       </View>
@@ -41,8 +44,10 @@ export const LtiAppsLayout = () => {
         {window.ENV.FEATURES.lti_registrations_discover_page && (
           <Tabs.Panel
             isSelected={!isManage}
+            active={!isManage}
             id="tabB"
             href="/"
+            padding="large 0"
             renderTitle={
               <Link style={{color: 'initial', textDecoration: 'initial'}} to="/">
                 {I18n.t('Discover')}
@@ -61,11 +66,11 @@ export const LtiAppsLayout = () => {
           id="tabA"
           padding="large"
           isSelected={!!isManage}
-          active={true}
+          active={!!isManage}
         >
           <Outlet />
         </Tabs.Panel>
       </Tabs>
-    </>
+    </QueryClientProvider>
   )
 }
