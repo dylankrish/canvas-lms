@@ -47,4 +47,55 @@ describe AuthenticationProvider::Microsoft do
     expect(ap.application_secret).to eq "secret"
     expect(ap.client_secret).to eq "secret"
   end
+
+  it "allows `microsoft` as an alias for the Microsoft tenant" do
+    ap = AuthenticationProvider::Microsoft.new
+    ap.tenant = "microsoft"
+    expect(ap.send(:authorize_url)).to include(AuthenticationProvider::Microsoft::MICROSOFT_TENANT)
+  end
+
+  context "fetch unique_id" do
+    it "records used tenants" do
+      ap = AuthenticationProvider::Microsoft.new(account: Account.default)
+      allow(ap).to receive(:claims).and_return("tid" => "1234")
+      ap.unique_id("token")
+      expect(ap.settings["known_tenants"]).to eq ["1234"]
+      expect(ap).not_to receive(:save!)
+      ap.unique_id("token")
+      expect(ap.settings["known_tenants"]).to eq ["1234"]
+    end
+
+    it "records used missing tenant" do
+      ap = AuthenticationProvider::Microsoft.new(account: Account.default)
+      allow(ap).to receive(:claims).and_return({})
+      ap.unique_id("token")
+      expect(ap.settings["known_tenants"]).to eq [nil]
+    end
+
+    it "enforces the tenant" do
+      ap = AuthenticationProvider::Microsoft.new(account: Account.default, tenant: "microsoft")
+      allow(ap).to receive(:claims).and_return({ "tid" => AuthenticationProvider::Microsoft::MICROSOFT_TENANT, "sub" => "abc" })
+      expect(ap.unique_id("token")).to eql "abc"
+      allow(ap).to receive(:claims).and_return({ "tid" => "elsewhise", "sub" => "abc" })
+      expect { ap.unique_id("token") }.to raise_error(OAuthValidationError)
+    end
+
+    it "allows specifying additional allowed tenants" do
+      ap = AuthenticationProvider::Microsoft.new(account: Account.default, tenant: "microsoft", allowed_tenants: "1234")
+      allow(ap).to receive(:claims).and_return({ "tid" => "1234", "sub" => "abc" })
+      expect(ap.unique_id("token")).to eql "abc"
+      allow(ap).to receive(:claims).and_return({ "tid" => "elsewhise", "sub" => "abc" })
+      expect { ap.unique_id("token") }.to raise_error(OAuthValidationError)
+    end
+
+    it "allows specifying all guest accounts" do
+      ap = AuthenticationProvider::Microsoft.new(account: Account.default, tenant: "microsoft", allowed_tenants: "guests")
+      allow(ap).to receive(:claims).and_return({ "tid" => "1234",
+                                                 "sub" => "abc",
+                                                 "iss" => "https://login.microsoftonline.com/#{AuthenticationProvider::Microsoft::MICROSOFT_TENANT}/v2.0" })
+      expect(ap.unique_id("token")).to eql "abc"
+      allow(ap).to receive(:claims).and_return({ "tid" => "elsewhise", "sub" => "abc" })
+      expect { ap.unique_id("token") }.to raise_error(OAuthValidationError)
+    end
+  end
 end
