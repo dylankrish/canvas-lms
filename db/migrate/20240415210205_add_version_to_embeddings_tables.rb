@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
-#
-# Copyright (C) 2014 - present Instructure, Inc.
+# Copyright (C) 2024 - present Instructure, Inc.
 #
 # This file is part of Canvas.
 #
@@ -16,19 +15,17 @@
 #
 # You should have received a copy of the GNU Affero General Public License along
 # with this program. If not, see <http://www.gnu.org/licenses/>.
-#
-#
-class WikiPages::ScopedToUser < ScopeFilter
-  def scope
-    # published API parameter notwithstanding, hide unpublished items if the user doesn't have permission to see them
-    concat_scope { @relation.published unless can?(:view_unpublished_items) }
-    concat_scope do
-      wiki_context = context.is_a?(Wiki) ? context.context : context
-      if wiki_context.is_a?(Course) && wiki_context.conditional_release?
-        return DifferentiableAssignment.scope_filter(@relation, user, wiki_context)
-      end
 
-      @relation
-    end
+class AddVersionToEmbeddingsTables < ActiveRecord::Migration[7.0]
+  tag :predeploy
+
+  def self.runnable?
+    connection.extension_available?(:vector)
+  end
+
+  def change
+    add_column :assignment_embeddings, :version, :integer, null: false, default: 1
+    add_column :discussion_topic_embeddings, :version, :integer, null: false, default: 1
+    add_column :wiki_page_embeddings, :version, :integer, null: false, default: 1
   end
 end
