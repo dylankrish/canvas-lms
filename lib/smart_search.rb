@@ -114,34 +114,18 @@ module SmartSearch
       end
     end
 
-    def generate_completion(prompt)
-      url = "https://api.openai.com/v1/completions"
-
-      headers = {
-        "Authorization" => "Bearer #{api_key}",
-        "Content-Type" => "application/json"
-      }
-      data = {
-        model: "text-davinci-003",
-        prompt:,
-        max_tokens: 1500,
-        temperature: 0.7
-      }
-      # TODO: error handling
-      response = Net::HTTP.post(URI(url), data.to_json, headers)
-      JSON.parse(response.body)["choices"][0]["text"].strip
-    end
-
+    # returns [ready, progress]
+    # progress may be < 100 while ready if upgrading embeddings
     def check_course(course)
       return -1 unless smart_search_available?(course)
 
       if course.search_embedding_version == EMBEDDING_VERSION
-        100
+        [true, 100]
       else
-        progress = indexing_progress(course)
-        # queue the index job if necessary (the singleton will ensure it's only queued once)
-        delay(singleton: "smart_search_index_course_#{course.global_id}").index_course(course) if progress < 100
-        progress
+        # queue the index job (the singleton will ensure it's only queued once)
+        delay(singleton: "smart_search_index_course_#{course.global_id}").index_course(course)
+
+        [course.search_embedding_version.present?, indexing_progress(course)]
       end
     end
 
