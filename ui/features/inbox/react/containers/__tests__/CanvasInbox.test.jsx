@@ -19,7 +19,7 @@
 import {AlertManagerContext} from '@canvas/alerts/react/AlertManager'
 import {ApolloProvider} from 'react-apollo'
 import CanvasInbox from '../CanvasInbox'
-import {handlers} from '../../../graphql/mswHandlers'
+import {handlers, inboxSettingsHandlers} from '../../../graphql/mswHandlers'
 import {mswClient} from '../../../../../shared/msw/mswClient'
 import {mswServer} from '../../../../../shared/msw/mswServer'
 import React from 'react'
@@ -33,7 +33,7 @@ jest.mock('../../../util/utils', () => ({
 }))
 
 describe('CanvasInbox App Container', () => {
-  const server = mswServer(handlers)
+  const server = mswServer(handlers.concat(inboxSettingsHandlers()))
 
   beforeAll(() => {
     server.listen()
@@ -224,6 +224,25 @@ describe('CanvasInbox App Container', () => {
         expect(courseSelectModal.getAttribute('value')).toBe('XavierSchool')
         window.location = originalLocation
       })
+    })
+  })
+
+  describe('Inbox Signature Block Settings enabled', () => {
+    it('should display Inbox Settings in header', () => {
+      window.ENV.CONVERSATIONS.INBOX_SIGNATURE_BLOCK_ENABLED = true
+      const {getByTestId} = setup()
+      expect(getByTestId('inbox-settings-in-header')).toBeInTheDocument()
+    })
+
+    it('should redirect to inbox when submission_comments and click on Compose button', async () => {
+      window.ENV.CONVERSATIONS.INBOX_SIGNATURE_BLOCK_ENABLED = true
+      const {findByText} = setup()
+      await waitForApolloLoading()
+      window.location.hash = '#filter=type=submission_comments=randomstring'
+      const composeButton = await findByText('Compose')
+      fireEvent.click(composeButton)
+      await waitForApolloLoading()
+      expect(window.location.hash).toBe('#filter=type=inbox')
     })
   })
 })

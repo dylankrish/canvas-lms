@@ -73,7 +73,7 @@ describe "Discussion Topic Show" do
 
       f("button[data-testid='discussion-post-menu-trigger']").click
       fj("span[role='menuitem']:contains('Show Rubric')").click
-      fj(".find_rubric_link").click
+      f(".find_rubric_link").click
 
       expect(fj(".select_rubric_link:contains(#{rubric.title})")).to be_present
       expect(ffj(".rubrics_dialog_rubric:visible").count).to eq 1
@@ -91,9 +91,10 @@ describe "Discussion Topic Show" do
       expect(fj("span:contains('Close for Comments')")).to be_present
       expect(fj("span:contains('Send To...')")).to be_present
       expect(fj("span:contains('Copy To...')")).to be_present
+      expect(f("body")).not_to contain_css(Discussion.summarize_button_selector)
     end
 
-    context "group discussions in a group context" do
+    context "group discussions in a course context" do
       it "loads without errors" do
         @group_discussion_topic = group_discussion_assignment
         get "/courses/#{@course.id}/discussion_topics/#{@group_discussion_topic.id}"
@@ -104,6 +105,27 @@ describe "Discussion Topic Show" do
         wait_for_ajaximations
         expect(fj("h1:contains('topic - group 1')")).to be_present
         expect_no_flash_message :error
+      end
+
+      it "truncates long group names in the middle" do
+        group_category = @course.group_categories.create!(name: "category")
+        group1 = @course.groups.create!(name: "justasmalltowngirllivinginalonelyworldshetookthemidnighttraingoinganywhere first", group_category:)
+        group2 = @course.groups.create!(name: "justasmalltowngirllivinginalonelyworldshetookthemidnighttraingoinganywhere second", group_category:)
+        topic = @course.discussion_topics.build(title: "topic")
+        topic.group_category = group_category
+        topic.save!
+
+        get "/courses/#{@course.id}/discussion_topics/#{topic.id}"
+        f("button[data-testid='groups-menu-btn']").click
+        menu_items = ff("[data-testid='groups-menu-item']")
+        truncated_menu_items = ["justasmall…here first\n0 Unread", "justasmal…e second\n0 Unread"]
+        menu_items.each do |item|
+          expect(truncated_menu_items).to include item.text
+          hover(item)
+          # check tooltip text
+          expect(fj("span:contains('#{group1.name}')")).to be_present if item.text.include? "first"
+          expect(fj("span:contains('#{group2.name}')")).to be_present if item.text.include? "second"
+        end
       end
     end
 
@@ -205,7 +227,7 @@ describe "Discussion Topic Show" do
         student_in_course(active_all: true)
 
         @due_at = 2.days.from_now
-        @replies_required = 5
+        @replies_required = 2
         @checkpointed_discussion = DiscussionTopic.create_graded_topic!(course: @course, title: "checkpointed discussion")
         Checkpoints::DiscussionCheckpointCreatorService.call(
           discussion_topic: @checkpointed_discussion,
@@ -236,6 +258,43 @@ describe "Discussion Topic Show" do
         reply_to_entry_contents = f("span[data-testid='reply_to_entry_section']").text
         expect(reply_to_entry_contents).to include("Additional Replies Required: #{@replies_required}")
         expect(reply_to_entry_contents).to include(format_date_for_view(@due_at))
+      end
+
+      it "lets students see the checkpoints tray with completed status on initial page load" do
+        root_entry = @checkpointed_discussion.discussion_entries.create!(user: @student, message: "reply to topic")
+
+        @replies_required.times { |i| @checkpointed_discussion.discussion_entries.create!(user: @student, message: "reply to entry #{i}", parent_entry: root_entry) }
+
+        user_session(@student)
+        get "/courses/#{@course.id}/discussion_topics/#{@checkpointed_discussion.id}"
+
+        fj("button:contains('View Due Dates')").click
+        wait_for_ajaximations
+        reply_to_topic_contents = f("span[data-testid='reply_to_topic_section']").text
+        expect(reply_to_topic_contents).to include("Completed #{format_date_for_view(root_entry.created_at)}")
+        reply_to_entry_contents = f("span[data-testid='reply_to_entry_section']").text
+        expect(reply_to_entry_contents).to include("Completed")
+        expect(reply_to_topic_contents).to include("Completed #{format_date_for_view(@checkpointed_discussion.discussion_entries.last.created_at)}")
+      end
+
+      it "lets students see completed status for reply to topic as soon as they successfully reply to topic" do
+        user_session(@student)
+        get "/courses/#{@course.id}/discussion_topics/#{@checkpointed_discussion.id}"
+
+        fj("button:contains('View Due Dates')").click
+        wait_for_ajaximations
+        reply_to_topic_contents = f("span[data-testid='reply_to_topic_section']").text
+        expect(reply_to_topic_contents).not_to include("Completed")
+        fj("button:contains('Close')").click
+
+        f("button[data-testid='discussion-topic-reply']").click
+        wait_for_ajaximations
+        type_in_tiny "textarea", "Test Reply"
+        fj("button:contains('Reply')").click
+        wait_for_ajaximations
+        fj("button:contains('View Due Dates')").click
+        reply_to_topic_contents = f("span[data-testid='reply_to_topic_section']").text
+        expect(reply_to_topic_contents).to include("Completed #{format_date_for_view(@checkpointed_discussion.reload.discussion_entries.last.created_at)}")
       end
 
       it "lets teachers see checkpoints tray" do
@@ -330,6 +389,77 @@ describe "Discussion Topic Show" do
         Discussion.click_assign_to_button
         wait_for_assign_to_tray_spinner
         expect(module_item_assign_to_card.last).to contain_css(due_date_input_selector)
+      end
+    end
+
+    context "when Discussion Summary feature flag is ON" do
+      before do
+        Account.default.enable_feature!(:discussion_summary)
+
+        @inst_llm = double("InstLLM::Client")
+        allow(InstLLMHelper).to receive(:client).and_return(@inst_llm)
+
+        get "/courses/#{@course.id}/discussion_topics/#{@topic.id}"
+      end
+
+      it "allows a teacher to summarize a discussion" do
+        expect(@inst_llm).to receive(:chat).and_return(
+          InstLLM::Response::ChatResponse.new(
+            model: "model",
+            message: { role: :assistant, content: "summary_1" },
+            stop_reason: "stop_reason",
+            usage: {
+              input_tokens: 10,
+              output_tokens: 20,
+            }
+          )
+        )
+
+        Discussion.click_summarize_button
+
+        expect(Discussion.summary_text).to include_text("summary_1")
+        expect(Discussion.summary_like_button).to be_present
+        expect(Discussion.summary_dislike_button).to be_present
+        expect(Discussion.summary_regenerate_button).to be_present
+        expect(Discussion.summary_disable_button).to be_present
+        expect(f("body")).not_to contain_css(Discussion.summarize_button_selector)
+
+        Discussion.click_summary_like_button
+        Discussion.click_summary_dislike_button
+
+        expect(@inst_llm).to receive(:chat).and_return(
+          InstLLM::Response::ChatResponse.new(
+            model: "model",
+            message: { role: :assistant, content: "summary_2" },
+            stop_reason: "stop_reason",
+            usage: {
+              input_tokens: 10,
+              output_tokens: 20,
+            }
+          )
+        )
+
+        Discussion.click_summary_regenerate_button
+
+        expect(Discussion.summary_text).to include_text("summary_2")
+        expect(Discussion.summary_like_button).to be_present
+        expect(Discussion.summary_dislike_button).to be_present
+        expect(Discussion.summary_regenerate_button).to be_present
+        expect(Discussion.summary_disable_button).to be_present
+        expect(f("body")).not_to contain_css(Discussion.summarize_button_selector)
+
+        Discussion.click_summary_disable_button
+
+        expect(f("body")).not_to contain_css(Discussion.summary_text_selector)
+        expect(Discussion.summarize_button).to be_present
+      end
+
+      it "shows an error message when summarization fails" do
+        expect(@inst_llm).to receive(:chat).and_raise(InstLLM::ThrottlingError)
+
+        Discussion.click_summarize_button
+
+        expect(Discussion.summary_error).to include_text("Sorry, the service is currently busy. Please try again later.")
       end
     end
   end

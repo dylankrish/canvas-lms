@@ -94,9 +94,14 @@ export const updateModuleAssignees = ({
     body: payload,
   })
     .then(() => {
-      showFlashAlert({
-        type: 'success',
-        message: I18n.t('Module access updated successfully.'),
+      // add the alert in the next event cycle so that the alert is added to the DOM's aria-live
+      // region after focus changes, thus preventing the focus change from interrupting the alert
+      setTimeout(() => {
+        showFlashAlert({
+          type: 'success',
+          message: I18n.t('Module access updated successfully.'),
+          politeness: 'polite',
+        })
       })
       updateModuleUI(moduleElement, payload)
     })
@@ -240,7 +245,11 @@ export default function AssignToPanel({
             <Text>{I18n.t('By default, this module is visible to everyone.')}</Text>
           </Flex.Item>
           <Flex.Item overflowX="hidden" margin="small 0 0 0">
-            <RadioInputGroup description={I18n.t('Set Visibility')} name="access_type">
+            <RadioInputGroup
+              description={I18n.t('Set Visibility')}
+              name="access_type"
+              data-testid="assign-to-panel-radio-group"
+            >
               {[EVERYONE_OPTION, CUSTOM_OPTION].map(option => (
                 <Flex key={option.value} margin="0 xx-small 0 0">
                   <Flex.Item align="start">

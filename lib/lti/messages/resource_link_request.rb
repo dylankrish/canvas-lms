@@ -39,7 +39,7 @@ module Lti::Messages
     def generate_post_payload_message(validate_launch: true)
       add_resource_link_request_claims! if include_claims?(:rlid)
       add_line_item_url_to_ags_claim! if include_assignment_and_grade_service_claims?
-      super(validate_launch:)
+      super
     end
 
     def generate_post_payload_for_assignment(assignment, _outcome_service_url, _legacy_outcome_service_url, _lti_turnitin_outcomes_placement_url)
@@ -61,7 +61,7 @@ module Lti::Messages
     def add_resource_link_request_claims!
       @message.resource_link.id = launch_resource_link_id
       @message.resource_link.description = @assignment&.description
-      @message.resource_link.title = resource_link&.title || @assignment&.title || tag_from_resource_link&.title || @context.name
+      @message.resource_link.title = resource_link&.title.presence || @assignment&.title.presence || tag_from_resource_link&.title.presence || @context.name
     end
 
     def add_lti1p1_claims!

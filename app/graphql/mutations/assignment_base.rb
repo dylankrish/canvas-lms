@@ -25,7 +25,9 @@ class Mutations::AssignmentBase::AssignmentOverrideCreateOrUpdate < GraphQL::Sch
   argument :due_at, Types::DateTimeType, required: false
   argument :lock_at, Types::DateTimeType, required: false
   argument :unlock_at, Types::DateTimeType, required: false
+  argument :unassign_item, Boolean, required: false
 
+  argument :course_id, ID, required: false
   argument :course_section_id, ID, required: false
   argument :group_id, ID, required: false
   argument :student_ids, [ID], required: false
@@ -52,12 +54,14 @@ class Mutations::AssignmentBase::AssignmentPeerReviewsUpdate < GraphQL::Schema::
 end
 
 class Mutations::AssignmentBase::AssignmentInputBase < GraphQL::Schema::InputObject
+  argument :ab_guid, [String], required: false
   argument :assignment_group_id, ID, required: false
   argument :assignment_overrides, [Mutations::AssignmentBase::AssignmentOverrideCreateOrUpdate], required: false
   argument :due_at, Types::DateTimeType, required: false
   argument :grading_standard_id, ID, required: false
   argument :grading_type, Types::AssignmentType::AssignmentGradingType, required: false
   argument :group_category_id, ID, required: false
+  argument :important_dates, Boolean, required: false
   argument :intra_reviews, Boolean, required: false
   argument :lock_at, Types::DateTimeType, required: false
   argument :only_visible_to_overrides, Boolean, required: false

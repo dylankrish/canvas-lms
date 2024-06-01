@@ -621,7 +621,8 @@ class DiscussionTopicsController < ApplicationController
       context_is_not_group: !@context.is_a?(Group),
       GRADING_SCHEME_UPDATES_ENABLED: Account.site_admin.feature_enabled?(:grading_scheme_updates),
       ARCHIVED_GRADING_SCHEMES_ENABLED: Account.site_admin.feature_enabled?(:archived_grading_schemes),
-      DISCUSSION_CHECKPOINTS_ENABLED: @context.root_account.feature_enabled?(:discussion_checkpoints)
+      DISCUSSION_CHECKPOINTS_ENABLED: @context.root_account.feature_enabled?(:discussion_checkpoints),
+      ASSIGNMENT_EDIT_PLACEMENT_NOT_ON_ANNOUNCEMENTS: Account.site_admin.feature_enabled?(:assignment_edit_placement_not_on_announcements)
     }
 
     post_to_sis = Assignment.sis_grade_export_enabled?(@context)
@@ -695,7 +696,7 @@ class DiscussionTopicsController < ApplicationController
       @page_title = topic_page_title(@topic)
 
       js_bundle :discussion_topic_edit_v2
-      css_bundle :discussions_index, :learning_outcomes
+      css_bundle :discussions_index, :learning_outcomes, :conditional_release_editor
       render html: "", layout: (params[:embed] == "true") ? "mobile_embed" : true
     else
       render :edit, layout: (params[:embed] == "true") ? "mobile_embed" : true
@@ -830,6 +831,8 @@ class DiscussionTopicsController < ApplicationController
       edit_url += "?embed=true" if params[:embed] == "true"
       js_env({
                course_id: params[:course_id] || @context.course&.id,
+               context_type: @topic.context_type,
+               context_id: @context.id,
                EDIT_URL: edit_url,
                PEER_REVIEWS_URL: @topic.assignment ? context_url(@topic.assignment.context, :context_assignment_peer_reviews_url, @topic.assignment.id) : nil,
                discussion_topic_id: params[:id],
@@ -839,7 +842,11 @@ class DiscussionTopicsController < ApplicationController
                discussion_grading_view: Account.site_admin.feature_enabled?(:discussion_grading_view),
                draft_discussions: Account.site_admin.feature_enabled?(:draft_discussions),
                discussion_entry_version_history: Account.site_admin.feature_enabled?(:discussion_entry_version_history),
+               discussion_translation_available: Translation.available?(@context, :translation), # Is translation enabled on the course.
+               discussion_translation_languages: Translation.available?(@context, :translation) ? Translation.translated_languages(@current_user) : [],
                discussion_anonymity_enabled: @context.feature_enabled?(:react_discussions_post),
+               user_can_summarize: @topic.user_can_summarize?(@current_user),
+               discussion_summary_enabled: @topic.summary_enabled,
                should_show_deeply_nested_alert: @current_user&.should_show_deeply_nested_alert?,
                # although there is a permissions object in DiscussionEntry type, it's only accessible if a discussion entry
                # is being replied to. We need this env var so that replying to the topic can use this
@@ -1390,6 +1397,19 @@ class DiscussionTopicsController < ApplicationController
       if params[:assignment]
         @errors[:anonymous_state] = t(:error_graded_anonymous,
                                       "Anonymous discussions cannot be graded")
+      end
+    end
+
+    attachment = params[:attachment]
+
+    if is_new && attachment
+      get_quota(@context)
+      if attachment.size + @quota_used > @quota
+        error = t "#application.errors.quota_exceeded_course", "Course storage quota exceeded"
+        respond_to do |format|
+          format.json { render json: { errors: { base: error } }, status: :bad_request }
+        end
+        return
       end
     end
 

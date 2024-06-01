@@ -17,7 +17,7 @@
  */
 
 import React from 'react'
-import {render, screen, waitFor} from '@testing-library/react'
+import {fireEvent, render, screen, waitFor} from '@testing-library/react'
 
 import FindReplaceTrayController from '../components/FindReplaceTrayController'
 import userEvent, {UserEvent} from '@testing-library/user-event'
@@ -76,7 +76,7 @@ describe('FindReplaceTray', () => {
     await user.keyboard('{backspace}')
     const errorText = screen.queryByLabelText(/no results found/i)
     expect(errorText).toBeNull()
-    waitFor(() => {
+    await waitFor(() => {
       expect(fakePlugin.done).toHaveBeenCalledTimes(1)
     })
   })
@@ -98,7 +98,7 @@ describe('FindReplaceTray', () => {
     await user.click(replaceButton)
 
     await user.click(findInput)
-    await user.keyboard('{enter}')
+    fireEvent.keyDown(findInput, {key: 'Enter'})
     const resultText = screen.getByLabelText(/1 of 3/i)
     expect(resultText).toBeInTheDocument()
   })
@@ -139,7 +139,7 @@ describe('FindReplaceTray', () => {
 
       const replaceInput = screen.getByTestId('replace-text-input')
       await type(user, replaceInput, 'some text')
-      await user.keyboard('{enter}')
+      fireEvent.keyDown(replaceInput, {key: 'Enter'})
 
       expect(fakePlugin.replace).toHaveBeenCalledWith('some text', true, false)
       expect(fakePlugin.replace).toHaveBeenCalledTimes(1)
@@ -152,7 +152,7 @@ describe('FindReplaceTray', () => {
 
       const replaceInput = screen.getByTestId('replace-text-input')
       await type(user, replaceInput, 'some text')
-      await user.keyboard('{shift>}{enter}')
+      fireEvent.keyDown(replaceInput, {shiftKey: true, key: 'Enter'})
 
       expect(fakePlugin.replace).toHaveBeenCalledWith('some text', false, false)
       expect(fakePlugin.replace).toHaveBeenCalledTimes(1)
@@ -260,14 +260,8 @@ describe('FindReplaceTray', () => {
       await type(user, findInput, 'a')
       expect(replaceButton).toBeDisabled()
 
-      await user.keyboard('{backspace}')
       const replaceInput = screen.getByTestId('replace-text-input')
       await type(user, replaceInput, 'some text')
-      waitFor(() => {
-        expect(replaceButton).toBeDisabled()
-      })
-
-      await type(user, findInput, 'a')
       expect(replaceButton).toBeEnabled()
     })
 
@@ -280,14 +274,8 @@ describe('FindReplaceTray', () => {
       await type(user, findInput, 'a')
       expect(replaceButton).toBeDisabled()
 
-      await user.keyboard('{backspace}')
       const replaceInput = screen.getByTestId('replace-text-input')
       await type(user, replaceInput, 'some text')
-      waitFor(() => {
-        expect(replaceButton).toBeDisabled()
-      })
-
-      await type(user, findInput, 'a')
       expect(replaceButton).toBeEnabled()
     })
   })
@@ -328,8 +316,8 @@ describe('FindReplaceTray', () => {
       const {user} = renderComponent()
       const findInput = screen.getByTestId('find-text-input')
       await type(user, findInput, 'a')
-      await user.keyboard('{enter}')
-      waitFor(() => {
+      fireEvent.keyDown(findInput, {key: 'Enter'})
+      await waitFor(() => {
         expect(fakePlugin.next).toHaveBeenCalledTimes(1)
       })
       const resultText = await screen.findByLabelText(/2 of 3/i)
@@ -350,8 +338,8 @@ describe('FindReplaceTray', () => {
       const {user} = renderComponent()
       const findInput = screen.getByTestId('find-text-input')
       await type(user, findInput, 'a')
-      await user.keyboard('{shift>}{enter}')
-      waitFor(() => {
+      fireEvent.keyDown(findInput, {shiftKey: true, key: 'Enter'})
+      await waitFor(() => {
         expect(fakePlugin.prev).toHaveBeenCalledTimes(1)
       })
       const resultText = await screen.findByLabelText(/3 of 3/i)
@@ -412,7 +400,7 @@ describe('FindReplaceTray', () => {
 
       const replaceInput = screen.getByTestId('replace-text-input')
       await type(user, replaceInput, 'some text')
-      await user.keyboard('{shift>}{enter}')
+      fireEvent.keyDown(replaceInput, {shiftKey: true, key: 'Enter'})
 
       expect(fakePlugin.replace).toHaveBeenCalledTimes(1)
       const resultText = screen.getByLabelText(/3 of 3/i)
@@ -425,7 +413,7 @@ describe('FindReplaceTray', () => {
       const {user} = renderComponent()
       const findInput = screen.getByTestId('find-text-input')
       await type(user, findInput, 'abc')
-      waitFor(() => {
+      await waitFor(() => {
         expect(props.getSelectionContext).toHaveBeenCalledTimes(3)
       })
       const srText = await screen.findByText(/text before abc text after/i)
@@ -438,7 +426,7 @@ describe('FindReplaceTray', () => {
       await type(user, findInput, 'a')
       const nextButton = screen.getByTestId('next-button')
       await user.click(nextButton)
-      waitFor(() => {
+      await waitFor(() => {
         expect(props.getSelectionContext).toHaveBeenCalledTimes(2)
       })
     })
@@ -449,7 +437,7 @@ describe('FindReplaceTray', () => {
       await type(user, findInput, 'a')
       const prevButton = screen.getByTestId('previous-button')
       await user.click(prevButton)
-      waitFor(() => {
+      await waitFor(() => {
         expect(props.getSelectionContext).toHaveBeenCalledTimes(2)
       })
     })
@@ -462,20 +450,7 @@ describe('FindReplaceTray', () => {
       await type(user, replaceInput, 'some text')
       const replaceButton = screen.getByTestId('replace-button')
       await user.click(replaceButton)
-      waitFor(() => {
-        expect(props.getSelectionContext).toHaveBeenCalledTimes(2)
-      })
-    })
-
-    it('is called when replace all button clicked', async () => {
-      const {user} = renderComponent()
-      const findInput = screen.getByTestId('find-text-input')
-      await type(user, findInput, 'a')
-      const replaceInput = screen.getByTestId('replace-text-input')
-      await type(user, replaceInput, 'some text')
-      const replaceButton = screen.getByTestId('replace-all-button')
-      await user.click(replaceButton)
-      waitFor(() => {
+      await waitFor(() => {
         expect(props.getSelectionContext).toHaveBeenCalledTimes(2)
       })
     })

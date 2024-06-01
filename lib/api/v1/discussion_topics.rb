@@ -47,6 +47,7 @@ module Api::V1::DiscussionTopics
     sort_by_rating
     is_section_specific
     anonymous_state
+    summary_enabled
   ].freeze
 
   # Public: DiscussionTopic methods to serialize.
@@ -148,7 +149,9 @@ module Api::V1::DiscussionTopics
     if (hold = topic.subscription_hold(user, session))
       json[:subscription_hold] = hold
     end
-
+    if topic.checkpoints?
+      json[:reply_to_entry_required_count] = topic.reply_to_entry_required_count
+    end
     if opts[:include_assignment] && topic.assignment
       excludes = opts[:exclude_assignment_description] ? ["description"] : []
       json[:assignment] = assignment_json(topic.assignment,

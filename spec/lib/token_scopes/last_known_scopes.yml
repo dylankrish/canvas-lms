@@ -829,6 +829,8 @@
   path: "/api/v1/accounts/:account_id/logins/:id"
 - verb: DELETE
   path: "/api/v1/users/:user_id/logins/:id"
+- verb: POST
+  path: "/api/v1/users/:user_id/logins/:id/migrate_login_attribute"
 - verb: GET
   path: "/api/v1/accounts"
 - verb: GET
@@ -1117,6 +1119,10 @@
   path: "/api/v1/accounts/:account_id/developer_keys"
 - verb: POST
   path: "/api/v1/accounts/:account_id/developer_keys"
+- verb: DELETE
+  path: "/api/v1/accounts/:account_id/lti_registrations/:id"
+- verb: GET
+  path: "/api/v1/accounts/:account_id/lti_registrations/:id"
 - verb: GET
   path: "/api/v1/immersive_reader/authenticate"
 - verb: GET
@@ -2189,3 +2195,15 @@
   path: "/api/v1/courses/:course_id/assign_outcome_order"
 - verb: PUT
   path: "/api/v1/users/:user_id/user_notes/suppress_deprecation_notice"
+- verb: GET
+  path: /api/v1/courses/:course_id/discussion_topics/:topic_id/summaries
+- verb: PUT
+  path: /api/v1/courses/:course_id/discussion_topics/:topic_id/summaries/disable
+- verb: POST
+  path: /api/v1/courses/:course_id/discussion_topics/:topic_id/summaries/:summary_id/feedback
+- verb: GET
+  path: /api/v1/groups/:group_id/discussion_topics/:topic_id/summaries
+- verb: PUT
+  path: /api/v1/groups/:group_id/discussion_topics/:topic_id/summaries/disable
+- verb: POST
+  path: /api/v1/groups/:group_id/discussion_topics/:topic_id/summaries/:summary_id/feedback

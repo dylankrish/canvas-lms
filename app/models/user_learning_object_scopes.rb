@@ -315,7 +315,7 @@ module UserLearningObjectScopes
                          .merge(Assignment.published.where(peer_reviews: true))
 
       if due_before
-        ar_scope = ar_scope.where("assessor_asset.cached_due_date <= ?", due_before)
+        ar_scope = ar_scope.where(assessor_asset: { cached_due_date: ..due_before })
       end
 
       if due_after
@@ -440,7 +440,7 @@ module UserLearningObjectScopes
         .published
         .for_courses_and_groups(shard_course_ids, shard_group_ids)
         .todo_date_between(due_after, due_before)
-        .visible_to_student_sections(self)
+        .visible_to_ungraded_discussion_student_visibilities(self)
     end
   end
 

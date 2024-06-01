@@ -191,6 +191,9 @@ const locale = {
   "congruent_5a244acd": { "message": "Congruent" },
   "contains_311f37b7": { "message": "Bevat" },
   "content_1440204b": { "message": "Inhoud" },
+  "content_in_the_editor_will_be_changed_press_cancel_d5bf3357": {
+    "message": "De inhoud van de editor wordt gewijzigd. Klik op Annuleren om de oorspronkelijke inhoud te behouden."
+  },
   "content_is_still_being_uploaded_if_you_continue_it_8f06d0cb": {
     "message": "Inhoud wordt nog steeds gedownload. Als je doorgaat, wordt deze niet goed ingesloten."
   },
@@ -682,6 +685,7 @@ const locale = {
   "nested_less_than_27d17e58": { "message": "Genest kleiner dan" },
   "new_quiz_34aacba6": { "message": "Nieuwe toets" },
   "next_40e12421": { "message": "Volgende" },
+  "next_findtext_9d69f0fe": { "message": "Volgende { findText }" },
   "no_accessibility_issues_were_detected_f8d3c875": {
     "message": "Geen toegankelijkheidsproblemen gevonden."
   },
@@ -812,12 +816,16 @@ const locale = {
   "precedes_196b9aef": { "message": "Gaat vooraf aan" },
   "precedes_equal_20701e84": { "message": "Gaat vooraf aan gelijk" },
   "preformatted_d0670862": { "message": "Voorgeformatteerd" },
+  "prepend_findtext_append_8e0e769a": {
+    "message": "{ prepend }{ findText }{ append }"
+  },
   "prev_f82cbc48": { "message": "Vorige" },
   "preview_53003fd2": { "message": "Voorbeeld" },
   "preview_a3f8f854": { "message": "VOORBEELD" },
   "preview_in_overlay_ed772c46": { "message": "Voorbeeld in overlay" },
   "preview_inline_9787330": { "message": "Voorbeeld inline" },
   "previous_bd2ac015": { "message": "Vorige" },
+  "previous_findtext_8dfbfd30": { "message": "Vorige { findText }" },
   "prime_917ea60e": { "message": "Priem" },
   "prime_numbers_13464f61": { "message": "Priemgetallen" },
   "product_39cf144f": { "message": "Product" },
@@ -847,12 +855,27 @@ const locale = {
   "remove_heading_style_5fdc8855": { "message": "Koptekststijl verwijderen" },
   "remove_link_d1f2f4d0": { "message": "Link verwijderen" },
   "replace_all_d3d68b3": { "message": "Alles vervangen" },
+  "replace_all_findtext_with_replacetext_da574b32": {
+    "message": "Vervang alle { findText } door { replaceText }"
+  },
   "replace_e61834a7": { "message": "Vervangen" },
+  "replace_findtext_with_replacetext_7b5c7fb3": {
+    "message": "Vervang { findText } door { replaceText }"
+  },
   "replace_with_eeff01ad": { "message": "Vervangen door" },
+  "replaced_alertfindtext_with_alertreplacetext_de5c1795": {
+    "message": "{ alertFindText } is vervangen door { alertReplaceText }"
+  },
+  "replaced_all_alertfindtext_with_alertreplacetext_83fdfe59": {
+    "message": "Alle { alertFindText } zijn vervangen door { alertReplaceText }"
+  },
   "reset_95a81614": { "message": "Opnieuw instellen" },
   "resize_ec83d538": { "message": "Grootte wijzigen" },
   "restore_auto_save_deccd84b": {
     "message": "Automatisch opslaan herstellen?"
+  },
+  "result_index_of_max_7db5ad8b": {
+    "message": "Resultaat { index } van { max }."
   },
   "reverse_turnstile_does_not_yield_7558be06": {
     "message": "Inverse tourniquet (conclusie volgt)"

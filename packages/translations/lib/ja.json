@@ -359,6 +359,9 @@
     "content_1440204b": {
         "message": "コンテンツ"
     },
+    "content_in_the_editor_will_be_changed_press_cancel_d5bf3357": {
+        "message": "エディタ内のコンテンツは変更されます。「キャンセル」を押すとオリジナルのコンテンツが保持されます。"
+    },
     "content_is_still_being_uploaded_if_you_continue_it_8f06d0cb": {
         "message": "コンテンツはまだアップロード中です。続行すると適切に埋め込まれません。"
     },
@@ -1445,6 +1448,9 @@
     "next_40e12421": {
         "message": "次へ"
     },
+    "next_findtext_9d69f0fe": {
+        "message": "次{ findText }"
+    },
     "no_accessibility_issues_were_detected_f8d3c875": {
         "message": "アクセシビリティの問題は検出されませんでした。"
     },
@@ -1703,6 +1709,9 @@
     "preformatted_d0670862": {
         "message": "フォーマット済み"
     },
+    "prepend_findtext_append_8e0e769a": {
+        "message": "{ prepend }{ findText }{ append }"
+    },
     "prev_f82cbc48": {
         "message": "前へ"
     },
@@ -1720,6 +1729,9 @@
     },
     "previous_bd2ac015": {
         "message": "前"
+    },
+    "previous_findtext_8dfbfd30": {
+        "message": "前{ findText }"
     },
     "prime_917ea60e": {
         "message": "素数"
@@ -1796,11 +1808,23 @@
     "replace_all_d3d68b3": {
         "message": "すべて置換する"
     },
+    "replace_all_findtext_with_replacetext_da574b32": {
+        "message": "すべての{ findText }を{ replaceText }に置き換える"
+    },
     "replace_e61834a7": {
         "message": "置換"
     },
+    "replace_findtext_with_replacetext_7b5c7fb3": {
+        "message": "{ findText }を{ replaceText }に置き換える"
+    },
     "replace_with_eeff01ad": {
         "message": "（）と置換する"
+    },
+    "replaced_alertfindtext_with_alertreplacetext_de5c1795": {
+        "message": "{ alertFindText }を{ alertReplaceText }に置き換えた"
+    },
+    "replaced_all_alertfindtext_with_alertreplacetext_83fdfe59": {
+        "message": "すべての{ alertFindText }を{ alertReplaceText }に置き換えた"
     },
     "reset_95a81614": {
         "message": "リセット"
@@ -1810,6 +1834,9 @@
     },
     "restore_auto_save_deccd84b": {
         "message": "自動保存したものを復元しますか？"
+    },
+    "result_index_of_max_7db5ad8b": {
+        "message": "{ index } / { max }の結果。"
     },
     "reverse_turnstile_does_not_yield_7558be06": {
         "message": "逆向きの回転式改札(イールドなし)"

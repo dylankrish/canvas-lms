@@ -116,7 +116,7 @@
 #           "type": "string"
 #         },
 #         "workflow_state": {
-#           "description": "the current state of the course one of 'unpublished', 'available', 'completed', or 'deleted'",
+#           "description": "the current state of the course, also known as ‘status’.  The value will be one of the following values: 'unpublished', 'available', 'completed', or 'deleted'.  NOTE: When fetching a singular course that has a 'deleted' workflow state value, an error will be returned with a message of 'The specified resource does not exist.'",
 #           "example": "available",
 #           "type": "string",
 #           "allowableValues": {
@@ -567,14 +567,49 @@ class CoursesController < ApplicationController
       end
     end
 
-    @past_enrollments.sort_by! { |e| [e.course.published? ? 0 : 1, Canvas::ICU.collation_key(e.long_name)] }
-    [@current_enrollments, @future_enrollments].each do |list|
-      list.sort_by! do |e|
-        [e.course.published? ? 0 : 1, e.active? ? 1 : 0, Canvas::ICU.collation_key(e.long_name)]
-      end
-    end
+    @current_enrollments = sort_enrollments(@current_enrollments, "current")
+    @past_enrollments = sort_enrollments(@past_enrollments, "past")
+    @future_enrollments = sort_enrollments(@future_enrollments, "future")
   end
   helper_method :load_enrollments_for_index
+
+  def sort_enrollments(enrollments, type)
+    sort_column = nil
+    order = nil
+    case type
+    when "current"
+      sort_column = params[:cc_sort]
+      order = params[:cc_order]
+    when "past"
+      sort_column = params[:pc_sort]
+      order = params[:pc_order]
+    when "future"
+      sort_column = params[:fc_sort]
+      order = params[:fc_order]
+    end
+    sorted_enrollments = enrollments.sort_by! do |e|
+      case sort_column
+      when "favorite"
+        @current_user.courses_with_primary_enrollment(:favorite_courses).map(&:id).include?(e.course_id) ? 0 : 1
+      when "course"
+        e.course.name
+      when "nickname"
+        nickname = e.course.nickname_for(@current_user, nil)
+        [nickname.nil? ? 1 : 0, nickname]
+      when "term"
+        [e.course.enrollment_term.default_term? ? 1 : 0, e.course.enrollment_term.name]
+      when "enrolled_as"
+        e.readable_role_name
+      else
+        if type == "past"
+          [e.course.published? ? 0 : 1, Canvas::ICU.collation_key(e.long_name)]
+        else
+          [e.course.published? ? 0 : 1, e.active? ? 1 : 0, Canvas::ICU.collation_key(e.long_name)]
+        end
+      end
+    end
+    (order == "desc") ? sorted_enrollments.reverse : sorted_enrollments
+  end
 
   def enrollments_for_index(type)
     instance_variable_get(:"@#{type}_enrollments")
@@ -1623,6 +1658,9 @@ class CoursesController < ApplicationController
   # @API Update course settings
   # Can update the following course settings:
   #
+  # @argument allow_final_grade_override [Boolean]
+  #   Let student final grades for a grading period or the total grades for the course be overridden
+  #
   # @argument allow_student_discussion_topics [Boolean]
   #   Let students create discussion topics
   #
@@ -1844,7 +1882,7 @@ class CoursesController < ApplicationController
       if enrollment.invited?
         GuardRail.activate(:primary) do
           SubmissionLifecycleManager.with_executing_user(@current_user) do
-            enrollment.accept!
+            enrollment.accept! && RequestCache.clear
           end
         end
         @pending_enrollment = nil
@@ -1951,7 +1989,7 @@ class CoursesController < ApplicationController
        (enrollment = @context.enrollments.where(uuid: session[:accepted_enrollment_uuid]).first)
 
       if enrollment.invited?
-        enrollment.accept!
+        enrollment.accept! && RequestCache.clear
         flash[:notice] = t("notices.invitation_accepted", "Invitation accepted!  Welcome to %{course}!", course: @context.name)
       end
 
@@ -2366,7 +2404,7 @@ class CoursesController < ApplicationController
             scope = Announcement.where(context_type: "Course", context_id: @context.id, workflow_state: "active")
                                 .ordered_between(start_date, end_date)
             unless @context.grants_any_right?(@current_user, session, :read_as_admin, :manage_content, *RoleOverride::GRANULAR_MANAGE_COURSE_CONTENT_PERMISSIONS)
-              scope = scope.visible_to_student_sections(@current_user)
+              scope = scope.visible_to_ungraded_discussion_student_visibilities(@current_user)
             end
             latest_announcement = scope.limit(1).first
           end
@@ -3269,8 +3307,7 @@ class CoursesController < ApplicationController
       end
       disable_conditional_release if changes[:conditional_release]&.last == false
 
-      # RUBY 3.0 - **{} can go away, because data won't implicitly convert to kwargs
-      @course.delay_if_production(priority: Delayed::LOW_PRIORITY).touch_content_if_public_visibility_changed(changes, **{})
+      @course.delay_if_production(priority: Delayed::LOW_PRIORITY).touch_content_if_public_visibility_changed(changes)
 
       if @course.errors.none? && @course.save
         Auditors::Course.record_updated(@course, @current_user, changes, source: logging_source)
@@ -4041,6 +4078,7 @@ class CoursesController < ApplicationController
   end
 
   def offline_web_exports
+    page_has_instui_topnav
     return render status: :not_found, template: "shared/errors/404_message" unless allow_web_export_download?
 
     if authorized_action(WebZipExport.new(course: @context), @current_user, :create)

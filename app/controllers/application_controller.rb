@@ -321,6 +321,16 @@ class ApplicationController < ActionController::Base
         @js_env[:LOCALE_TRANSLATION_FILE] = ::Canvas::Cdn.registry.url_for("javascripts/translations/#{@js_env[:LOCALES].first}.json")
         @js_env[:ACCOUNT_ID] = effective_account_id(@context)
         @js_env[:user_cache_key] = Base64.encode64("#{@current_user.uuid}vyfW=;[p-0?:{P_=HUpgraqe;njalkhpvoiulkimmaqewg") if @current_user&.workflow_state
+        @js_env[:top_navigation_tools] = external_tools_display_hashes(:top_navigation) if !!@domain_root_account&.feature_enabled?(:top_navigation_placement)
+        # partner context data
+        if @context&.grants_right?(@current_user, session, :read)
+          @js_env[:current_context] = {
+            id: @context.id,
+            name: @context.name,
+            type: @context.class.name,
+            url: named_context_url(@context, :context_url, include_host: true)
+          }
+        end
       end
     end
 
@@ -356,12 +366,14 @@ class ApplicationController < ActionController::Base
     differentiated_modules
     enhanced_course_creation_account_fetching
     instui_for_import_page
-    enhanced_rubrics
     multiselect_gradebook_filters
     assignment_edit_placement_not_on_announcements
     platform_service_speedgrader
     instui_header
     rce_find_replace
+    courses_popout_sisid
+    dashboard_graphql_integration
+    discussion_checkpoints
   ].freeze
   JS_ENV_ROOT_ACCOUNT_FEATURES = %i[
     product_tours
@@ -383,6 +395,7 @@ class ApplicationController < ActionController::Base
     instui_nav
     enhanced_developer_keys_tables
     lti_registrations_discover_page
+    enhanced_rubrics
   ].freeze
   JS_ENV_BRAND_ACCOUNT_FEATURES = [
     :embedded_release_notes
@@ -552,6 +565,9 @@ class ApplicationController < ActionController::Base
     hash[:external_url] = tool.url if custom_settings.include?(:external_url)
     if type == :submission_type_selection && tool.submission_type_selection[:description].present?
       hash[:description] = tool.submission_type_selection[:description]
+    end
+    if type == :top_navigation
+      hash[:pinned] = tool.placement_pinned?(type)
     end
 
     # Add the tool's postmessage scopes to the JS environment, if present.
@@ -1204,7 +1220,8 @@ class ApplicationController < ActionController::Base
           @context_membership = @context_enrollment
           check_for_readonly_enrollment_state
         elsif params[:account_id] || (is_a?(AccountsController) && (params[:account_id] = params[:id]))
-          @context = api_find(Account.active, params[:account_id])
+          account_scope = (params.dig(:account, :event) && params[:account][:event] == "restore") ? Account : Account.active
+          @context = api_find(account_scope, params[:account_id])
           params[:context_id] = @context.id
           params[:context_type] = "Account"
           @context_enrollment = @context.account_users.active.where(user_id: @current_user.id).first if @context && @current_user
@@ -2219,7 +2236,7 @@ class ApplicationController < ActionController::Base
         @lti_launch.link_text = @resource_title
         @lti_launch.analytics_id = @tool.tool_id
 
-        Lti::LogService.new(tool: @tool, context:, user: @current_user, placement: nil, launch_type: :content_item).call
+        Lti::LogService.new(tool: @tool, context:, user: @current_user, session_id: session[:session_id], placement: nil, launch_type: :content_item).call
 
         @append_template = "context_modules/tool_sequence_footer" if render_external_tool_append_template?
         render Lti::AppUtil.display_template(external_tool_redirect_display_type)
@@ -2952,6 +2969,7 @@ class ApplicationController < ActionController::Base
                    include: [
                      "assignments",
                      "discussion_topic",
+                     Account.site_admin.feature_enabled?(:discussion_checkpoints) && "checkpoints",
                      (permissions[:manage] || current_user_has_been_observer_in_this_course) && "all_dates",
                      permissions[:manage] && "module_ids",
                      peer_reviews_for_a2_enabled? && "assessment_requests"

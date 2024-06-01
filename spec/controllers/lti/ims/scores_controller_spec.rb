@@ -413,7 +413,7 @@ module Lti::IMS
 
             before do
               result.grading_progress = "PendingManual"
-              result.submission.workflow_state = Submission.workflow_states.pending_review
+              result.submission.workflow_state = "pending_review"
               result.save!
             end
 
@@ -1217,6 +1217,28 @@ module Lti::IMS
 
       context "with valid params" do
         it_behaves_like "a successful scores request"
+      end
+
+      context "when activityProdress is set to Initialized" do
+        let(:params_overrides) { super().merge(activityProgress: "Initialized") }
+
+        shared_examples_for "an unsubmitted submission" do
+          it "does not update the submission" do
+            send_request
+            rslt = Lti::Result.find(json["resultUrl"].split("/").last)
+            expect(rslt.submission.workflow_state).to eq("unsubmitted")
+          end
+        end
+
+        it_behaves_like "an unsubmitted submission"
+
+        context "ags_scores_multiple_files FF is on" do
+          before do
+            Account.root_accounts.first.enable_feature! :ags_scores_multiple_files
+          end
+
+          it_behaves_like "an unsubmitted submission"
+        end
       end
 
       context "when user_id is a fake student in course" do

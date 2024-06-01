@@ -54,7 +54,11 @@ export const TABS = {
   archived: 'Archived',
 }
 
-export const ViewRubrics = () => {
+export type ViewRubricsProps = {
+  canManageRubrics?: boolean
+}
+
+export const ViewRubrics = ({canManageRubrics = false}: ViewRubricsProps) => {
   const navigate = useNavigate()
   const {accountId, courseId} = useParams()
   const isAccount = !!accountId
@@ -139,6 +143,7 @@ export const ViewRubrics = () => {
               locations: [], // TODO: add locations once we have them
               ratingOrder: curr.ratingOrder,
               hidePoints: curr.hidePoints,
+              freeFormCriterionComments: curr.freeFormCriterionComments,
               workflowState: curr.workflowState,
               buttonDisplay: curr.buttonDisplay,
               criteria: curr.criteria ?? [],
@@ -242,14 +247,17 @@ export const ViewRubrics = () => {
           />
         </FlexItem>
         <FlexItem>
-          <Button
-            renderIcon={IconAddLine}
-            color="primary"
-            margin="small"
-            onClick={() => navigate('./create')}
-          >
-            {I18n.t('Create New Rubric')}
-          </Button>
+          {canManageRubrics && (
+            <Button
+              renderIcon={IconAddLine}
+              color="primary"
+              margin="small"
+              onClick={() => navigate('./create')}
+              data-testid="create-new-rubric-button"
+            >
+              {I18n.t('Create New Rubric')}
+            </Button>
+          )}
         </FlexItem>
       </Flex>
 
@@ -267,6 +275,7 @@ export const ViewRubrics = () => {
         >
           <View as="div" margin="medium 0" data-testid="saved-rubrics-table">
             <RubricTable
+              canManageRubrics={canManageRubrics}
               rubrics={filteredActiveRubrics}
               onLocationsClick={rubricId => handleLocationsClick(rubricId)}
               onPreviewClick={rubricId => handlePreviewClick(rubricId)}
@@ -284,6 +293,7 @@ export const ViewRubrics = () => {
         >
           <View as="div" margin="medium 0" data-testid="archived-rubrics-table">
             <RubricTable
+              canManageRubrics={canManageRubrics}
               rubrics={filteredArchivedRubrics}
               onLocationsClick={rubricId => handleLocationsClick(rubricId)}
               onPreviewClick={rubricId => handlePreviewClick(rubricId)}
@@ -297,10 +307,13 @@ export const ViewRubrics = () => {
       <RubricAssessmentTray
         isLoading={isLoadingPreview}
         isOpen={isPreviewTrayOpen}
-        isPreviewMode={true}
+        isPreviewMode={false}
         rubric={rubricPreview}
         rubricAssessmentData={[]}
-        onDismiss={() => setIsPreviewTrayOpen(false)}
+        onDismiss={() => {
+          setRubricIdForPreview(undefined)
+          setIsPreviewTrayOpen(false)
+        }}
       />
 
       <UsedLocationsModal

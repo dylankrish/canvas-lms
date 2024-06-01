@@ -40,6 +40,7 @@ export type RubricPopoverProps = {
   pointsPossible: number
   buttonDisplay?: string
   ratingOrder?: string
+  freeFormCriterionComments?: boolean
   hasRubricAssociations?: boolean
   onArchiveRubricChange: () => void
   active: boolean
@@ -55,6 +56,7 @@ export const RubricPopover = ({
   pointsPossible,
   buttonDisplay,
   ratingOrder,
+  freeFormCriterionComments,
   hasRubricAssociations,
   onArchiveRubricChange,
   active,
@@ -82,6 +84,7 @@ export const RubricPopover = ({
         pointsPossible={pointsPossible}
         buttonDisplay={buttonDisplay}
         ratingOrder={ratingOrder}
+        freeFormCriterionComments={freeFormCriterionComments}
         accountId={accountId}
         courseId={courseId}
       />
@@ -128,12 +131,12 @@ export const RubricPopover = ({
           <Menu.Item data-testid="archive-rubric-button" onClick={handleArchiveRubric}>
             {active ? I18n.t('Archive') : I18n.t('Un-Archive')}
           </Menu.Item>
-          <Menu.Item data-testid="download-rubric-button" onClick={() => {}}>
+          {/* <Menu.Item data-testid="download-rubric-button" onClick={() => {}}>
             {I18n.t('Download')}
           </Menu.Item>
           <Menu.Item data-testid="print-rubric-button" onClick={() => {}}>
             {I18n.t('Print')}
-          </Menu.Item>
+          </Menu.Item> */}
           <Menu.Item
             disabled={hasRubricAssociations}
             data-testid="delete-rubric-button"

@@ -28,6 +28,7 @@ import {setContainScrollBehavior} from '../utils/assignToHelper'
 import useFetchAssignees from '../utils/hooks/useFetchAssignees'
 import type {FormMessage} from '@instructure/ui-form-field'
 import {showFlashAlert} from '@canvas/alerts/react/FlashAlert'
+import {AssigneeOption} from './Item/types'
 
 const {Option: CanvasMultiSelectOption} = CanvasMultiSelect as any
 
@@ -51,14 +52,7 @@ interface Props {
   showVisualLabel?: boolean
   inputRef?: (inputElement: HTMLInputElement | null) => void
   onBlur?: () => void
-}
-
-export interface AssigneeOption {
-  id: string
-  value: string
-  sisID?: string
-  overrideId?: string
-  group?: string
+  disabledWithGradingPeriod?: boolean
 }
 
 const AssigneeSelector = ({
@@ -79,6 +73,7 @@ const AssigneeSelector = ({
   showVisualLabel = true,
   inputRef,
   onBlur,
+  disabledWithGradingPeriod,
 }: Props) => {
   const listElementRef = useRef<HTMLElement | null>(null)
   const [options, setOptions] = useState<AssigneeOption[]>(defaultValues)
@@ -152,6 +147,7 @@ const AssigneeSelector = ({
   return (
     <>
       <CanvasMultiSelect
+        disabled={disabledWithGradingPeriod}
         data-testid="assignee_selector"
         messages={messages}
         label={showVisualLabel ? label : <ScreenReaderContent>{label}</ScreenReaderContent>}

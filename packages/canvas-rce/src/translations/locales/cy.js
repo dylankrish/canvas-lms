@@ -193,6 +193,9 @@ const locale = {
   "congruent_5a244acd": { "message": "Cyfath" },
   "contains_311f37b7": { "message": "Yn cynnwys" },
   "content_1440204b": { "message": "Cynnwys" },
+  "content_in_the_editor_will_be_changed_press_cancel_d5bf3357": {
+    "message": "Bydd y cynnwys yn y golygydd yn cael ei newid. Pwyswch Canslo i gadw''r cynnwys gwreiddiol."
+  },
   "content_is_still_being_uploaded_if_you_continue_it_8f06d0cb": {
     "message": "Mae cynnwys wrthi''n cael ei llwytho i fyny, os byddwch chi''n parhau ni fydd yn cael ei blannu''n gywir."
   },
@@ -682,6 +685,7 @@ const locale = {
   "nested_less_than_27d17e58": { "message": "Nythu’n Llai Na" },
   "new_quiz_34aacba6": { "message": "Cwis Newydd" },
   "next_40e12421": { "message": "Nesaf" },
+  "next_findtext_9d69f0fe": { "message": "Nesaf { findText }" },
   "no_accessibility_issues_were_detected_f8d3c875": {
     "message": "Heb ganfod problemau o ran hygyrchedd."
   },
@@ -810,12 +814,16 @@ const locale = {
   "precedes_196b9aef": { "message": "Cyn" },
   "precedes_equal_20701e84": { "message": "Cyn Hafalnod" },
   "preformatted_d0670862": { "message": "Wedi''i fformatio’n barod" },
+  "prepend_findtext_append_8e0e769a": {
+    "message": "{ prepend }{ findText }{ append }"
+  },
   "prev_f82cbc48": { "message": "Blaenorol" },
   "preview_53003fd2": { "message": "Rhagolwg" },
   "preview_a3f8f854": { "message": "RHAGOLWG" },
   "preview_in_overlay_ed772c46": { "message": "Rhagolwg mewn troshaen" },
   "preview_inline_9787330": { "message": "Rhagolwg mewn llinell" },
   "previous_bd2ac015": { "message": "Blaenorol" },
+  "previous_findtext_8dfbfd30": { "message": "Blaenorol { findText }" },
   "prime_917ea60e": { "message": "Cysefin" },
   "prime_numbers_13464f61": { "message": "Rhifau Cysefin" },
   "product_39cf144f": { "message": "Cynnyrch" },
@@ -847,11 +855,26 @@ const locale = {
   "remove_heading_style_5fdc8855": { "message": "Tynnu arddull y pennawd" },
   "remove_link_d1f2f4d0": { "message": "Tynnu Dolen" },
   "replace_all_d3d68b3": { "message": "Cyfnewid pob un" },
+  "replace_all_findtext_with_replacetext_da574b32": {
+    "message": "Disodli pob un { findText } â { replaceText }"
+  },
   "replace_e61834a7": { "message": "Disodli" },
+  "replace_findtext_with_replacetext_7b5c7fb3": {
+    "message": "Disodli { findText } â { replaceText }"
+  },
   "replace_with_eeff01ad": { "message": "Cyfnewid am" },
+  "replaced_alertfindtext_with_alertreplacetext_de5c1795": {
+    "message": "Disodlwyd { alertFindText } â { alertReplaceText }"
+  },
+  "replaced_all_alertfindtext_with_alertreplacetext_83fdfe59": {
+    "message": "Disodlwyd pob un { alertFindText } â { alertReplaceText }"
+  },
   "reset_95a81614": { "message": "Ailosod" },
   "resize_ec83d538": { "message": "Ailfeintio" },
   "restore_auto_save_deccd84b": { "message": "Adfer cadw’n awtomatig?" },
+  "result_index_of_max_7db5ad8b": {
+    "message": "Canlyniad { index } o { max }."
+  },
   "reverse_turnstile_does_not_yield_7558be06": {
     "message": "Giât Dro yn ôl (Ddim yn rhoi)"
   },

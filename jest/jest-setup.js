@@ -54,11 +54,13 @@ const ignoredErrors = [
   /You seem to have overlapping act\(\) calls/,
   /Warning: `value` prop on `%s` should not be null. Consider using an empty string to clear the component or `undefined` for uncontrolled components.%s/,
   /Warning: This synthetic event is reused for performance reasons/,
+  /Invalid prop `value` supplied to `MenuItem`/, // https://instructure.atlassian.net/browse/INSTUI-4054
 ]
 const globalWarn = global.console.warn
 const ignoredWarnings = [
   /JQMIGRATE:/, // ignore warnings about jquery migrate; these are muted globally when not in a jest test
   /componentWillReceiveProps/, // ignore warnings about componentWillReceiveProps; this method is deprecated and will be removed with react upgrades
+  /The prop `[\w]+` is defined at 2 or more breakpoints which are currently applied at the same time/, // https://instructure.atlassian.net/browse/VICE-4257
 ]
 
 global.console = {

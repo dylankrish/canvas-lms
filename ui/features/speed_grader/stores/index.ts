@@ -26,7 +26,9 @@ type SpeedGraderStore = {
   gradesLoading: Record<string, boolean>
   rubricAssessmentTrayOpen: boolean
   rubricAssessors: RubricAssessmentSelect
+  rubricHidePoints: boolean
   studentAssessment?: RubricAssessmentUnderscore
+  rubricSavedComments?: Record<string, string[]>
 }
 
 const useStore = create(
@@ -35,7 +37,9 @@ const useStore = create(
     gradesLoading: {},
     rubricAssessmentTrayOpen: false,
     rubricAssessors: [],
+    rubricHidePoints: false,
     studentAssessment: undefined,
+    rubricSavedComments: {},
   }))
 )
 

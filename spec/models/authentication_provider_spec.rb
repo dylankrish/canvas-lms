@@ -234,7 +234,7 @@ describe AuthenticationProvider do
                                      purpose: :provisioning)
       @user.reload
       expect(@user.short_name).to eq "Mr. Cutler"
-      expect(@user.communication_channels.email.active.pluck(:path)).to include("cody@school.edu")
+      expect(@user.communication_channels.email.in_state("unconfirmed").pluck(:path)).to include("cody@school.edu")
       expect(@pseudonym.integration_id).to eq "abc123"
       expect(@user.locale).to eq "es"
       expect(@user.name).to eq "Cody Cutrer"
@@ -265,7 +265,7 @@ describe AuthenticationProvider do
                                        "timezone" => "America/New_York"
                                      })
       @user.reload
-      expect(@user.communication_channels.email.active.pluck(:path)).to include("cody@school.edu")
+      expect(@user.communication_channels.email.in_state("unconfirmed").pluck(:path)).to include("cody@school.edu")
       expect(@pseudonym.integration_id).not_to eq "abc123"
       expect(@user.locale).to eq "es"
       expect(@user.name).to eq "Cody Cutrer"
@@ -350,6 +350,24 @@ describe AuthenticationProvider do
         @user.reload
         expect(@user.locale).to eq "en-GB"
       end
+    end
+  end
+
+  describe "#provision_user" do
+    let(:auth_provider) { account.authentication_providers.create!(auth_type: "microsoft", tenant: "microsoft", login_attribute: "sub") }
+
+    it "works" do
+      p = auth_provider.provision_user("unique_id")
+      expect(p.unique_id).to eq "unique_id"
+      expect(p.login_attribute).to eq "sub"
+      expect(p.unique_ids).to eq({})
+    end
+
+    it "handles a hash of unique ids" do
+      p = auth_provider.provision_user("sub" => "unique_id", "tid" => "abc")
+      expect(p.unique_id).to eq "unique_id"
+      expect(p.login_attribute).to eq "sub"
+      expect(p.unique_ids).to eq({ "sub" => "unique_id", "tid" => "abc" })
     end
   end
 

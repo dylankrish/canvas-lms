@@ -20,7 +20,7 @@ import React from 'react'
 import {render} from '@testing-library/react'
 import chicago from 'timezone/America/Chicago'
 import DueDateCalendarPicker from '@canvas/due-dates/react/DueDateCalendarPicker'
-import * as tz from '@canvas/datetime'
+import * as tz from '@instructure/datetime'
 import tzInTest from '@canvas/datetime/specHelpers'
 import fakeENV from 'helpers/fakeENV'
 
@@ -128,23 +128,13 @@ QUnit.module('DueDateCalendarPicker', suiteHooks => {
   test('forwards properties to label', () => {
     props.labelClasses = 'special-label'
     mountComponent()
-    ok(
-      wrapper
-        .container.querySelector('label')
-        .className
-        .match(/special-label/)
-    )
+    ok(wrapper.container.querySelector('label').className.match(/special-label/))
   })
 
   test('forwards properties to input', () => {
     props.name = 'special-name'
     mountComponent()
-    ok(
-      wrapper
-        .container.querySelector('input')
-        .name
-        .match(/special-name/)
-    )
+    ok(wrapper.container.querySelector('input').name.match(/special-name/))
   })
 
   test('label and input reference each other', () => {

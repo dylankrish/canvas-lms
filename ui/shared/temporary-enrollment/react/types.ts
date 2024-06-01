@@ -19,7 +19,7 @@
 export const MODULE_NAME = 'TempEnroll'
 
 export const ITEMS_PER_PAGE = 100
-export const MAX_ALLOWED_COURSES_PER_PAGE = 50
+export const MAX_ALLOWED_COURSES_PER_PAGE = 100
 
 export const TOOLTIP_MAX_WIDTH: string = '15rem'
 export const ENROLLMENT_TREE_SPACING: string = '1.75rem'
@@ -31,6 +31,11 @@ export interface Course {
   workflow_state: string
   enrollments: Enrollment[]
   sections: Section[]
+  term?: Term
+}
+
+export interface Term {
+  name: string
 }
 
 export interface Section {
@@ -107,6 +112,7 @@ export interface NodeStructure {
   label: string
   parent?: NodeStructure
   workflowState?: string
+  termName?: string
 }
 
 export const EMPTY_USER: User = {

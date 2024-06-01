@@ -325,8 +325,13 @@ body:not(.course-menu-expanded) {
 }
 
 .instui-topnav-container {
-  margin: 0 $ic-sp * 2;
+  margin: 0;
   min-height: $ic-breadcrumbs-height;
+  display: none;
+
+  @include desktop-only {
+    display: block;
+  }
 }
 
 .ic-app-nav-toggle-and-crumbs {
@@ -363,6 +368,13 @@ body:not(.course-menu-expanded) {
 .ic-app-crumbs {
   flex: 1;
   display: flex;
+  align-items: center;
+  box-sizing: border-box;
+}
+
+.ic-app-crumbs-enhanced-rubrics {
+  flex: 1;
+  display: block;
   align-items: center;
   box-sizing: border-box;
 }

@@ -1634,6 +1634,7 @@ el:
   add_new_set_of_due_dates_e8e240f: "Προσθέστε νέο σύνολο απο καταληκτικές ημερομηνίες"
   add_new_term_d2217c0d: "Προσθήκη Νέου Εξαμήνου"
   add_people_7ee4b2ec: "Προσθήκη Ατόμων"
+  add_prerequisite_6409bd9: "Προσθήκη Προαπαιτούμενου"
   add_quiz_cebfa28b: "Προσθήκη Κουίζ"
   add_quiz_ip_filter_c7b37dc5: "Πρόσθεση φίλτου IP Διεύθυνσης για Κουίζ"
   add_recipient_ff135ed7: "Προσθήκη Παραλήπτη"
@@ -1838,7 +1839,7 @@ el:
   announcements_a4b8ed4a: Ανακοινώσεις
   anonymous_e1b8ad27: Ανώνυμο
   anonymous_grading_ccb5045c: "Ανώνυμη Βαθμολόγηση"
-  anonymous_grading_forces_student_names_to_be_hidde_8b46d7e7: "Η ανώνυμη βαθμολόγηση συνεπάγεται την υποχρεωτική απόκρυψη ονομάτων φοιτητών/τριών στο SpeedGrader™"
+  anonymous_grading_forces_student_names_to_be_hidde_8b46d7e7: "Η ανώνυμη βαθμολόγηση συνεπάγεται την υποχρεωτική απόκρυψη ονομάτων φοιτητών/τριών στο SpeedGrader"
   anonymous_user: "Ανώνυμος Χρήστης"
   anonymous_user_d984b9ce: "Ανώνυμος Χρήστης"
   anonymously_graded_59149570: "Ανώνυμα βαθμολογημένα"
@@ -2223,7 +2224,7 @@ el:
       resubmission_count: 
         one: "1 Μη Βαθμολογημένη Επανυποβολή"
         other: "%{count} Μη Βαθμολογημένες Επανυποβολές"
-      speed_grader: SpeedGrader™
+      speed_grader: SpeedGrader
       titles: 
         related_items: "Σχετικά Στοιχεία"
     grade_gpa_scale_screenreader: "Βαθμός: %{grade}"
@@ -3285,6 +3286,7 @@ el:
   canvas_error_report_ff678539: "Αναφορά Σφάλματος Canvas"
   canvas_id_f42f6ad: "Canvas ID"
   canvas_introduction_video_2d81f3ad: "Εισαγωγικό Βίντεο στο Canvas"
+  canvas_lms_6ce68514: "Σύστημα Διαχείρισης Εκπαιδευτικού Περιεχομένου Canvas"
   canvas_login_failure_message_4c922f2f: "Μήνυμα απο το Canvas σχετικά με την αποτυχία σύνδεσης"
   canvas_revision_unknown: Άγνωστο
   canvas_thinks_response_is_valid_8cc4a67d: "το Canvas πιστεύει πως η απάντηση είναι έγκυρη"
@@ -6638,6 +6640,7 @@ el:
       select_an_option: "Παρακαλώ διαλέξτε μια επιλογή"
     gradebook_header_menu: 
       assignment_details: "Λεπτομέρειες Εργασίας"
+      speedgrader: SpeedGrader™
     graded: βαθμολογήθηκε/αν
     graded_then_resubmitted: "βαθμολογήθηκε, κατόπιν επανυποβλήθηκε (%{when})"
     group: Ομάδα
@@ -14076,7 +14079,7 @@ el:
       resubmitting: Επανυποβολή...
   speedgrader_d9a6fa90: Speedgrader
   speedgrader_de0affa6: SpeedGrader
-  speedgrader_tm_44688790: SpeedGrader™
+  speedgrader_tm_44688790: SpeedGrader
   spreadsheet_6d622119: "Λογιστικό φύλλο"
   sr_gradebook: 
     all_grading_periods: "Όλες οι περίοδοι βαθμολογήσεων"
@@ -15423,6 +15426,8 @@ el:
   validate_links_in_content_b1630fba: "Επικύρωση Συνδέσμων στο Περιεχόμενο"
   validation_error_3b943100: "Λάθος στην Επικύρωση"
   vanity_url_76f93382: "Vanity URL"
+  verification_code_5acd64ef: "Κωδικός Επιβεβαίωσης"
+  version_5599c321: Έκδοση
   video_b9f27375: "Αρχείο Βίντεο"
   video_content_is_not_supported_by_your_device_or_a_25214f57: "Το περιεχόμενο του βίντεο δεν υποστηρίζεται από τη συσκευή ή την εφαρμογή σας."
   video_player_b371005: "Πρόγραμμα Αναπαραγωγής Βίντεο"

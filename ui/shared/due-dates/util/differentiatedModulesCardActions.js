@@ -31,6 +31,8 @@ const CardActions = {
       return this.handleSectionAdd(newAssignee, overridesFromRow)
     } else if (newAssignee.group_id) {
       return this.handleGroupAdd(newAssignee, overridesFromRow)
+    } else if (newAssignee.course_id) {
+      return this.handleCourseAdd(newAssignee, overridesFromRow)
     } else if (newAssignee.noop_id) {
       return this.handleNoopAdd(newAssignee, overridesFromRow)
     } else {
@@ -49,11 +51,23 @@ const CardActions = {
     return union(overridesFromRow, [newOverride])
   },
 
+  // -- Adding Course --
+
+  handleCourseAdd(assignee, overridesFromRow) {
+    const newOverride = this.newOverrideForCard({
+      course_id: assignee.course_id,
+      title: assignee.name,
+    })
+
+    return union(overridesFromRow, [newOverride])
+  },
+
   // -- Adding Groups --
 
   handleGroupAdd(assignee, overridesFromRow) {
     const newOverride = this.newOverrideForCard({
       group_id: assignee.group_id,
+      group_category_id: assignee.group_category_id,
       title: assignee.name,
     })
 
@@ -129,6 +143,12 @@ const CardActions = {
   },
 
   removeForType(selector, assigneeToRemove, overridesFromRow) {
+    if (assigneeToRemove.course_section_id === '0') {
+      // the simplest way to make sure the correct 'everyone' is always removed is to treat
+      // course overrides like regular everyone cards and then check for course overrides
+      const courseOverride = overridesFromRow.filter(override => override.course_id !== undefined)
+      if (courseOverride?.length > 0) return difference(overridesFromRow, courseOverride)
+    }
     const overrideToRemove = find(
       overridesFromRow,
       override => override[selector] == assigneeToRemove[selector]

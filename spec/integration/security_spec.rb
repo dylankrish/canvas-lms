@@ -65,7 +65,7 @@ describe "security" do
 
       post "/login/canvas", params: { "pseudonym_session[unique_id]" => "nobody@example.com",
                                       "pseudonym_session[password]" => "asdfasdf" }
-      assert_response 302
+      assert_response :found
       lines = response["Set-Cookie"]
       lines = lines.lines if $canvas_rails == "7.0"
       c = lines.grep(/\A_normandy_session=/).first
@@ -77,7 +77,7 @@ describe "security" do
       post "/login/canvas", params: { "pseudonym_session[unique_id]" => "nobody@example.com",
                                       "pseudonym_session[password]" => "asdfasdf",
                                       "pseudonym_session[remember_me]" => "1" }
-      assert_response 302
+      assert_response :found
       lines = response["Set-Cookie"]
       lines = lines.lines if $canvas_rails == "7.0"
       c = lines.grep(/\A_normandy_session=/).first
@@ -92,7 +92,7 @@ describe "security" do
       https!
       post "/login/canvas", params: { "pseudonym_session[unique_id]" => "nobody@example.com",
                                       "pseudonym_session[password]" => "asdfasdf" }
-      assert_response 302
+      assert_response :found
       lines = response["Set-Cookie"]
       lines = lines.lines if $canvas_rails == "7.0"
       c1 = lines.grep(/\Apseudonym_credentials=/).first
@@ -184,7 +184,7 @@ describe "security" do
       post "/login/canvas", params: { "pseudonym_session[unique_id]" => "nobody@example.com",
                                       "pseudonym_session[password]" => "asdfasdf",
                                       "pseudonym_session[remember_me]" => "1" }
-      assert_response 302
+      assert_response :found
       cookie = cookies["pseudonym_credentials"]
       expect(cookie).to be_present
       token = SessionPersistenceToken.find_by_pseudonym_credentials(CGI.unescape(cookie))
@@ -302,12 +302,13 @@ describe "security" do
   if Canvas.redis_enabled?
     describe "max login attempts" do
       before do
-        Setting.set("login_attempts_total", "2")
-        Setting.set("login_attempts_per_ip", "1")
         u = user_with_pseudonym active_user: true,
                                 username: "nobody@example.com",
                                 password: "asdfasdf"
         u.save!
+        @account = @pseudonym.account
+        @account.settings[:password_policy] = { max_attempts: 1 }
+        @account.save!
       end
 
       def bad_login(ip)
@@ -317,9 +318,9 @@ describe "security" do
         follow_redirect! while response.redirect?
       end
 
-      it "is limited for the same ip" do
+      it "is restrictive to pseudonym account's configured max attempts" do
         bad_login("5.5.5.5")
-        expect(response.body).to match(/Invalid username/)
+        expect(response.body).to match(/Please verify your username or password and try again/)
         bad_login("5.5.5.5")
         expect(response.body).to match(/Too many failed login attempts/)
         # should still fail
@@ -330,27 +331,9 @@ describe "security" do
         expect(response.body).to match(/Too many failed login attempts/)
       end
 
-      it "has a higher limit for other ips" do
+      it "does not block other users" do
         bad_login("5.5.5.5")
-        expect(response.body).to match(/Invalid username/)
-        bad_login("5.5.5.6") # different IP, so allowed
-        expect(response.body).to match(/Invalid username/)
-        bad_login("5.5.5.7") # different IP, but too many total failures
-        expect(response.body).to match(/Too many failed login attempts/)
-        # should still fail
-        post "/login/canvas",
-             params: { "pseudonym_session[unique_id]" => "nobody@example.com", "pseudonym_session[password]" => "asdfasdf" },
-             headers: { "REMOTE_ADDR" => "5.5.5.7" }
-        follow_redirect! while response.redirect?
-        expect(response.body).to match(/Too many failed login attempts/)
-      end
-
-      it "does not block other users with the same ip" do
-        bad_login("5.5.5.5")
-        expect(response.body).to match(/Invalid username/)
-
-        # schools like to NAT hundreds of people to the same IP, so we don't
-        # ever block the IP address as a whole
+        expect(response.body).to match(/Please verify your username or password and try again/)
         user_with_pseudonym(active_user: true, username: "second@example.com", password: "12341234").save!
         post "/login/canvas",
              params: { "pseudonym_session[unique_id]" => "second@example.com", "pseudonym_session[password]" => "12341234" },
@@ -364,10 +347,12 @@ describe "security" do
         allow_any_instantiation_of(Account.default).to receive(:trusted_account_ids).and_return([account.id])
         @pseudonym.account = account
         @pseudonym.save!
+        @pseudonym.account.settings[:password_policy] = { max_attempts: 2 }
+        @pseudonym.account.save!
         bad_login("5.5.5.5")
-        expect(response.body).to match(/Invalid username/)
+        expect(response.body).to match(/Please verify your username or password and try again/)
         bad_login("5.5.5.6") # different IP, so allowed
-        expect(response.body).to match(/Invalid username/)
+        expect(response.body).to match(/Please verify your username or password and try again/)
         bad_login("5.5.5.7") # different IP, but too many total failures
         expect(response.body).to match(/Too many failed login attempts/)
         # should still fail
@@ -430,7 +415,7 @@ describe "security" do
       user_session(@admin, @admin.pseudonyms.first)
 
       get "/?become_user_id=#{@student.id}"
-      assert_response 302
+      assert_response :found
       expect(response.location).to match "/users/#{@student.id}/masquerade$"
       expect(session[:masquerade_return_to]).to eq "/"
       expect(session[:become_user_id]).to be_nil
@@ -438,18 +423,18 @@ describe "security" do
       expect(assigns["real_current_user"]).to be_nil
 
       follow_redirect!
-      assert_response 200
+      assert_response :ok
       expect(path).to eq "/users/#{@student.id}/masquerade"
       expect(session[:become_user_id]).to be_nil
       expect(assigns["current_user"].id).to eq @admin.id
       expect(assigns["real_current_user"]).to be_nil
 
       post "/users/#{@student.id}/masquerade"
-      assert_response 302
+      assert_response :found
       expect(session[:become_user_id]).to eq @student.id.to_s
 
       get "/"
-      assert_response 200
+      assert_response :ok
       expect(session[:become_user_id]).to eq @student.id.to_s
       expect(assigns["current_user"].id).to eq @student.id
       expect(assigns["current_pseudonym"]).to eq @student_pseudonym
@@ -460,7 +445,7 @@ describe "security" do
       user_session(@admin, @admin.pseudonyms.first)
 
       get "/?as_user_id=#{@student.id}"
-      assert_response 200
+      assert_response :ok
       expect(session[:become_user_id]).to be_nil
       expect(assigns["current_user"].id).to eq @admin.id
       expect(assigns["real_current_user"]).to be_nil
@@ -470,13 +455,13 @@ describe "security" do
       user_session(@student, @student.pseudonyms.first)
 
       get "/?become_user_id=#{@teacher.id}"
-      assert_response 200
+      assert_response :ok
       expect(session[:become_user_id]).to be_nil
       expect(assigns["current_user"].id).to eq @student.id
       expect(assigns["real_current_user"]).to be_nil
 
       post "/users/#{@teacher.id}/masquerade"
-      assert_response 401
+      assert_response :unauthorized
       expect(assigns["current_user"].id).to eq @student.id
       expect(session[:become_user_id]).to be_nil
     end
@@ -486,7 +471,7 @@ describe "security" do
       user_session(@admin, @admin.pseudonyms.first)
 
       get "/?become_user_id=#{@student.id}"
-      assert_response 302
+      assert_response :found
       expect(response.location).to match "/users/#{@student.id}/masquerade$"
       expect(session[:masquerade_return_to]).to eq "/"
       expect(session[:become_user_id]).to be_nil
@@ -494,7 +479,7 @@ describe "security" do
       expect(assigns["real_current_user"]).to be_nil
 
       follow_redirect!
-      assert_response 200
+      assert_response :ok
       expect(path).to eq "/users/#{@student.id}/masquerade"
       expect(session[:become_user_id]).to be_nil
       expect(assigns["current_user"].id).to eq @admin.id
@@ -504,11 +489,11 @@ describe "security" do
       expect(pv1.real_user_id).to be_nil
 
       post "/users/#{@student.id}/masquerade"
-      assert_response 302
+      assert_response :found
       expect(session[:become_user_id]).to eq @student.id.to_s
 
       get "/"
-      assert_response 200
+      assert_response :ok
       expect(session[:become_user_id]).to eq @student.id.to_s
       expect(assigns["current_user"].id).to eq @student.id
       expect(assigns["real_current_user"].id).to eq @admin.id

@@ -2076,6 +2076,7 @@ tr:
   add_people_7948b7da: "Kullanıcı Ekle"
   add_people_7ee4b2ec: "Katılımcı Ekle"
   add_people_to_coursename_5ea234e1: "%{courseName}'e kişileri ekleyin"
+  add_prerequisite_6409bd9: "Ön Koşul Ekle"
   add_proficiency_rating_d819f6b8: "Yeterlik düzeyi ekle"
   add_quiz_cebfa28b: "Kısa Sınav Ekle"
   add_quiz_ip_filter_c7b37dc5: "Kısa Sınav IP Filtresi Ekle"
@@ -2429,7 +2430,7 @@ tr:
   anonymize_all_instructor_comments_and_annotations__713924c9: "DocViewer'daki tüm eğitmen yorumlarını ve ek açıklamalarını anonimleştirir."
   anonymous_e1b8ad27: Anonim
   anonymous_grading_ccb5045c: "İsimsiz Notlandırma"
-  anonymous_grading_forces_student_names_to_be_hidde_8b46d7e7: "İsimsiz notlandırma, SpeedGrader™ da öğrencilerin isimlerini gizler"
+  anonymous_grading_forces_student_names_to_be_hidde_8b46d7e7: "İsimsiz notlandırma, SpeedGrader da öğrencilerin isimlerini gizler"
   anonymous_instructor_annotations_2b6c822: "İsimsiz Öğretmen Ek açıklamaları"
   anonymous_moderated_marking_801bbb65: "İsimsiz Modere Edilmiş Notlandırma"
   anonymous_user: "İsimsiz Kullanıcı"
@@ -2994,7 +2995,7 @@ tr:
           bu düzenlenmiş dosyayı görecekler 
           
           *Gönderilen dosyaların adlarını değiştirmeyin ki sistem bu dosyaları tanımlayabilsin.*
-      speed_grader: SpeedGrader™
+      speed_grader: SpeedGrader
       titles: 
         related_items: "İlişkili Öğeler"
     grade_gpa_scale_screenreader: "Not: %{grade}"
@@ -4329,6 +4330,7 @@ tr:
   canvas_error_report_ff678539: "Canvas Hata Raporu"
   canvas_group_category_id_38d8cfd7: canvas_group_category_id
   canvas_introduction_video_2d81f3ad: "Canvas Tanıtım Videosu"
+  canvas_lms_6ce68514: "Canvas LMS"
   canvas_login_failure_message_4c922f2f: "Canvas oturum açma hata mesajı"
   canvas_multi_factor_authentication_backup_codes_4bd08f93: "Canvas Çoklu Kimlik Doğrulama Yedek Kodları"
   canvas_observer_id_59db0918: canvas_observer_id
@@ -18316,7 +18318,7 @@ tr:
       resubmitting: "Yeniden gönderiliyor..."
   speedgrader_d9a6fa90: Speedgrader
   speedgrader_de0affa6: SpeedGrader
-  speedgrader_tm_44688790: SpeedGrader™
+  speedgrader_tm_44688790: SpeedGrader
   spreadsheet_6d622119: "Elektronik Tablo"
   sr_gradebook: 
     all_grading_periods: "Tüm Notlandırma Periyotları"
@@ -18353,6 +18355,7 @@ tr:
   start_a_new_course_57ae2480: "Yeni bir Ders Aç"
   start_date_e937be8a: "Başlangıç Tarihi"
   start_participating_f0c75256: "Katılımı Başlat"
+  started_5e138638: Başladı
   state_66a67ba2: Durum
   state_standards_c9b1affd: "Eyalet Standartları"
   statistics: 
@@ -19867,6 +19870,8 @@ tr:
   validation_error_3b943100: "Doğrulama Hatası"
   venezuela_58_959d01f7: "Venezuella (+58)"
   vericite_similarity_score_more_information_7df9ea5c: "VeriCite benzerlik puanı -- daha fazla bilgi"
+  verification_code_5acd64ef: "Doğrulama Kodu"
+  version_5599c321: Versiyon
   video_b9f27375: Video
   video_player_b371005: "Video Oynatıcı"
   vietnam_84_e50a2a44: "Viyetnam (+84)"

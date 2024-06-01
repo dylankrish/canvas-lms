@@ -46,6 +46,8 @@ import UsageRightsIndicator from '@canvas/files/react/components/UsageRightsIndi
 import setUsageRights from '@canvas/files/util/setUsageRights'
 import * as returnToHelper from '@canvas/util/validateReturnToURL'
 import 'jqueryui/tabs'
+import {unfudgeDateForProfileTimezone} from '@instructure/datetime'
+import {renderDatetimeField} from '@canvas/datetime/jquery/DatetimeField'
 
 const I18n = useI18nScope('discussion_topics')
 
@@ -146,6 +148,27 @@ EditView.prototype.initialize = function (options) {
     'success',
     (function (_this) {
       return function (xhr) {
+        // a request with attachment always will be successfull because of the iframe submit
+        const errors = xhr?.errors && Object.values(xhr.errors)
+
+        if (errors?.length) {
+          // when a request with attachment fails we need to re-enable the form
+          this.disablingDfd.reject()
+
+          errors.forEach(errorMsg => {
+            if (typeof errorMsg === 'string') {
+              $.flashError(errorMsg)
+              return
+            }
+
+            // internal server error has a different response
+            if (typeof errorMsg?.message === 'string') {
+              $.flashError(errorMsg.message)
+            }
+          })
+          return
+        }
+
         let contextId, contextType, ref, ref1, usageRights
         if (((ref = xhr.attachments) != null ? ref.length : void 0) === 1) {
           usageRights = _this.attachment_model.get('usage_rights')
@@ -370,7 +393,7 @@ EditView.prototype.render = function () {
   if (this.showConditionalRelease()) {
     defer(this.loadConditionalRelease)
   }
-  this.$('.datetime_field').datetime_field()
+  renderDatetimeField(this.$('.datetime_field'))
   if (!this.model.get('locked')) {
     this.updateAllowComments()
   }
@@ -559,7 +582,7 @@ EditView.prototype.getFormData = function () {
   const dateFields = ['last_reply_at', 'posted_at', 'delayed_post_at', 'lock_at']
   for (i = 0, len = dateFields.length; i < len; i++) {
     dateField = dateFields[i]
-    data[dateField] = $.unfudgeDateForProfileTimezone(data[dateField])
+    data[dateField] = unfudgeDateForProfileTimezone(data[dateField])
   }
   data.title || (data.title = I18n.t('default_discussion_title', 'No Title'))
   data.discussion_type = data.threaded === '1' ? 'threaded' : 'side_comment'
@@ -597,7 +620,6 @@ EditView.prototype.getFormData = function () {
       assign_data.peer_review_count = numberHelper.parse(assign_data.peer_review_count)
     }
   }
-  data.set_assignment = document.querySelector('#use_for_grading') && document.querySelector('#use_for_grading').checked
   if ((assign_data != null ? assign_data.set_assignment : void 0) === '1') {
     data.set_assignment = '1'
     data.assignment = this.updateAssignment(assign_data)
@@ -680,6 +702,7 @@ EditView.prototype.submit = function (event) {
   let missingDateDialog, sections
   event.preventDefault()
   event.stopPropagation()
+  this.disablingDfd = new $.Deferred()
   if (this.gradedChecked() && this.dueDateOverrideView.containsSectionsWithoutOverrides()) {
     sections = this.dueDateOverrideView.sectionsWithoutOverrides()
     missingDateDialog = new MissingDateDialog({
@@ -762,7 +785,7 @@ EditView.prototype.validateBeforeSave = function (data, errors) {
   if (data.anonymous_state !== 'full_anonymity' && data.anonymous_state !== 'partial_anonymity') {
     data.anonymous_state = null
   }
-  if (this.isTopic() && data.anonymous_state == null && data.set_assignment === '1') {
+  if (this.isTopic() && data.set_assignment === '1') {
     if (this.assignmentGroupSelector != null) {
       errors = this.assignmentGroupSelector.validateBeforeSave(data, errors)
     }
@@ -773,6 +796,13 @@ EditView.prototype.validateBeforeSave = function (data, errors) {
     errors = this.dueDateOverrideView.validateBeforeSave(validateBeforeSaveData, errors)
     errors = this._validatePointsPossible(data, errors)
     errors = this._validateTitle(data, errors)
+    if (data.anonymous_state !== null) {
+      errors.anonymous_state = [
+        {
+          message: I18n.t('You are not allowed to create an anonymous graded discussion'),
+        },
+      ]
+    }
   } else {
     this.model.set(
       'assignment',
@@ -833,6 +863,11 @@ EditView.prototype.validateBeforeSave = function (data, errors) {
       },
     ]
   }
+
+  if (Object.keys(errors).length === 0 && data.anonymous_state != null) {
+    data.set_assignment = false
+  }
+
   return errors
 }
 

@@ -60,7 +60,6 @@ export function AssignmentAvailabilityContainer({...props}) {
   }
 
   const useCheckpointsTray = props.assignment?.checkpoints?.length > 0
-
   const trayComponent = () => {
     if (props.inPacedCourse) {
       return <CoursePacingNotice courseId={props.courseId} />
@@ -69,6 +68,8 @@ export function AssignmentAvailabilityContainer({...props}) {
         <CheckpointsTray
           checkpoints={props.assignment.checkpoints}
           replyToEntryRequiredCount={props.replyToEntryRequiredCount}
+          replyToTopicSubmission={props.replyToTopicSubmission}
+          replyToEntrySubmission={props.replyToEntrySubmission}
         />
       )
     } else {
@@ -111,4 +112,6 @@ AssignmentAvailabilityContainer.propTypes = {
   inPacedCourse: PropTypes.bool,
   courseId: PropTypes.string,
   replyToEntryRequiredCount: PropTypes.number,
+  replyToTopicSubmission: PropTypes.object,
+  replyToEntrySubmission: PropTypes.object,
 }

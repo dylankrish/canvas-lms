@@ -199,6 +199,9 @@ const locale = {
   "congruent_5a244acd": { "message": "Congruent" },
   "contains_311f37b7": { "message": "Contient" },
   "content_1440204b": { "message": "Contenu" },
+  "content_in_the_editor_will_be_changed_press_cancel_d5bf3357": {
+    "message": "Le contenu de l’éditeur sera modifié. Appuyez sur Annuler pour conserver le contenu original."
+  },
   "content_is_still_being_uploaded_if_you_continue_it_8f06d0cb": {
     "message": "Contenu est toujours en cours de téléversement, si vous continuez, l''image ne sera pas correctement intégrée."
   },
@@ -698,6 +701,7 @@ const locale = {
   "nested_less_than_27d17e58": { "message": "Inférieur à (groupé)" },
   "new_quiz_34aacba6": { "message": "Nouveau questionnaire" },
   "next_40e12421": { "message": "Suivant" },
+  "next_findtext_9d69f0fe": { "message": "{ findText } suivant" },
   "no_accessibility_issues_were_detected_f8d3c875": {
     "message": "Aucun problème d''accessibilité détecté."
   },
@@ -832,12 +836,16 @@ const locale = {
   "precedes_196b9aef": { "message": "Précédant" },
   "precedes_equal_20701e84": { "message": "Précède l''égalité" },
   "preformatted_d0670862": { "message": "Préformaté" },
+  "prepend_findtext_append_8e0e769a": {
+    "message": "{ prepend }{ findText }{ append }"
+  },
   "prev_f82cbc48": { "message": "Précédent" },
   "preview_53003fd2": { "message": "Aperçu" },
   "preview_a3f8f854": { "message": "PRÉVISUALISER" },
   "preview_in_overlay_ed772c46": { "message": "Aperçu en superposition" },
   "preview_inline_9787330": { "message": "Aperçu « inline »" },
   "previous_bd2ac015": { "message": "Précédent" },
+  "previous_findtext_8dfbfd30": { "message": "{ findText } précédent" },
   "prime_917ea60e": { "message": "Premier" },
   "prime_numbers_13464f61": { "message": "Nombres premiers" },
   "product_39cf144f": { "message": "Produit" },
@@ -869,12 +877,27 @@ const locale = {
   "remove_heading_style_5fdc8855": { "message": "Retirer le style d’entête" },
   "remove_link_d1f2f4d0": { "message": "Retirer le lien" },
   "replace_all_d3d68b3": { "message": "Remplacer tout" },
+  "replace_all_findtext_with_replacetext_da574b32": {
+    "message": "Remplacer tous les { findText } par des { replaceText }"
+  },
   "replace_e61834a7": { "message": "Remplacer" },
+  "replace_findtext_with_replacetext_7b5c7fb3": {
+    "message": "Remplacer { findText } par { replaceText }"
+  },
   "replace_with_eeff01ad": { "message": "Remplacer par" },
+  "replaced_alertfindtext_with_alertreplacetext_de5c1795": {
+    "message": "Remplacement de { alertFindText } par { alertReplaceText }"
+  },
+  "replaced_all_alertfindtext_with_alertreplacetext_83fdfe59": {
+    "message": "Remplacement de tous les { alertFindText } par des { alertReplaceText }"
+  },
   "reset_95a81614": { "message": "Réinitialiser" },
   "resize_ec83d538": { "message": "Redimensionner" },
   "restore_auto_save_deccd84b": {
     "message": "Restaurer l''enregistrement automatique?"
+  },
+  "result_index_of_max_7db5ad8b": {
+    "message": "Résultat { index } de { max }."
   },
   "reverse_turnstile_does_not_yield_7558be06": {
     "message": "Tourniquet inversé (ne cède pas)"

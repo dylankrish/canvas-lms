@@ -395,6 +395,10 @@ class Account < ActiveRecord::Base
   add_setting :enable_usage_metrics, boolean: true, root_only: true, default: false
 
   add_setting :allow_observers_in_appointment_groups, boolean: true, default: false, inheritable: true
+  add_setting :enable_name_pronunciation, boolean: true, root_only: true, default: false
+
+  add_setting :enable_inbox_signature_block, boolean: true, root_only: true, default: false
+  add_setting :enable_inbox_auto_response, boolean: true, root_only: true, default: false
 
   def settings=(hash)
     if hash.is_a?(Hash) || hash.is_a?(ActionController::Parameters)
@@ -1549,6 +1553,18 @@ class Account < ActiveRecord::Base
 
   def password_policy
     Canvas::PasswordPolicy.default_policy.merge(settings[:password_policy] || {})
+  end
+
+  def password_complexity_enabled?
+    return false unless root_account?
+
+    feature_enabled?(:password_complexity)
+  end
+
+  def allow_login_suspension?
+    return false unless password_complexity_enabled?
+
+    Canvas::Plugin.value_to_boolean(password_policy[:allow_login_suspension]) || false
   end
 
   def delegated_authentication?

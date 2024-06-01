@@ -33,7 +33,7 @@ import {
   reject,
   some,
 } from 'lodash'
-import * as tz from '@canvas/datetime'
+import * as tz from '@instructure/datetime'
 import React, {Suspense} from 'react'
 import ReactDOM from 'react-dom'
 import GenericErrorPage from '@canvas/generic-error-page'
@@ -182,7 +182,6 @@ import MultiSelectSearchInput from './components/MultiSelectSearchInput'
 import ApplyScoreToUngradedModal from './components/ApplyScoreToUngradedModal'
 import ScoreToUngradedManager from '../shared/ScoreToUngradedManager'
 import '@canvas/jquery/jquery.ajaxJSON'
-import '@canvas/datetime/jquery'
 import 'jqueryui/dialog'
 import 'jqueryui/tooltip'
 import '@canvas/jquery/jquery.instructure_misc_helpers'
@@ -3962,7 +3961,8 @@ class Gradebook extends React.Component<GradebookProps, GradebookState> {
   }
 
   isGradeEditable = (studentId: string, assignmentId: string) => {
-    if (!this.isStudentGradeable(studentId)) {
+    const assignment = this.getAssignment(assignmentId)
+    if (assignment.has_sub_assignments || !this.isStudentGradeable(studentId)) {
       return false
     }
     const submissionState = this.submissionStateMap.getSubmissionState({
@@ -4574,7 +4574,13 @@ class Gradebook extends React.Component<GradebookProps, GradebookState> {
       late_policy_status?: string | undefined
       posted_grade?: string | number | null | undefined
     },
-    gradeInfo: {excused: boolean; grade: string | null; score: number | null; valid: boolean},
+    gradeInfo: {
+      excused: boolean
+      grade: string | null
+      score: number | null
+      valid: boolean
+      subAssignmentTag?: string
+    },
     enterGradesAs?: string
   ) {
     const {userId, assignmentId} = submission
@@ -4588,7 +4594,8 @@ class Gradebook extends React.Component<GradebookProps, GradebookState> {
       assignmentId,
       userId,
       submission,
-      enterGradesAs
+      enterGradesAs,
+      gradeInfo.subAssignmentTag
     )
       .then(response => {
         this.removePendingGradeInfo(submission)

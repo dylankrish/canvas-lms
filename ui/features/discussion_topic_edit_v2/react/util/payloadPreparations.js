@@ -22,9 +22,11 @@ const prepareOverride = (
   overrideDueDate,
   overrideAvailableUntil,
   overrideAvailableFrom,
+  overrideUnassignItem,
   overrideIds = {
     groupId: null,
     courseSectionId: null,
+    courseId: null,
     studentIds: null,
     noopId: null,
   },
@@ -34,8 +36,10 @@ const prepareOverride = (
     dueAt: overrideDueDate || null,
     lockAt: overrideAvailableUntil || null,
     unlockAt: overrideAvailableFrom || null,
+    unassignItem: overrideUnassignItem || false,
     groupId: overrideIds.groupIds || null,
     courseSectionId: overrideIds.courseSectionId || null,
+    courseId: overrideIds.courseId || null,
     studentIds: overrideIds.studentIds || null,
     noopId: overrideIds.noopId || null,
     title: overrideTitle || null,
@@ -59,6 +63,9 @@ const prepareAssignmentOverridesPayload = (
     const {assignedList, context_module_id: contextModuleId} = info
     const studentIds = assignedList.filter(assetCode => assetCode.includes('user'))
     const sectionIds = assignedList.filter(assetCode => assetCode.includes('section'))
+    const courseIds = assignedList.filter(
+      assetCode => assetCode.includes('course') && !assetCode.includes('section')
+    )
     const groupIds = assignedList.filter(assetCode => assetCode.includes('group'))
 
     // If the override is a module override, don't update it
@@ -71,6 +78,7 @@ const prepareAssignmentOverridesPayload = (
           info.dueDate || null,
           info.availableUntil || null,
           info.availableFrom || null,
+          info.unassignItem || false,
           {
             studentIds:
               studentIds.length > 0 ? studentIds.map(id => id.split('_').reverse()[0]) : null,
@@ -87,12 +95,28 @@ const prepareAssignmentOverridesPayload = (
             info.dueDate || null,
             info.availableUntil || null,
             info.availableFrom || null,
+            info.unassignItem || false,
             {
               courseSectionId: sectionId.split('_').reverse()[0] || null,
             }
           )
         )
       })
+    }
+
+    // override for course ids
+    if (courseIds.length > 0) {
+      preparedOverrides.push(
+        prepareOverride(
+          info.dueDate || null,
+          info.availableUntil || null,
+          info.availableFrom || null,
+          info.unassignItem || false,
+          {
+            courseId: 'everyone',
+          }
+        )
+      )
     }
 
     // override for group ids
@@ -103,6 +127,7 @@ const prepareAssignmentOverridesPayload = (
             info.dueDate || null,
             info.availableUntil || null,
             info.availableFrom || null,
+            info.unassignItem || false,
             {
               groupIds: groupId.split('_').reverse()[0] || null,
             }
@@ -122,6 +147,7 @@ const prepareAssignmentOverridesPayload = (
         masteryPathOverride.dueDate || null,
         masteryPathOverride.availableUntil || null,
         masteryPathOverride.availableFrom || null,
+        masteryPathOverride.unassignItem || false,
         {
           noopId: '1',
         },
@@ -151,6 +177,16 @@ const preparePeerReviewPayload = (
       }
 }
 
+const setOnlyVisibleToOverrides = (assignedInfoList, everyoneOverride) => {
+  const hasDefaultEveryone = !!Object.keys(everyoneOverride).length
+  if (ENV.FEATURES?.differentiated_modules) {
+    const contextModuleOverrides = assignedInfoList.filter(info => info.context_module_id != null)
+    return !(hasDefaultEveryone || contextModuleOverrides.length === assignedInfoList.length)
+  } else {
+    return !hasDefaultEveryone
+  }
+}
+
 export const prepareCheckpointsPayload = (
   pointsPossibleReplyToTopic,
   pointsPossibleReplyToEntry,
@@ -176,6 +212,7 @@ export const prepareCheckpointsPayload = (
 }
 
 export const prepareAssignmentPayload = (
+  abGuid,
   isEditing,
   title,
   pointsPossible,
@@ -192,6 +229,7 @@ export const prepareAssignmentPayload = (
   peerReviewDueDate,
   intraGroupPeerReviews,
   masteryPathsOption,
+  importantDates,
   isCheckpoints,
   existingAssignment
 ) => {
@@ -212,6 +250,7 @@ export const prepareAssignmentPayload = (
   let payload = {
     postToSis,
     gradingType: displayGradeAs,
+    importantDates,
     assignmentGroupId: assignmentGroup || null,
     peerReviews: preparePeerReviewPayload(
       isEditing,
@@ -225,9 +264,15 @@ export const prepareAssignmentPayload = (
       defaultEveryoneOption,
       masteryPathsOption
     ),
-    onlyVisibleToOverrides: !Object.keys(everyoneOverride).length,
+    onlyVisibleToOverrides: setOnlyVisibleToOverrides(assignedInfoList, everyoneOverride),
     gradingStandardId: gradingSchemeId || null,
     forCheckpoints: isCheckpoints,
+  }
+  if (abGuid) {
+    payload = {
+      ...payload,
+      abGuid,
+    }
   }
   // Additional properties if graded assignment is not checkpointed
   if (!isCheckpoints) {

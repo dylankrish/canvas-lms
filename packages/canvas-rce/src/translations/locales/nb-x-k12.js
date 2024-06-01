@@ -185,6 +185,9 @@ const locale = {
   "congruent_5a244acd": { "message": "Kongruent" },
   "contains_311f37b7": { "message": "Inneholder" },
   "content_1440204b": { "message": "Innhold" },
+  "content_in_the_editor_will_be_changed_press_cancel_d5bf3357": {
+    "message": "Innhold i redigeringsprogrammet vil bli endret. Trykk Avbryt for å beholde originalt innhold."
+  },
   "content_is_still_being_uploaded_if_you_continue_it_8f06d0cb": {
     "message": "Innhold blir fortsatt lastet opp, fortsetter du vil ikke innholdet bli innebygd riktig."
   },
@@ -666,6 +669,7 @@ const locale = {
   "nested_less_than_27d17e58": { "message": "Nested mindre enn" },
   "new_quiz_34aacba6": { "message": "Ny quiz" },
   "next_40e12421": { "message": "Neste" },
+  "next_findtext_9d69f0fe": { "message": "Neste { findText }" },
   "no_accessibility_issues_were_detected_f8d3c875": {
     "message": "Ingen tiljengelighetsproblemer ble oppdaget."
   },
@@ -786,12 +790,16 @@ const locale = {
   "precedes_196b9aef": { "message": "Forutgående" },
   "precedes_equal_20701e84": { "message": "Går foran lik" },
   "preformatted_d0670862": { "message": "Forhåndsformattert" },
+  "prepend_findtext_append_8e0e769a": {
+    "message": "{ prepend }{ findText }{ append }"
+  },
   "prev_f82cbc48": { "message": "Forrige" },
   "preview_53003fd2": { "message": "Forhåndsvisning" },
   "preview_a3f8f854": { "message": "FORHÅNDSVISNING" },
   "preview_in_overlay_ed772c46": { "message": "Forhåndsvis i utvidet vindu" },
   "preview_inline_9787330": { "message": "Forhåndsvis i vindu" },
   "previous_bd2ac015": { "message": "Forrige" },
+  "previous_findtext_8dfbfd30": { "message": "Forrige { findText }" },
   "prime_917ea60e": { "message": "Prim" },
   "prime_numbers_13464f61": { "message": "Primtall" },
   "product_39cf144f": { "message": "Produkt" },
@@ -821,12 +829,27 @@ const locale = {
   "remove_heading_style_5fdc8855": { "message": "Fjern tittelstil" },
   "remove_link_d1f2f4d0": { "message": "Fjerne lenke" },
   "replace_all_d3d68b3": { "message": "Erstatt alle" },
+  "replace_all_findtext_with_replacetext_da574b32": {
+    "message": "Erstatt alle { findText } med { replaceText }"
+  },
   "replace_e61834a7": { "message": "Erstatt" },
+  "replace_findtext_with_replacetext_7b5c7fb3": {
+    "message": "Erstatt { findText } med { replaceText }"
+  },
   "replace_with_eeff01ad": { "message": "Erstatt med" },
+  "replaced_alertfindtext_with_alertreplacetext_de5c1795": {
+    "message": "Erstattet { alertFindText } med { alertReplaceText }"
+  },
+  "replaced_all_alertfindtext_with_alertreplacetext_83fdfe59": {
+    "message": "Erstattet alle { alertFindText } med { alertReplaceText }"
+  },
   "reset_95a81614": { "message": "Tilbakestill" },
   "resize_ec83d538": { "message": "Endre størrelse" },
   "restore_auto_save_deccd84b": {
     "message": "Gjenopprette automatisk lagring?"
+  },
+  "result_index_of_max_7db5ad8b": {
+    "message": "Resultat { index } av { max }."
   },
   "reverse_turnstile_does_not_yield_7558be06": {
     "message": "Omvendt turnstile (gir ikke etter)"

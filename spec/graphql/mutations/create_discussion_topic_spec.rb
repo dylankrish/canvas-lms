@@ -105,6 +105,7 @@ describe Mutations::CreateDiscussionTopic do
               name
               pointsPossible
               gradingType
+              importantDates
               groupSet {
                 _id
               }
@@ -887,6 +888,7 @@ describe Mutations::CreateDiscussionTopic do
           pointsPossible: 15,
           gradingType: percent,
           postToSis: true,
+          importantDates: true,
           peerReviews: {
             anonymousReviews: true,
             automaticReviews: true,
@@ -909,6 +911,7 @@ describe Mutations::CreateDiscussionTopic do
         expect(discussion_topic["assignment"]["name"]).to eq title
         expect(discussion_topic["assignment"]["pointsPossible"]).to eq 15
         expect(discussion_topic["assignment"]["gradingType"]).to eq "percent"
+        expect(discussion_topic["assignment"]["importantDates"]).to be true
         expect(discussion_topic["assignment"]["peerReviews"]["anonymousReviews"]).to be true
         expect(discussion_topic["assignment"]["peerReviews"]["automaticReviews"]).to be true
         expect(discussion_topic["assignment"]["peerReviews"]["count"]).to eq 2
@@ -1063,6 +1066,32 @@ describe Mutations::CreateDiscussionTopic do
       discussion_topic = result.dig("data", "createDiscussionTopic", "discussionTopic")
       expect(discussion_topic).to be_nil
       expect(result["data"]["createDiscussionTopic"]["errors"][0]["message"]).to eq "[[:base, \"unknown student ids: [\\\"#{@teacher.id - 1}\\\"]\"]]"
+    end
+
+    it "sets the ab_guid on the assignment" do
+      context_type = "Course"
+      title = "Graded Discussion"
+      message = "Lorem ipsum..."
+      published = true
+
+      query = <<~GQL
+        contextId: "#{@course.id}"
+        contextType: #{context_type}
+        title: "#{title}"
+        message: "#{message}"
+        published: #{published}
+        assignment: {
+          courseId: "#{@course.id}",
+          name: "#{title}",
+          pointsPossible: 15,
+          gradingType: percent,
+          abGuid: ["1E20776E-7053-11DF-8EBF-BE719DFF4B22", "1e20776e-7053-11df-8eBf-Be719dff4b22"]
+        }
+      GQL
+
+      execute_with_input_with_assignment(query)
+
+      expect(Assignment.last.ab_guid).to eq(["1E20776E-7053-11DF-8EBF-BE719DFF4B22", "1e20776e-7053-11df-8eBf-Be719dff4b22"])
     end
   end
 

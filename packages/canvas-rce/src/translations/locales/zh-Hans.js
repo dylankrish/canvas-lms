@@ -169,6 +169,9 @@ const locale = {
   "congruent_5a244acd": { "message": "全等" },
   "contains_311f37b7": { "message": "包含" },
   "content_1440204b": { "message": "内容" },
+  "content_in_the_editor_will_be_changed_press_cancel_d5bf3357": {
+    "message": "编辑器中的内容将更改。按“取消”以保留原始内容。"
+  },
   "content_is_still_being_uploaded_if_you_continue_it_8f06d0cb": {
     "message": "内容仍在上传中，如果您继续，该内容将不会正确嵌入。"
   },
@@ -594,6 +597,7 @@ const locale = {
   "nested_less_than_27d17e58": { "message": "嵌套小于" },
   "new_quiz_34aacba6": { "message": "新测验" },
   "next_40e12421": { "message": "下一步" },
+  "next_findtext_9d69f0fe": { "message": "下一步{ findText }" },
   "no_accessibility_issues_were_detected_f8d3c875": {
     "message": "没有发现辅助功能问题。"
   },
@@ -696,12 +700,16 @@ const locale = {
   "precedes_196b9aef": { "message": "先于" },
   "precedes_equal_20701e84": { "message": "先于等于" },
   "preformatted_d0670862": { "message": "预定义格式" },
+  "prepend_findtext_append_8e0e769a": {
+    "message": "{ prepend }{ findText }{ append }"
+  },
   "prev_f82cbc48": { "message": "上一个" },
   "preview_53003fd2": { "message": "预览" },
   "preview_a3f8f854": { "message": "预览" },
   "preview_in_overlay_ed772c46": { "message": "在图层中预览" },
   "preview_inline_9787330": { "message": "嵌入式预览" },
   "previous_bd2ac015": { "message": "上一个" },
+  "previous_findtext_8dfbfd30": { "message": "上一步{ findText }" },
   "prime_917ea60e": { "message": "质" },
   "prime_numbers_13464f61": { "message": "质数" },
   "product_39cf144f": { "message": "乘积" },
@@ -729,11 +737,24 @@ const locale = {
   "remove_heading_style_5fdc8855": { "message": "删除标题样式" },
   "remove_link_d1f2f4d0": { "message": "删除链接" },
   "replace_all_d3d68b3": { "message": "全部替换" },
+  "replace_all_findtext_with_replacetext_da574b32": {
+    "message": "将所有{ findText }全部替换为{ replaceText }"
+  },
   "replace_e61834a7": { "message": "替换" },
+  "replace_findtext_with_replacetext_7b5c7fb3": {
+    "message": "将{ findText }替换为{ replaceText }"
+  },
   "replace_with_eeff01ad": { "message": "替换为" },
+  "replaced_alertfindtext_with_alertreplacetext_de5c1795": {
+    "message": "将{ alertFindText }替换为{ alertReplaceText }"
+  },
+  "replaced_all_alertfindtext_with_alertreplacetext_83fdfe59": {
+    "message": "将所有{ alertFindText }全部替换为{ alertReplaceText }"
+  },
   "reset_95a81614": { "message": "重置" },
   "resize_ec83d538": { "message": "调整大小" },
   "restore_auto_save_deccd84b": { "message": "是否恢复自动保存？" },
+  "result_index_of_max_7db5ad8b": { "message": "结果 { index }/{ max }。" },
   "reverse_turnstile_does_not_yield_7558be06": {
     "message": "反十字转门（不产生）"
   },

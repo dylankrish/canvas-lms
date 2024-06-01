@@ -355,7 +355,7 @@ class SubmissionsApiController < ApplicationController
   #   Determines whether ordered results are returned in ascending or descending
   #   order.  Defaults to "ascending".  Doesn't affect results for "grouped" mode.
   #
-  # @argument include[] [String, "submission_history"|"submission_comments"|"rubric_assessment"|"assignment"|"total_scores"|"visibility"|"course"|"user"]
+  # @argument include[] [String, "submission_history"|"submission_comments"|"rubric_assessment"|"assignment"|"total_scores"|"visibility"|"course"|"user"|"sub_assignment_submissions"]
   #   Associations to include with the group. `total_scores` requires the
   #   `grouped` argument.
   #
@@ -451,6 +451,10 @@ class SubmissionsApiController < ApplicationController
     includes = Array(params[:include])
 
     assignment_scope = @context.assignments.published.preload(:quiz, :discussion_topic, :post_policy)
+    if includes.include?("sub_assignment_submissions") && @context.root_account.feature_enabled?(:discussion_checkpoints)
+      assignment_scope = assignment_scope.preload(:sub_assignments)
+    end
+
     assignment_scope = assignment_scope.where(post_to_sis: true) if value_to_boolean(params[:post_to_sis])
     requested_assignment_ids = Array(params[:assignment_ids]).map(&:to_i)
     if requested_assignment_ids.present?
@@ -986,7 +990,7 @@ class SubmissionsApiController < ApplicationController
       bulk_load_attachments_and_previews([@submission])
 
       includes = %w[submission_comments]
-      includes.concat(Array.wrap(params[:include]) & ["visibility"])
+      includes.concat(Array.wrap(params[:include]) & %w[visibility sub_assignment_submissions])
       includes << "provisional_grades" if submission[:provisional]
 
       visiblity_included = includes.include?("visibility")

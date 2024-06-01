@@ -306,7 +306,7 @@ class Submission < ActiveRecord::Base
   IdBookmarker = BookmarkedCollection::SimpleBookmarker.new(Submission, :id)
 
   scope :anonymized, -> { where.not(anonymous_id: nil) }
-  scope :due_in_past, -> { where("cached_due_date <= ?", Time.now.utc) }
+  scope :due_in_past, -> { where(cached_due_date: ..Time.now.utc) }
 
   scope :posted, -> { where.not(posted_at: nil) }
   scope :unposted, -> { where(posted_at: nil) }
@@ -1391,7 +1391,7 @@ class Submission < ActiveRecord::Base
   end
 
   # If an object is pulled from a simply_versioned yaml it may not have a submitted at.
-  # submitted_at is needed by the SpeedGrader, so it is set to the updated_at value
+  # submitted_at is needed by SpeedGrader, so it is set to the updated_at value
   def submitted_at
     if submission_type
       unless read_attribute(:submitted_at)
@@ -1499,12 +1499,12 @@ class Submission < ActiveRecord::Base
     inferred_state = workflow_state
 
     # New Quizzes returned a partial grade, but manual review is needed from a human
-    return workflow_state if workflow_state == Submission.workflow_states.pending_review && cached_quiz_lti
+    return workflow_state if pending_review? && cached_quiz_lti
 
-    inferred_state = Submission.workflow_states.submitted if unsubmitted? && submitted_at
-    inferred_state = Submission.workflow_states.unsubmitted if submitted? && !has_submission?
-    inferred_state = Submission.workflow_states.graded if grade && score && grade_matches_current_submission
-    inferred_state = Submission.workflow_states.pending_review if infer_review_needed?
+    inferred_state = "submitted" if unsubmitted? && submitted_at
+    inferred_state = "unsubmitted" if submitted? && !has_submission?
+    inferred_state = "graded" if grade && score && grade_matches_current_submission
+    inferred_state = "pending_review" if infer_review_needed?
 
     inferred_state
   end
@@ -2139,10 +2139,10 @@ class Submission < ActiveRecord::Base
   scope :for_user, ->(user) { where(user_id: user) }
   scope :needing_screenshot, -> { where("submissions.submission_type='online_url' AND submissions.attachment_id IS NULL").order(:updated_at) }
 
-  def assignment_visible_to_user?(user, opts = {})
+  def assignment_visible_to_user?(user)
     return visible_to_user unless visible_to_user.nil?
 
-    assignment.visible_to_user?(user, opts)
+    assignment.visible_to_user?(user)
   end
 
   def needs_regrading?
@@ -3203,8 +3203,8 @@ class Submission < ActiveRecord::Base
 
   def send_timing_data_if_needed
     return unless saved_change_to_workflow_state? &&
-                  workflow_state == Submission.workflow_states.graded &&
-                  workflow_state_before_last_save == Submission.workflow_states.pending_review &&
+                  state == :graded &&
+                  workflow_state_before_last_save == "pending_review" &&
                   (submission_type == "online_quiz" || (submission_type == "basic_lti_launch" && url.include?("quiz-lti")))
 
     time = graded_at - submitted_at

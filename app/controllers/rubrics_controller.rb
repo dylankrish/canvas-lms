@@ -41,7 +41,9 @@ class RubricsController < ApplicationController
     mastery_scales_js_env
     set_tutorial_js_env
 
-    if Account.site_admin.feature_enabled?(:enhanced_rubrics)
+    if @domain_root_account.feature_enabled?(:enhanced_rubrics)
+      js_env breadcrumbs: rubric_breadcrumbs
+
       return show_rubrics_redesign
     end
 
@@ -55,7 +57,7 @@ class RubricsController < ApplicationController
     permission = @context.is_a?(User) ? :manage : [:manage_rubrics, :read_rubrics]
     return unless authorized_action(@context, @current_user, permission)
 
-    is_enhanced_rubrics = Account.site_admin.feature_enabled?(:enhanced_rubrics)
+    is_enhanced_rubrics = @domain_root_account.feature_enabled?(:enhanced_rubrics)
 
     if params[:id].match?(Api::ID_REGEX) || is_enhanced_rubrics
       js_env ROOT_OUTCOME_GROUP: get_root_outcome,
@@ -66,6 +68,8 @@ class RubricsController < ApplicationController
       mastery_scales_js_env
 
       if is_enhanced_rubrics
+        js_env breadcrumbs: rubric_breadcrumbs
+
         return show_rubrics_redesign
       end
 
@@ -81,6 +85,11 @@ class RubricsController < ApplicationController
   def show_rubrics_redesign
     css_bundle :learning_outcomes
     render html: "".html_safe, layout: true
+  end
+
+  def rubric_breadcrumbs
+    breadcrumbs = crumbs[1..]&.map { |crumb| { name: crumb[0], url: crumb[1] } }
+    breadcrumbs << { name: t("Rubrics"), url: context_url(@context, :context_rubrics_url) }
   end
 
   # @API Create a single rubric

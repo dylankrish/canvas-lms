@@ -88,7 +88,8 @@ import {map, keyBy, values, find, includes, reject, some, isEqual, filter} from 
 import {useScope as useI18nScope} from '@canvas/i18n'
 import natcompare from '@canvas/util/natcompare'
 import qs from 'qs'
-import * as tz from '@canvas/datetime'
+import * as tz from '@instructure/datetime'
+import {datetimeString} from '@canvas/datetime/date-functions'
 import userSettings from '@canvas/user-settings'
 import htmlEscape from '@instructure/html-escape'
 import rubricAssessment from '@canvas/rubrics/jquery/rubric_assessment'
@@ -135,7 +136,6 @@ import 'jqueryui/draggable'
 import '@canvas/jquery/jquery.ajaxJSON' /* getJSON, ajaxJSON */
 import '@canvas/jquery/jquery.instructure_forms' /* ajaxJSONFiles */
 import {loadDocPreview} from '@instructure/canvas-rce/es/enhance-user-content/doc_previews'
-import '@canvas/datetime/jquery' /* datetimeString */
 import 'jqueryui/dialog'
 import 'jqueryui/menu'
 import '@canvas/jquery/jquery.instructure_misc_helpers' /* replaceTags */
@@ -289,6 +289,7 @@ const HISTORY_PUSH = 'push'
 const HISTORY_REPLACE = 'replace'
 
 const {enhanced_rubrics} = ENV.FEATURES ?? {}
+type RubricSavedComments = {summary_data?: {saved_comments: Record<string, string[]>}}
 
 function setGradeLoading(studentId: string, loading: boolean) {
   useStore.setState(state => {
@@ -497,18 +498,27 @@ function mergeStudentsAndSubmission() {
     }
 
     case 'submission_status': {
-      const states = {
-        not_graded: 1,
-        resubmitted: 2,
-        not_submitted: 3,
-        graded: 4,
-        not_gradeable: 5,
-      }
       jsonData.studentsWithSubmissions.sort(
         EG.compareStudentsBy(
           student =>
-            student && states[SpeedgraderHelpers.submissionState(student, ENV.grading_role)]
+            student && SpeedgraderHelpers.submissionStateSortingValue(student, ENV.grading_role)
         )
+      )
+      break
+    }
+
+    case 'submission_status_randomize': {
+      jsonData.studentsWithSubmissions = SpeedgraderHelpers.randomizedStudentSorter(
+        jsonData.studentsWithSubmissions,
+        student =>
+          SpeedgraderHelpers.submissionStateSortingValue(student, ENV.grading_role) + Math.random()
+      )
+      break
+    }
+
+    case 'randomize': {
+      jsonData.studentsWithSubmissions = SpeedgraderHelpers.randomizedStudentSorter(
+        jsonData.studentsWithSubmissions
       )
       break
     }
@@ -1295,7 +1305,7 @@ EG = {
         window.alert(
           I18n.t(
             'alerts.no_students_in_groups_close',
-            "Sorry, submissions for this assignment cannot be graded in Speedgrader because there are no assigned users. Please assign users to this group set and try again. Click 'OK' to close this window."
+            "Sorry, submissions for this assignment cannot be graded in SpeedGrader because there are no assigned users. Please assign users to this group set and try again. Click 'OK' to close this window."
           )
         )
         window.close()
@@ -1304,7 +1314,7 @@ EG = {
         window.alert(
           I18n.t(
             'alerts.no_students_in_groups_back',
-            "Sorry, submissions for this assignment cannot be graded in Speedgrader because there are no assigned users. Please assign users to this group set and try again. Click 'OK' to go back."
+            "Sorry, submissions for this assignment cannot be graded in SpeedGrader because there are no assigned users. Please assign users to this group set and try again. Click 'OK' to go back."
           )
         )
         SpeedgraderHelpers.getHistory().back()
@@ -1715,7 +1725,7 @@ EG = {
         let submissionComments = this.currentStudent.submission.submission_comments
         if (submissionComments) {
           submissionComments = submissionComments.filter(
-            comment => comment.author_id === ENV.current_user_id
+            comment => comment.author_id?.toString() === ENV.current_user_id
           )
           const lastCommentByUser = submissionComments[submissionComments.length - 1]
           if (lastCommentByUser?.created_at) {
@@ -1948,6 +1958,11 @@ EG = {
         if (response && response.rubric_association) {
           if (!enhanced_rubrics) {
             rubricAssessment.updateRubricAssociation(rubricElement, response.rubric_association)
+          } else {
+            const rubricAssociation: RubricSavedComments = response?.rubric_association ?? {}
+            useStore.setState({
+              rubricSavedComments: rubricAssociation?.summary_data?.saved_comments,
+            })
           }
           delete response.rubric_association
         }
@@ -2406,7 +2421,7 @@ EG = {
 
       if (!window.jsonData.anonymize_students || isAdmin) {
         studentViewedAtHTML = studentViewedAtTemplate({
-          viewed_at: $.datetimeString(attachment.viewed_at),
+          viewed_at: datetimeString(attachment.viewed_at),
         })
       }
 
@@ -2618,7 +2633,7 @@ EG = {
           selected: selectedIndex === i,
           proxy_submitter: s.proxy_submitter,
           proxy_submitter_label_text: s.proxy_submitter ? ` by ${s.proxy_submitter}` : null,
-          submittedAt: $.datetimeString(s.submitted_at) || noSubmittedAt,
+          submittedAt: datetimeString(s.submitted_at) || noSubmittedAt,
           grade,
         }
       })
@@ -3043,7 +3058,11 @@ EG = {
       const showSelectMenu = isModerator || selectMenu.find('option').length > 1
       $('#rubric_assessments_list').showIf(showSelectMenu)
 
-      useStore.setState({rubricAssessors: showSelectMenu ? selectMenuOptions : []})
+      const {hide_points} = (window?.jsonData?.rubric_association ?? {}) as {hide_points: boolean}
+      useStore.setState({
+        rubricAssessors: showSelectMenu ? selectMenuOptions : [],
+        rubricHidePoints: hide_points,
+      })
       handleSelectedRubricAssessmentChanged({validateEnteredData})
     }
   },
@@ -3208,7 +3227,7 @@ EG = {
     // For screenreaders
     spokenComment = comment.comment.replace(/\s+/, ' ')
 
-    comment.posted_at = $.datetimeString(comment.created_at)
+    comment.posted_at = datetimeString(comment.created_at)
 
     hideStudentName =
       opts.hideStudentNames && window.jsonData.studentMap[comment[anonymizableAuthorId]]
@@ -4203,6 +4222,14 @@ function setupSpeedGrader(
   EG.jsonReady()
   EG.setInitiallyLoadedStudent()
   EG.setupGradeLoadingSpinner()
+
+  if (enhanced_rubrics && ENV.rubric) {
+    const rubricAssociation: RubricSavedComments = window.jsonData?.rubric_association ?? {}
+    useStore.setState({
+      rubricSavedComments: rubricAssociation.summary_data?.saved_comments,
+    })
+    EG.setUpRubricAssessmentTrayWrapper()
+  }
 }
 
 function setupSelectors() {
@@ -4294,10 +4321,6 @@ export default {
 
     if (ENV.can_view_audit_trail) {
       EG.setUpAssessmentAuditTray()
-    }
-
-    if (enhanced_rubrics && ENV.rubric) {
-      EG.setUpRubricAssessmentTrayWrapper()
     }
 
     function registerQuizzesNext(

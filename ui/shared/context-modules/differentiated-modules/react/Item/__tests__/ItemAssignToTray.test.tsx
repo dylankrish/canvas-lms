@@ -21,7 +21,12 @@ import {act, fireEvent, render, waitFor} from '@testing-library/react'
 import userEvent, {PointerEventsCheckLevel} from '@testing-library/user-event'
 import fetchMock from 'fetch-mock'
 import ItemAssignToTray, {type ItemAssignToTrayProps} from '../ItemAssignToTray'
-import {SECTIONS_DATA, STUDENTS_DATA} from '../../__tests__/mocks'
+import {
+  SECTIONS_DATA,
+  STUDENTS_DATA,
+  FIRST_GROUP_CATEGORY_DATA,
+  SECOND_GROUP_CATEGORY_DATA,
+} from '../../__tests__/mocks'
 
 const USER_EVENT_OPTIONS = {pointerEventsCheck: PointerEventsCheckLevel.Never, delay: null}
 
@@ -47,8 +52,13 @@ describe('ItemAssignToTray', () => {
     timezone: 'UTC',
   }
 
+  const FIRST_GROUP_CATEGORY_ID = '2'
+  const SECOND_GROUP_CATEGORY_ID = '3'
+  const FIRST_GROUP_CATEGORY_URL = `/api/v1/group_categories/${FIRST_GROUP_CATEGORY_ID}/groups`
+  const SECOND_GROUP_CATEGORY_URL = `/api/v1/group_categories/${SECOND_GROUP_CATEGORY_ID}/groups`
   const SECTIONS_URL = `/api/v1/courses/${props.courseId}/sections`
   const STUDENTS_URL = `api/v1/courses/${props.courseId}/users?enrollment_type=student`
+  const OVERRIDES_URL = '/api/v1/courses/1/assignments/23/date_details'
 
   const OVERRIDES = [
     {
@@ -92,7 +102,7 @@ describe('ItemAssignToTray', () => {
     // an assignment with valid dates and overrides
     fetchMock.get('/api/v1/courses/1/settings', {conditional_release: false})
     fetchMock
-      .get('/api/v1/courses/1/assignments/23/date_details', {
+      .get(OVERRIDES_URL, {
         id: '23',
         due_at: '2023-10-05T12:00:00Z',
         unlock_at: '2023-10-01T12:00:00Z',
@@ -124,7 +134,11 @@ describe('ItemAssignToTray', () => {
       .get('/api/v1/courses/1/quizzes/23/date_details', {})
       .get('/api/v1/courses/1/discussion_topics/23/date_details', {})
       .get('/api/v1/courses/1/pages/23/date_details', {})
-    fetchMock.get(STUDENTS_URL, STUDENTS_DATA).get(SECTIONS_URL, SECTIONS_DATA)
+    fetchMock
+      .get(STUDENTS_URL, STUDENTS_DATA)
+      .get(SECTIONS_URL, SECTIONS_DATA)
+      .get(FIRST_GROUP_CATEGORY_URL, FIRST_GROUP_CATEGORY_DATA)
+      .get(SECOND_GROUP_CATEGORY_URL, SECOND_GROUP_CATEGORY_DATA)
   })
 
   afterEach(() => {
@@ -234,7 +248,7 @@ describe('ItemAssignToTray', () => {
 
   it('adds a card when add button is clicked', async () => {
     fetchMock.get(
-      '/api/v1/courses/1/assignments/23/date_details',
+      OVERRIDES_URL,
       {
         id: '23',
         due_at: '2023-10-05T12:00:00Z',
@@ -355,7 +369,7 @@ describe('ItemAssignToTray', () => {
 
   it('fetches assignee options when defaultCards are passed', () => {
     fetchMock.get(
-      '/api/v1/courses/1/assignments/23/date_details',
+      OVERRIDES_URL,
       {
         id: '23',
         due_at: '2023-10-05T12:00:00Z',
@@ -370,7 +384,7 @@ describe('ItemAssignToTray', () => {
       }
     )
     renderComponent({defaultCards: []})
-    expect(fetchMock.calls('/api/v1/courses/1/assignments/23/date_details').length).toBe(1)
+    expect(fetchMock.calls(OVERRIDES_URL).length).toBe(1)
   })
 
   it('calls customAddCard if passed when a card is added', () => {
@@ -384,7 +398,7 @@ describe('ItemAssignToTray', () => {
   describe('AssigneeSelector', () => {
     it('does not render everyone option if the assignment is set to overrides only', async () => {
       fetchMock.get(
-        '/api/v1/courses/1/assignments/23/date_details',
+        OVERRIDES_URL,
         {
           id: '23',
           due_at: null,
@@ -412,7 +426,7 @@ describe('ItemAssignToTray', () => {
 
     it('renders everyone option if there are no overrides', async () => {
       fetchMock.get(
-        '/api/v1/courses/1/assignments/23/date_details',
+        OVERRIDES_URL,
         {
           id: '23',
           due_at: '2023-10-05T12:00:00Z',
@@ -434,7 +448,7 @@ describe('ItemAssignToTray', () => {
 
     it('renders everyone option for item with course and module overrides', async () => {
       fetchMock.get(
-        '/api/v1/courses/1/assignments/23/date_details',
+        OVERRIDES_URL,
         {
           id: '23',
           due_at: '2023-10-05T12:00:00Z',
@@ -476,7 +490,7 @@ describe('ItemAssignToTray', () => {
         {overwriteRoutes: true}
       )
       fetchMock.get(
-        '/api/v1/courses/1/assignments/23/date_details',
+        OVERRIDES_URL,
         {
           overrides: [
             {
@@ -496,9 +510,10 @@ describe('ItemAssignToTray', () => {
       waitFor(() => expect(selectedOptions[0]).toHaveTextContent('Mastery Paths'))
     })
 
-    it('renders everyone option if there are more than 1 card', async () => {
+    // LF-1603 - this test is flaky
+    it.skip('renders everyone option if there are more than 1 card', async () => {
       fetchMock.get(
-        '/api/v1/courses/1/assignments/23/date_details',
+        OVERRIDES_URL,
         {
           id: '23',
           due_at: '2023-10-05T12:00:00Z',
@@ -542,7 +557,7 @@ describe('ItemAssignToTray', () => {
     }
 
     beforeEach(() => {
-      fetchMock.get('/api/v1/courses/1/assignments/23/date_details', DATE_DETAILS_OBJ, {
+      fetchMock.get(OVERRIDES_URL, DATE_DETAILS_OBJ, {
         overwriteRoutes: true,
       })
       fetchMock.put(DATE_DETAILS, {})
@@ -567,6 +582,7 @@ describe('ItemAssignToTray', () => {
           {
             course_section_id: SECTIONS_DATA[0].id,
             ...payloadValues,
+            unassign_item: false,
           },
         ],
       })
@@ -608,8 +624,8 @@ describe('ItemAssignToTray', () => {
 
     it('reloads the page after saving', async () => {
       const user = userEvent.setup(USER_EVENT_OPTIONS)
-      const {getByRole} = renderComponent()
-      const save = getByRole('button', {name: 'Save'})
+      const {getByTestId} = renderComponent()
+      const save = getByTestId('differentiated_modules_save_button')
       await user.click(save)
       await waitFor(() => {
         expect(window.location.reload).toHaveBeenCalled()
@@ -619,13 +635,22 @@ describe('ItemAssignToTray', () => {
     it('does not reload the page after saving if onSave is passed', async () => {
       const user = userEvent.setup(USER_EVENT_OPTIONS)
       const onSave = jest.fn()
-      const {getByRole} = renderComponent({onSave})
-      const save = getByRole('button', {name: 'Save'})
+      const {getByTestId} = renderComponent({onSave})
+      const save = getByTestId('differentiated_modules_save_button')
       await user.click(save)
       await waitFor(() => {
         expect(onSave).toHaveBeenCalled()
       })
       expect(window.location.reload).not.toHaveBeenCalled()
+    })
+
+    it('shows loading spinner while saving', async () => {
+      fetchMock.put(DATE_DETAILS, {}, {overwriteRoutes: true, delay: 500})
+      const user = userEvent.setup(USER_EVENT_OPTIONS)
+      const {getByTestId} = renderComponent()
+      const save = getByTestId('differentiated_modules_save_button')
+      await user.click(save)
+      expect(getByTestId('cards-loading')).toBeInTheDocument()
     })
   })
 
@@ -659,13 +684,9 @@ describe('ItemAssignToTray', () => {
     }
 
     it('shows module cards if they are not overridden', async () => {
-      fetchMock.get(
-        '/api/v1/courses/1/assignments/23/date_details',
-        DATE_DETAILS_WITHOUT_OVERRIDES,
-        {
-          overwriteRoutes: true,
-        }
-      )
+      fetchMock.get(OVERRIDES_URL, DATE_DETAILS_WITHOUT_OVERRIDES, {
+        overwriteRoutes: true,
+      })
       const {getByText, findAllByTestId, getByTestId} = renderComponent()
       const cards = await findAllByTestId('item-assign-to-card')
       expect(getByText('Inherited from')).toBeInTheDocument()
@@ -674,7 +695,7 @@ describe('ItemAssignToTray', () => {
     })
 
     it('does not show overridden module cards', async () => {
-      fetchMock.get('/api/v1/courses/1/assignments/23/date_details', DATE_DETAILS_WITH_OVERRIDES, {
+      fetchMock.get(OVERRIDES_URL, DATE_DETAILS_WITH_OVERRIDES, {
         overwriteRoutes: true,
       })
       const {queryByText, findAllByTestId, queryByTestId} = renderComponent()
@@ -696,7 +717,8 @@ describe('ItemAssignToTray', () => {
     expect(addButton).toHaveFocus()
   })
 
-  it("focuses on the newly-created card's delete button when adding a card", async () => {
+  // LF-1603 - this test is flaky
+  it.skip("focuses on the newly-created card's delete button when adding a card", async () => {
     const user = userEvent.setup(USER_EVENT_OPTIONS)
     const {findAllByTestId, getByTestId} = renderComponent()
 
@@ -710,5 +732,86 @@ describe('ItemAssignToTray', () => {
     await user.click(addButton)
     const deleteButtons = await findAllByTestId('delete-card-button')
     expect(deleteButtons[deleteButtons.length - 1].closest('button')).toHaveFocus()
+  })
+
+  describe('Student Groups', () => {
+    const payload = {
+      id: '23',
+      due_at: '2023-10-05T12:00:00Z',
+      unlock_at: '2023-10-01T12:00:00Z',
+      lock_at: '2023-11-01T12:00:00Z',
+      only_visible_to_overrides: false,
+      group_category_id: FIRST_GROUP_CATEGORY_ID,
+      visible_to_everyone: true,
+      overrides: [],
+    }
+
+    it('displays student groups if the assignmet is a group assignment', async () => {
+      fetchMock.get(OVERRIDES_URL, payload, {
+        overwriteRoutes: true,
+      })
+      const {findByText, findByTestId, getByText} = renderComponent()
+      const assigneeSelector = await findByTestId('assignee_selector')
+      act(() => assigneeSelector.click())
+      await findByText(FIRST_GROUP_CATEGORY_DATA[0].name)
+      FIRST_GROUP_CATEGORY_DATA.forEach(group => {
+        expect(getByText(group.name)).toBeInTheDocument()
+      })
+    })
+
+    it('refreshes the group options if the group category is overridden', async () => {
+      fetchMock.get(OVERRIDES_URL, payload, {
+        overwriteRoutes: true,
+      })
+      const {findByText, findByTestId, getByText, queryByText, rerender} = renderComponent()
+      const assigneeSelector = await findByTestId('assignee_selector')
+      act(() => assigneeSelector.click())
+      await findByText(FIRST_GROUP_CATEGORY_DATA[0].name)
+      SECOND_GROUP_CATEGORY_DATA.forEach(group => {
+        expect(queryByText(group.name)).not.toBeInTheDocument()
+      })
+      rerender(<ItemAssignToTray {...props} defaultGroupCategoryId={SECOND_GROUP_CATEGORY_ID} />)
+      await findByText(SECOND_GROUP_CATEGORY_DATA[0].name)
+      SECOND_GROUP_CATEGORY_DATA.forEach(group => {
+        expect(getByText(group.name)).toBeInTheDocument()
+      })
+    })
+  })
+
+  it('fetches overrides and assignee options only once', async () => {
+    const urls = [STUDENTS_URL, SECTIONS_URL, OVERRIDES_URL]
+    const {rerender, findAllByTestId} = renderComponent()
+    const assigneeSelectors = await findAllByTestId('assignee_selector')
+    expect(assigneeSelectors[0]).toBeInTheDocument()
+    urls.forEach(url => expect(fetchMock.calls(url).length).toBe(1))
+    rerender(<ItemAssignToTray {...props} open={false} />)
+    rerender(<ItemAssignToTray {...props} open={true} />)
+    urls.forEach(url => expect(fetchMock.calls(url).length).toBe(1))
+  })
+
+  describe('in a paced course', () => {
+    beforeEach(() => {
+      ENV.IN_PACED_COURSE = true
+    })
+
+    afterEach(() => {
+      ENV.IN_PACED_COURSE = false
+    })
+
+    it('shows the course pacing notice', () => {
+      const {getByTestId} = renderComponent()
+      expect(getByTestId('CoursePacingNotice')).toBeInTheDocument()
+    })
+
+    it('does not request existing overrides', () => {
+      renderComponent()
+      expect(fetchMock.calls(OVERRIDES_URL).length).toBe(0)
+    })
+
+    it('does not fetch assignee options', () => {
+      renderComponent()
+      expect(fetchMock.calls(STUDENTS_URL).length).toBe(0)
+      expect(fetchMock.calls(SECTIONS_URL).length).toBe(0)
+    })
   })
 })

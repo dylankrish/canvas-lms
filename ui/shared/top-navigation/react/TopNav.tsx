@@ -19,13 +19,27 @@
 import React from 'react'
 import {TopNavBar} from '@instructure/ui-top-nav-bar'
 import {Breadcrumb} from '@instructure/ui-breadcrumb'
+import {getCurrentTheme} from '@instructure/theme-registry'
 import useToggleCourseNav from './hooks/useToggleCourseNav'
 import {useMutation, useQueryClient} from '@tanstack/react-query'
 import {setSetting} from '@canvas/settings-query/react/settingsQuery'
+import type {ItemChild} from '@instructure/ui-top-nav-bar/types/TopNavBar/props'
+import {useScope as useI18nScope} from '@canvas/i18n'
 
-const TopNav = () => {
+const {porcelain} = getCurrentTheme()?.colors ?? {porcelain: 'white'}
+const overrides = {
+  desktopBackgroundInverse: porcelain,
+  smallViewportBackgroundInverse: porcelain,
+}
+
+export interface ITopNavProps {
+  actionItems?: ItemChild[]
+}
+
+const TopNav: React.FC<ITopNavProps> = ({actionItems}) => {
   const breadCrumbs = window.ENV.breadcrumbs
   const queryClient = useQueryClient()
+  const I18n = useI18nScope('react_top_nav')
 
   const {toggle} = useToggleCourseNav()
 
@@ -53,6 +67,7 @@ const TopNav = () => {
     <TopNavBar inverseColor={true} width="100%">
       {() => (
         <TopNavBar.Layout
+          themeOverride={overrides}
           navLabel="Top Navigation"
           desktopConfig={{
             hideActionsUserSeparator: false,
@@ -71,6 +86,18 @@ const TopNav = () => {
                 ))}
               </Breadcrumb>
             </TopNavBar.Breadcrumb>
+          }
+          renderActionItems={
+            <TopNavBar.ActionItems
+              listLabel="Actions"
+              renderHiddenItemsMenuTriggerLabel={hiddenChildrenCount =>
+                I18n.t('%{hiddenChildrenCount} more actions', {
+                  hiddenChildrenCount,
+                })
+              }
+            >
+              {actionItems?.map(component => component)}
+            </TopNavBar.ActionItems>
           }
         />
       )}

@@ -189,6 +189,9 @@ const locale = {
   "congruent_5a244acd": { "message": "Przystające" },
   "contains_311f37b7": { "message": "Zawiera" },
   "content_1440204b": { "message": "Zawartość" },
+  "content_in_the_editor_will_be_changed_press_cancel_d5bf3357": {
+    "message": "Zawartość w edytorze ulegnie zmianie. Naciśnij Anuluj, aby zachować pierwotną zawartość."
+  },
   "content_is_still_being_uploaded_if_you_continue_it_8f06d0cb": {
     "message": "Zawartość jest nadal przesyłana; w przypadku kontynuowania obraz nie zostanie prawidłowo osadzony."
   },
@@ -668,6 +671,7 @@ const locale = {
   "nested_less_than_27d17e58": { "message": "Zagnieżdżone mniejsze niż" },
   "new_quiz_34aacba6": { "message": "Nowy test" },
   "next_40e12421": { "message": "Następny" },
+  "next_findtext_9d69f0fe": { "message": "Następny { findText }" },
   "no_accessibility_issues_were_detected_f8d3c875": {
     "message": "Nie wykryto problemów z dostępnością."
   },
@@ -796,12 +800,16 @@ const locale = {
   "precedes_196b9aef": { "message": "Poprzedza" },
   "precedes_equal_20701e84": { "message": "Poprzedza lub równa się" },
   "preformatted_d0670862": { "message": "Wstępnie formatowane" },
+  "prepend_findtext_append_8e0e769a": {
+    "message": "{ prepend }{ findText }{ append }"
+  },
   "prev_f82cbc48": { "message": "Poprz" },
   "preview_53003fd2": { "message": "Podgląd" },
   "preview_a3f8f854": { "message": "PODGLĄD" },
   "preview_in_overlay_ed772c46": { "message": "Podgląd w nakładce" },
   "preview_inline_9787330": { "message": "Wbudowany pogląd" },
   "previous_bd2ac015": { "message": "Poprzednie" },
+  "previous_findtext_8dfbfd30": { "message": "Poprzednie { findText }" },
   "prime_917ea60e": { "message": "Liczba pierwsza" },
   "prime_numbers_13464f61": { "message": "Liczby pierwsze" },
   "product_39cf144f": { "message": "Produkt" },
@@ -833,13 +841,26 @@ const locale = {
   "remove_heading_style_5fdc8855": { "message": "Usuń styl nagłówka" },
   "remove_link_d1f2f4d0": { "message": "Usuń łącze" },
   "replace_all_d3d68b3": { "message": "Zamień wszystko" },
+  "replace_all_findtext_with_replacetext_da574b32": {
+    "message": "Zamień wszystkie { findText } na { replaceText }"
+  },
   "replace_e61834a7": { "message": "Zastąp" },
+  "replace_findtext_with_replacetext_7b5c7fb3": {
+    "message": "Zamień { findText } na { replaceText }"
+  },
   "replace_with_eeff01ad": { "message": "Zastąp" },
+  "replaced_alertfindtext_with_alertreplacetext_de5c1795": {
+    "message": "Zamieniono { alertFindText } na { alertReplaceText }"
+  },
+  "replaced_all_alertfindtext_with_alertreplacetext_83fdfe59": {
+    "message": "Zamieniono wszystkie { alertFindText } na { alertReplaceText }"
+  },
   "reset_95a81614": { "message": "Resetuj" },
   "resize_ec83d538": { "message": "Zmień rozmiar" },
   "restore_auto_save_deccd84b": {
     "message": "Przywrócić automatycznie zapisaną zawartość?"
   },
+  "result_index_of_max_7db5ad8b": { "message": "Wynik { index } z { max }." },
   "reverse_turnstile_does_not_yield_7558be06": {
     "message": "Kołowrót zwrotny (nie spełnia)"
   },

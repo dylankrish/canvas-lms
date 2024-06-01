@@ -30,6 +30,7 @@ export const ItemAssignToTrayWrapper = () => {
     title,
     assignmentID,
     importantDates,
+    setImportantDates,
     pointsPossible,
   } = useContext(GradedDiscussionDueDatesContext)
 
@@ -56,6 +57,7 @@ export const ItemAssignToTrayWrapper = () => {
       all_day_date: null,
       unlock_at_overridden: true,
       lock_at_overridden: true,
+      unassign_item: inputObj.unassignItem || false,
       id: inputObj.dueDateId,
       noop_id: null,
       stagedOverrideId: inputObj.stagedOverrideId || null,
@@ -96,6 +98,8 @@ export const ItemAssignToTrayWrapper = () => {
         studentIds.push(id)
       } else if (type === 'group') {
         groupIds.push(id)
+      } else if (type === 'course') {
+        outputObj.course_id = id
       }
     })
 
@@ -119,6 +123,7 @@ export const ItemAssignToTrayWrapper = () => {
       dueDate: inputObj.due_at ? inputObj.due_at : null,
       availableFrom: inputObj.unlock_at_overridden ? inputObj.unlock_at : null,
       availableUntil: inputObj.lock_at_overridden ? inputObj.lock_at : null,
+      unassignItem: inputObj.unassign_item || false,
       context_module_id: inputObj.context_module_id || null,
       context_module_name: inputObj.context_module_name || null,
       stagedOverrideId: inputObj.stagedOverrideId || null,
@@ -137,26 +142,34 @@ export const ItemAssignToTrayWrapper = () => {
       inputObj.student_ids.forEach(id => {
         outputObj.assignedList.push('user_' + id)
       })
+    } else if (inputObj.course_id) {
+      outputObj.assignedList.push('course_' + inputObj.course_id)
     }
 
-    if (!inputObj.course_section_id && !inputObj.student_ids && !inputObj.noop_id) {
+    if (
+      !inputObj.course_section_id &&
+      !inputObj.course_id &&
+      !inputObj.student_ids &&
+      !inputObj.noop_id
+    ) {
       outputObj.assignedList.push('everyone')
     }
 
     return outputObj
   }
 
-  const onSync = assigneeInfoUpdateOverrides => {
-    const outputArray = []
-
-    assigneeInfoUpdateOverrides.forEach(inputObj => {
-      const outputObj = convertToAssignedInfoListObject(inputObj)
-      outputArray.push(outputObj)
-    })
-
-    // convert overrides to the expected assignedInfoList shape
-    // Then Set the assignedInfoList
-    setAssignedInfoList(outputArray)
+  const onSync = (assigneeInfoUpdateOverrides, newImportantDatesValue) => {
+    if (assigneeInfoUpdateOverrides) {
+      const outputArray = []
+      assigneeInfoUpdateOverrides.forEach(inputObj => {
+        const outputObj = convertToAssignedInfoListObject(inputObj)
+        outputArray.push(outputObj)
+      })
+      // convert overrides to the expected assignedInfoList shape
+      // Then Set the assignedInfoList
+      setAssignedInfoList(outputArray)
+    }
+    setImportantDates(newImportantDatesValue)
   }
 
   if (loading) {
@@ -168,8 +181,8 @@ export const ItemAssignToTrayWrapper = () => {
       onSync={onSync}
       overrides={overrides}
       assignmentId={assignmentID}
-      assignmentName={title}
-      pointsPossible={pointsPossible}
+      getAssignmentName={() => title}
+      getPointsPossible={() => pointsPossible}
       type="discussion"
       importantDates={importantDates}
       defaultSectionId={DEFAULT_SECTION_ID}

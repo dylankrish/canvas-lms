@@ -22,7 +22,7 @@ import {extend} from '@canvas/backbone/utils'
 import {useScope as useI18nScope} from '@canvas/i18n'
 import $ from 'jquery'
 import {each, filter, intersection, includes, without} from 'lodash'
-import * as tz from '@canvas/datetime'
+import * as tz from '@instructure/datetime'
 import DialogBaseView from '@canvas/dialog-base-view'
 import deparam from 'deparam'
 import template from '../../jst/editConferenceForm.handlebars'
@@ -31,6 +31,7 @@ import authenticity_token from '@canvas/authenticity-token'
 import numberHelper from '@canvas/i18n/numberHelper'
 import '@canvas/jquery/jquery.instructure_forms'
 import {encodeQueryString} from '@canvas/query-string-encoding'
+import {renderDatetimeField} from '@canvas/datetime/jquery/DatetimeField'
 
 const I18n = useI18nScope('conferences')
 
@@ -250,7 +251,7 @@ EditConferenceView.prototype.renderConferenceFormUserSettings = function () {
   )
   return this.$('.date_entry').each(function () {
     if (!this.disabled) {
-      return $(this).datetime_field({
+      return renderDatetimeField($(this), {
         alwaysShowTime: true,
       })
     }

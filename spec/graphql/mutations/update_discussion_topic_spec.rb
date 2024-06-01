@@ -75,6 +75,7 @@ RSpec.describe Mutations::UpdateDiscussionTopic do
               dueAt
               state
               gradingType
+              importantDates
               peerReviews {
                 anonymousReviews
                 automaticReviews
@@ -122,6 +123,7 @@ RSpec.describe Mutations::UpdateDiscussionTopic do
     return "" unless assignment
 
     args = []
+    args << "abGuid: #{assignment[:abGuid]}" if assignment[:abGuid]
     args << "pointsPossible: #{assignment[:pointsPossible]}" if assignment[:pointsPossible]
     args << "postToSis: #{assignment[:postToSis]}" if assignment.key?(:postToSis)
     args << "assignmentGroupId: \"#{assignment[:assignmentGroupId]}\"" if assignment[:assignmentGroupId]
@@ -131,6 +133,7 @@ RSpec.describe Mutations::UpdateDiscussionTopic do
     args << "onlyVisibleToOverrides: #{assignment[:onlyVisibleToOverrides]}" if assignment.key?(:onlyVisibleToOverrides)
     args << "setAssignment: #{assignment[:setAssignment]}" if assignment.key?(:setAssignment)
     args << "gradingType: #{assignment[:gradingType]}" if assignment[:gradingType]
+    args << "importantDates: #{assignment[:importantDates]}" if assignment[:importantDates]
     args << peer_reviews_str(assignment[:peerReviews]) if assignment[:peerReviews]
     args << assignment_overrides_str(assignment[:assignmentOverrides]) if assignment[:assignmentOverrides]
     args << "forCheckpoints: #{assignment[:forCheckpoints]}" if assignment[:forCheckpoints]
@@ -308,7 +311,8 @@ RSpec.describe Mutations::UpdateDiscussionTopic do
         grading_type: "points",
         points_possible: 5,
         due_at: 3.months.from_now,
-        peer_reviews: false
+        peer_reviews: false,
+        ab_guid: ["1E20776E-7053-11DF-8EBF-BE719DFF4B22"]
       )
       @topic = @discussion_assignment.discussion_topic
     end
@@ -391,6 +395,12 @@ RSpec.describe Mutations::UpdateDiscussionTopic do
       # Check updated object
       new_assignment = Assignment.find(@discussion_assignment.id)
       expect(new_assignment.intra_group_peer_reviews).to be false
+    end
+
+    it "sets the important dates field on the assignment" do
+      result = run_mutation(id: @topic.id, assignment: { importantDates: true })
+      expect(result["errors"]).to be_nil
+      expect(Assignment.last.important_dates).to be(true)
     end
 
     it "sets just the due date" do
@@ -505,6 +515,18 @@ RSpec.describe Mutations::UpdateDiscussionTopic do
       @topic.update!(group_category: group_category_old)
       result = run_mutation(id: @topic.id, group_category_id: group_category_new.id, assignment: { groupCategoryId: group_category_old.id })
       expect(result["errors"][0]["message"]).to eq "Assignment group category id and discussion topic group category id do not match"
+    end
+
+    it "updates the ab_guid on the assignment" do
+      result = run_mutation(id: @topic.id, assignment: { abGuid: ["1E20776E-7053-11DF-8EBF-BE719DFF4B22", "1e20776e-7053-11df-8eBf-Be719dff4b22"] })
+      expect(result["errors"]).to be_nil
+      expect(Assignment.last.ab_guid).to eq(["1E20776E-7053-11DF-8EBF-BE719DFF4B22", "1e20776e-7053-11df-8eBf-Be719dff4b22"])
+    end
+
+    it "preserves the current ab_guid value on the assignment if abGuid is not passed in from the mutation" do
+      result = run_mutation(id: @topic.id, assignment: {})
+      expect(result["errors"]).to be_nil
+      expect(Assignment.last.ab_guid).to eq(["1E20776E-7053-11DF-8EBF-BE719DFF4B22"])
     end
   end
 

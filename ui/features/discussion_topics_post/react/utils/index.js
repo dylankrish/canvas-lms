@@ -25,6 +25,7 @@ import {Discussion} from '../../graphql/Discussion'
 import {DiscussionEntry} from '../../graphql/DiscussionEntry'
 import {useScope as useI18nScope} from '@canvas/i18n'
 import $ from '@canvas/rails-flash-notifications'
+import doFetchApi from '@canvas/do-fetch-api-effect'
 
 const I18n = useI18nScope('discussion_topics_post')
 
@@ -277,7 +278,7 @@ export const getOptimisticResponse = ({
   if (quotedEntry && Object.keys(quotedEntry).length !== 0) {
     quotedEntry = {
       createdAt: quotedEntry.createdAt,
-      previewMessage: quotedEntry.previewMessage,
+      message: quotedEntry.message,
       author: {
         shortName: quotedEntry.author.shortName,
         __typename: 'User',
@@ -368,10 +369,20 @@ export const getOptimisticResponse = ({
         depth,
         __typename: 'DiscussionEntry',
       },
+      mySubAssignmentSubmissions: [],
       errors: null,
       __typename: 'CreateDiscussionEntryPayload',
     },
   }
+}
+
+// data must contain data response to create discussion entry mutation
+export const getCheckpointSubmission = (data, subAssignmentTag) => {
+  return (
+    data.createDiscussionEntry.mySubAssignmentSubmissions?.find(
+      sub => sub.subAssignmentTag === subAssignmentTag
+    ) || {}
+  )
 }
 
 export const buildQuotedReply = (nodes, previewId) => {
@@ -383,7 +394,7 @@ export const buildQuotedReply = (nodes, previewId) => {
         id: previewId,
         author: {shortName: getDisplayName(reply)},
         createdAt: reply.createdAt,
-        previewMessage: reply.message,
+        message: reply.message,
       }
       return false
     }
@@ -428,3 +439,43 @@ export const showErrorWhenMessageTooLong = message => {
   }
   return false
 }
+
+export const getTranslation = async (
+  text,
+  translateTargetLanguage,
+  setter,
+  setIsTranslating = () => {}
+) => {
+  if (text === undefined || text == null) {
+    return // Do nothing, there is no text to translate
+  }
+
+  const apiPath = `/courses/${ENV.course_id}/translate`
+
+  // Remove any tags from the string to be translated
+  const parsedDocument = new DOMParser().parseFromString(text, 'text/html')
+  const toTranslate = parsedDocument.documentElement.textContent
+
+  try {
+    setIsTranslating(true)
+    const {json} = await doFetchApi({
+      method: 'POST',
+      path: apiPath,
+      body: {
+        inputs: {
+          src_lang: 'en', // TODO: detect source language.
+          tgt_lang: translateTargetLanguage,
+          text: toTranslate,
+        },
+      },
+    })
+    // Join together all the text with a separator, so that the original text remains separate
+    setter([text, translationSeparator, json.translated_text].join(''))
+  } catch (e) {
+    // TODO: Do something with the error message.
+  }
+
+  setIsTranslating(false)
+}
+
+export const translationSeparator = "\n\n----------\n\n\n"

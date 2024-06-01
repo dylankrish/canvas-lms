@@ -441,8 +441,8 @@ class Rubric < ActiveRecord::Base
   end
 
   CriteriaData = Struct.new(:criteria, :points_possible, :title)
-  Criterion = Struct.new(:description, :long_description, :points, :id, :criterion_use_range, :learning_outcome_id, :mastery_points, :ignore_for_scoring, :ratings, keyword_init: true)
-  Rating = Struct.new(:description, :long_description, :points, :id, :criterion_id, keyword_init: true)
+  Criterion = Struct.new(:description, :long_description, :points, :id, :criterion_use_range, :learning_outcome_id, :mastery_points, :ignore_for_scoring, :ratings, :title, :migration_id, :percentage, :order, keyword_init: true)
+  Rating = Struct.new(:description, :long_description, :points, :id, :criterion_id, :migration_id, :percentage, keyword_init: true)
   def generate_criteria(params)
     @used_ids = {}
     title = params[:title] || t("context_name_rubric", "%{course_name} Rubric", course_name: context.name)
@@ -489,8 +489,8 @@ class Rubric < ActiveRecord::Base
 
   def reconstitute_criteria(criteria)
     criteria.map do |criterion|
-      ratings = criterion[:ratings].map { |rating| Rating.new(**rating) }
-      Criterion.new(**criterion, ratings:)
+      ratings = criterion[:ratings].map { |rating| Rating.new(**rating.slice(*Rating.members)) }
+      Criterion.new(**criterion.slice(*Criterion.members), ratings:)
     end
   end
 
@@ -499,7 +499,7 @@ class Rubric < ActiveRecord::Base
   end
 
   def reconcile_criteria_models(current_user)
-    return unless Account.site_admin.feature_enabled?(:enhanced_rubrics)
+    return unless context.root_account.feature_enabled?(:enhanced_rubrics)
 
     return unless criteria.present? && criteria.is_a?(Array)
 
@@ -563,7 +563,7 @@ class Rubric < ActiveRecord::Base
   end
 
   def enhanced_rubrics_enabled?
-    Account.site_admin.feature_enabled?(:enhanced_rubrics)
+    context.root_account.feature_enabled?(:enhanced_rubrics)
   end
 
   def learning_outcome_ids_from_results

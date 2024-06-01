@@ -19,7 +19,7 @@
 import $ from 'jquery'
 import {omit, defer, pick} from 'lodash'
 import {useScope as useI18nScope} from '@canvas/i18n'
-import * as tz from '@canvas/datetime'
+import * as tz from '@instructure/datetime'
 import moment from 'moment-timezone'
 import Backbone from '@canvas/backbone'
 import React from 'react'
@@ -32,7 +32,7 @@ import unflatten from 'obj-unflatten'
 import deparam from 'deparam'
 import coupleTimeFields from '@canvas/calendar/jquery/coupleTimeFields'
 import {renderDeleteCalendarEventDialog} from '@canvas/calendar/react/RecurringEvents/DeleteCalendarEventDialog'
-import datePickerFormat from '@canvas/datetime/datePickerFormat'
+import datePickerFormat from '@instructure/datetime/datePickerFormat'
 import CalendarConferenceWidget from '@canvas/calendar-conferences/react/CalendarConferenceWidget'
 import filterConferenceTypes from '@canvas/calendar-conferences/filterConferenceTypes'
 import FrequencyPicker, {
@@ -47,6 +47,7 @@ import {
 import {CommonEventShowError} from '@canvas/calendar/jquery/CommonEvent/CommonEvent'
 import {showFlashAlert} from '@canvas/alerts/react/FlashAlert'
 import EditCalendarEventHeader from '../../react/components/EditCalendarEventHeader'
+import {renderDatetimeField} from '@canvas/datetime/jquery/DatetimeField'
 
 const I18n = useI18nScope('calendar.edit')
 
@@ -260,9 +261,10 @@ export default class EditCalendarEventView extends Backbone.View {
   }
 
   renderHeaderComponent() {
-    const title = this.model.id == null ? 
-      I18n.t('Create New Calendar Event') : 
-      I18n.t('Edit %{title}', {title: this.model.get('title')})
+    const title =
+      this.model.id == null
+        ? I18n.t('Create New Calendar Event')
+        : I18n.t('Edit %{title}', {title: this.model.get('title')})
 
     ReactDOM.render(
       <EditCalendarEventHeader title={title} />,
@@ -344,10 +346,13 @@ export default class EditCalendarEventView extends Backbone.View {
 
   render() {
     super.render(...arguments)
-    this.$('.date_field').date_field({
+    renderDatetimeField(this.$('.date_field'), {
+      dateOnly: true,
       datepicker: {dateFormat: datePickerFormat(I18n.t('#date.formats.default'))},
     })
-    this.$('.time_field').time_field()
+    renderDatetimeField($('.time_field'), {
+      timeOnly: true,
+    })
     this.$('.date_start_end_row').each((_unused, row) => {
       const date = $('.start_date', row).first()
       const start = $('.start_time', row).first()
@@ -494,7 +499,7 @@ export default class EditCalendarEventView extends Backbone.View {
             return true
           }
         },
-        labelFn(input) {
+        labelFn(_index, input) {
           return $(input).parents('.date_start_end_row').prev('label').text()
         },
         success: $dialog => {

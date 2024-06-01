@@ -23,11 +23,13 @@ import {View} from '@instructure/ui-view'
 import {Flex} from '@instructure/ui-flex'
 import {Text} from '@instructure/ui-text'
 import {TextInput} from '@instructure/ui-text-input'
-import {IconChatLine} from '@instructure/ui-icons'
 import {HorizontalButtonDisplay} from './HorizontalButtonDisplay'
 import {VerticalButtonDisplay} from './VerticalButtonDisplay'
 import type {RubricAssessmentData, RubricCriterion, UpdateAssessmentData} from '../types/rubric'
 import {TextArea} from '@instructure/ui-text-area'
+import {Checkbox} from '@instructure/ui-checkbox'
+import {CommentLibrary} from './CommentLibrary'
+import {CriteriaReadonlyComment} from './CriteriaReadonlyComment'
 
 const I18n = useI18nScope('rubrics-assessment-tray')
 
@@ -35,24 +37,30 @@ type ModernViewModes = 'horizontal' | 'vertical'
 
 type ModernViewProps = {
   criteria: RubricCriterion[]
+  hidePoints: boolean
   isPreviewMode: boolean
   isPeerReview: boolean
+  isFreeFormCriterionComments: boolean
   ratingOrder: string
   rubricAssessmentData: RubricAssessmentData[]
   selectedViewMode: ModernViewModes
+  rubricSavedComments?: Record<string, string[]>
   onUpdateAssessmentData: (params: UpdateAssessmentData) => void
 }
 export const ModernView = ({
   criteria,
+  hidePoints,
   isPreviewMode,
   isPeerReview,
+  isFreeFormCriterionComments,
   ratingOrder,
   rubricAssessmentData,
   selectedViewMode,
+  rubricSavedComments,
   onUpdateAssessmentData,
 }: ModernViewProps) => {
   return (
-    <View as="div" margin="0">
+    <View as="div" margin="0" overflowX="hidden">
       {criteria.map((criterion, index) => {
         const criterionAssessment = rubricAssessmentData.find(
           data => data.criterionId === criterion.id
@@ -63,12 +71,15 @@ export const ModernView = ({
             key={criterion.id}
             criterion={criterion}
             displayHr={index < criteria.length - 1}
-            isPeerReview={isPeerReview}
+            hidePoints={hidePoints}
             isPreviewMode={isPreviewMode}
+            isPeerReview={isPeerReview}
             ratingOrder={ratingOrder}
             criterionAssessment={criterionAssessment}
             selectedViewMode={selectedViewMode}
+            rubricSavedComments={rubricSavedComments?.[criterion.id] ?? []}
             onUpdateAssessmentData={onUpdateAssessmentData}
+            isFreeFormCriterionComments={isFreeFormCriterionComments}
           />
         )
       })}
@@ -79,21 +90,27 @@ export const ModernView = ({
 type CriterionRowProps = {
   criterion: RubricCriterion
   displayHr: boolean
-  isPeerReview: boolean
+  hidePoints: boolean
   isPreviewMode: boolean
+  isPeerReview: boolean
+  isFreeFormCriterionComments: boolean
   ratingOrder: string
   criterionAssessment?: RubricAssessmentData
   selectedViewMode: ModernViewModes
+  rubricSavedComments: string[]
   onUpdateAssessmentData: (params: UpdateAssessmentData) => void
 }
 export const CriterionRow = ({
   criterion,
   displayHr,
-  isPeerReview,
+  hidePoints,
   isPreviewMode,
+  isPeerReview,
+  isFreeFormCriterionComments,
   ratingOrder,
   criterionAssessment,
   selectedViewMode,
+  rubricSavedComments,
   onUpdateAssessmentData,
 }: CriterionRowProps) => {
   const {ratings} = criterion
@@ -104,6 +121,7 @@ export const CriterionRow = ({
   const [pointsInput, setPointsInput] = useState<string>()
   const [selectedRatingDescription, setSelectedRatingDescription] = useState<string>()
   const [commentText, setCommentText] = useState<string>(criterionAssessment?.comments ?? '')
+  const [isSaveCommentChecked, setIsSaveCommentChecked] = useState(false)
 
   useEffect(() => {
     setCommentText(criterionAssessment?.comments ?? '')
@@ -151,7 +169,7 @@ export const CriterionRow = ({
     if (selectedViewMode === 'horizontal' && ratings.length <= 5) {
       return (
         <HorizontalButtonDisplay
-          isPeerReview={isPeerReview}
+          isPreviewMode={isPreviewMode}
           ratings={ratings}
           ratingOrder={ratingOrder}
           selectedRatingIndex={selectedRatingIndex}
@@ -162,7 +180,7 @@ export const CriterionRow = ({
 
     return (
       <VerticalButtonDisplay
-        isPeerReview={isPeerReview}
+        isPreviewMode={isPreviewMode}
         ratings={ratings}
         ratingOrder={ratingOrder}
         selectedRatingIndex={selectedRatingIndex}
@@ -173,31 +191,35 @@ export const CriterionRow = ({
 
   return (
     <View as="div" margin="0 0 small 0">
-      <Flex direction="row-reverse">
-        <Flex.Item margin={isPeerReview ? '0' : '0 0 0 x-small'}>
-          <Text size="small" weight="bold">
-            /{criterion.points}
-          </Text>
-        </Flex.Item>
-        <Flex.Item margin={isPeerReview ? '0 0 0 x-small' : '0'}>
-          {isPeerReview ? (
+      {!hidePoints && (
+        <Flex direction="row-reverse" data-testid="modern-view-out-of-points">
+          <Flex.Item margin={isPreviewMode ? '0' : '0 0 0 x-small'}>
             <Text size="small" weight="bold">
-              {pointsInput?.toString() ?? ''}
+              /{criterion.points}
             </Text>
-          ) : (
-            <TextInput
-              renderLabel={<ScreenReaderContent>{I18n.t('Instructor Points')}</ScreenReaderContent>}
-              placeholder="--"
-              width="2.688rem"
-              height="2.375rem"
-              value={pointsInput?.toString() ?? ''}
-              onChange={(_e, value) => {
-                setPoints(value)
-              }}
-            />
-          )}
-        </Flex.Item>
-      </Flex>
+          </Flex.Item>
+          <Flex.Item margin={isPreviewMode ? '0 0 0 x-small' : '0'}>
+            {isPreviewMode ? (
+              <Text size="small" weight="bold">
+                {pointsInput?.toString() ?? ''}
+              </Text>
+            ) : (
+              <TextInput
+                renderLabel={
+                  <ScreenReaderContent>{I18n.t('Instructor Points')}</ScreenReaderContent>
+                }
+                placeholder="--"
+                width="2.688rem"
+                height="2.375rem"
+                value={pointsInput?.toString() ?? ''}
+                onChange={(_e, value) => {
+                  setPoints(value)
+                }}
+              />
+            )}
+          </Flex.Item>
+        </Flex>
+      )}
       <View as="div">
         <Text size="medium" weight="bold">
           {criterion.description}
@@ -209,25 +231,74 @@ export const CriterionRow = ({
         </Text>
       </View>
       <View as="div" margin="small 0 0 0">
-        {renderButtonDisplay()}
+        {!isFreeFormCriterionComments && renderButtonDisplay()}
       </View>
       <View as="div" margin="small 0 0 0">
-        <Flex>
-          <Flex.Item>
-            <IconChatLine />
-          </Flex.Item>
-          <Flex.Item shouldGrow={true} margin="0 0 0 xx-small">
-            <TextArea
-              label={<ScreenReaderContent>{I18n.t('Leave criterion comment')}</ScreenReaderContent>}
-              readOnly={isPreviewMode || isPeerReview}
-              size="small"
-              value={commentText}
-              onChange={e => setCommentText(e.target.value)}
-              onBlur={() => updateAssessmentData({comments: commentText})}
-              placeholder={I18n.t('Leave a comment')}
-            />
-          </Flex.Item>
-        </Flex>
+        {isFreeFormCriterionComments ? (
+          <Flex direction="column">
+            {!isPreviewMode && !isPeerReview && rubricSavedComments.length > 0 && (
+              <>
+                <Flex.Item>
+                  <Text weight="bold">{I18n.t('Comment Library')}</Text>
+                </Flex.Item>
+                <Flex.Item margin="x-small 0 0 0" shouldGrow={true}>
+                  <CommentLibrary
+                    rubricSavedComments={rubricSavedComments}
+                    criterionId={criterion.id}
+                    setCommentText={setCommentText}
+                    updateAssessmentData={updateAssessmentData}
+                  />
+                </Flex.Item>
+              </>
+            )}
+            <Flex.Item margin={rubricSavedComments.length > 0 ? 'medium 0 0 0' : '0 0 0 0'}>
+              <Text weight="bold">{I18n.t('Comment')}</Text>
+            </Flex.Item>
+            <Flex.Item margin="x-small 0 0 0" shouldGrow={true}>
+              <TextArea
+                label={<ScreenReaderContent>{I18n.t('Criterion Comment')}</ScreenReaderContent>}
+                readOnly={isPreviewMode}
+                data-testid={`free-form-comment-area-${criterion.id}`}
+                width="100%"
+                height="38px"
+                value={commentText}
+                onChange={e => setCommentText(e.target.value)}
+                onBlur={e => updateAssessmentData({comments: e.target.value})}
+              />
+            </Flex.Item>
+            {!isPeerReview && !isPreviewMode && (
+              <Flex.Item margin="medium 0 x-small 0" shouldGrow={true}>
+                <Checkbox
+                  checked={isSaveCommentChecked}
+                  label={I18n.t('Save this comment for reuse')}
+                  size="small"
+                  data-testid={`save-comment-checkbox-${criterion.id}`}
+                  onChange={e => {
+                    updateAssessmentData({saveCommentsForLater: !!e.target.checked})
+                    setIsSaveCommentChecked(!!e.target.checked)
+                  }}
+                />
+              </Flex.Item>
+            )}
+          </Flex>
+        ) : (
+          <Flex direction="column">
+            <Flex.Item margin="x-small 0 0 0" shouldGrow={true}>
+              {isPreviewMode ? (
+                <CriteriaReadonlyComment commentText={commentText} />
+              ) : (
+                <TextArea
+                  label={I18n.t('Comment')}
+                  size="small"
+                  value={commentText}
+                  onChange={e => setCommentText(e.target.value)}
+                  onBlur={() => updateAssessmentData({comments: commentText})}
+                  placeholder={I18n.t('Leave a comment')}
+                />
+              )}
+            </Flex.Item>
+          </Flex>
+        )}
       </View>
       {displayHr && <View as="hr" margin="medium 0" />}
     </View>

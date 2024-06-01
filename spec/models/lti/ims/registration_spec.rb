@@ -20,9 +20,6 @@
 
 module Lti::IMS
   describe Registration do
-    let(:application_type) { :web }
-    let(:grant_types) { [:client_credentials, :implicit] }
-    let(:response_types) { [:id_token] }
     let(:redirect_uris) { ["http://example.com"] }
     let(:initiate_login_uri) { "http://example.com/login" }
     let(:client_name) { "Example Tool" }
@@ -31,7 +28,6 @@ module Lti::IMS
     let(:client_uri) { "http://example.com/" }
     let(:tos_uri) { "http://example.com/tos" }
     let(:policy_uri) { "http://example.com/policy" }
-    let(:token_endpoint_auth_method) { "private_key_jwt" }
     let(:lti_tool_configuration) do
       {
         domain: "example.com",
@@ -43,9 +39,6 @@ module Lti::IMS
 
     let(:registration) do
       r = Registration.new({
-        application_type:,
-        grant_types:,
-        response_types:,
         redirect_uris:,
         initiate_login_uri:,
         client_name:,
@@ -54,7 +47,6 @@ module Lti::IMS
         client_uri:,
         tos_uri:,
         policy_uri:,
-        token_endpoint_auth_method:,
         lti_tool_configuration:,
         scopes:
       }.compact)
@@ -62,6 +54,11 @@ module Lti::IMS
       r
     end
     let(:developer_key) { DeveloperKey.create }
+
+    it "is soft_deleted when destroy is called" do
+      registration.destroy
+      expect(registration.reload.workflow_state).to eq("deleted")
+    end
 
     describe "associations" do
       subject { Lti::IMS::Registration.new }
@@ -74,64 +71,6 @@ module Lti::IMS
 
       context "when valid" do
         it { is_expected.to be true }
-      end
-
-      context "application_type" do
-        context "is \"web\"" do
-          it { is_expected.to be true }
-        end
-
-        context "is not \"web\"" do
-          let(:application_type) { "native" }
-
-          it { is_expected.to be false }
-        end
-
-        context "is not included" do
-          let(:application_type) { nil }
-
-          it { is_expected.to be false }
-        end
-      end
-
-      context "grant_types" do
-        context "includes other types" do
-          let(:grant_types) { %i[client_credentials implicit foo bar] }
-
-          it { is_expected.to be true }
-        end
-
-        context "does not include implicit" do
-          let(:grant_types) { [:client_credentials, :foo] }
-
-          it { is_expected.to be false }
-        end
-
-        context "does not include client_credentials" do
-          let(:grant_types) { [:implicit, :foo] }
-
-          it { is_expected.to be false }
-        end
-      end
-
-      context "response_types" do
-        context "includes other types" do
-          let(:response_types) { %i[id_token foo bar] }
-
-          it { is_expected.to be true }
-        end
-
-        context "is not included" do
-          let(:response_types) { nil }
-
-          it { is_expected.to be false }
-        end
-
-        context "does not include id_token" do
-          let(:response_types) { [:foo, :bar] }
-
-          it { is_expected.to be false }
-        end
       end
 
       context "redirect_uris" do
@@ -191,14 +130,6 @@ module Lti::IMS
 
         context "is not a valid uri" do
           let(:jwks_uri) { "asdf" }
-
-          it { is_expected.to be false }
-        end
-      end
-
-      context "token_endpoint_auth_method" do
-        context "is not \"private_key_jwt\"" do
-          let(:token_endpoint_auth_method) { "asdf" }
 
           it { is_expected.to be false }
         end
@@ -659,6 +590,31 @@ module Lti::IMS
             }
           )
         end
+      end
+    end
+
+    describe "registration_configuration" do
+      subject { registration.registration_configuration }
+
+      it "formats the configuration correctly" do
+        config = registration.lti_tool_configuration.with_indifferent_access
+
+        expect(subject).to eq(
+          {
+            name: registration.client_name,
+            description: config[:description],
+            domain: config[:domain],
+            custom_fields: config[:custom_parameters],
+            target_link_uri: config[:target_link_uri],
+            privacy_level: registration.privacy_level,
+            icon_url: config[:icon_uri],
+            oidc_initiation_url: registration.initiate_login_uri,
+            redirect_uris: registration.redirect_uris,
+            public_jwk_url: registration.jwks_uri,
+            scopes: registration.overlaid_scopes,
+            placements: registration.placements,
+          }.with_indifferent_access
+        )
       end
     end
   end

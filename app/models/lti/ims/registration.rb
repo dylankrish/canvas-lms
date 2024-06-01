@@ -18,6 +18,7 @@
 # with this program. If not, see <http://www.gnu.org/licenses/>.
 
 class Lti::IMS::Registration < ApplicationRecord
+  include Canvas::SoftDeletable
   extend RootAccountResolver
   CANVAS_EXTENSION_LABEL = "canvas.instructure.com"
   self.table_name = "lti_ims_registrations"
@@ -31,19 +32,16 @@ class Lti::IMS::Registration < ApplicationRecord
 
   PLACEMENT_VISIBILITY_OPTIONS = %(admins members public)
 
-  validates :application_type,
-            :grant_types,
-            :response_types,
-            :redirect_uris,
+  self.ignored_columns += %i[application_type grant_types response_types token_endpoint_auth_method]
+
+  validates :redirect_uris,
             :initiate_login_uri,
             :client_name,
             :jwks_uri,
-            :token_endpoint_auth_method,
             :lti_tool_configuration,
             presence: true
 
-  validate :required_values_are_present,
-           :redirect_uris_contains_uris,
+  validate :redirect_uris_contains_uris,
            :lti_tool_configuration_is_valid,
            :scopes_are_valid
 
@@ -69,7 +67,7 @@ class Lti::IMS::Registration < ApplicationRecord
     canvas_configuration
   end
 
-  # A Registration (this class) denotes a registration of a tool with a platform. This
+  # An IMS::Registration (this class) denotes a registration of a tool with a platform. This
   # follows the IMS Dynamic Registration specification. A "Tool Configuration" is
   # Canvas' proprietary representation of a tool's configuration, which predates
   # the dynamic registration specification. This method converts an ims registration
@@ -77,13 +75,9 @@ class Lti::IMS::Registration < ApplicationRecord
   def canvas_configuration(apply_overlay: true)
     config = lti_tool_configuration
 
-    overlay = registration_overlay
-
     {
       title: client_name,
-      scopes: scopes.reject do |s|
-        apply_overlay ? (overlay["disabledScopes"]&.include?(s) || false) : false
-      end,
+      scopes: overlaid_scopes(apply_overlay:),
       public_jwk_url: jwks_uri,
       description: config["description"],
       custom_fields: config["custom_parameters"],
@@ -106,6 +100,28 @@ class Lti::IMS::Registration < ApplicationRecord
     }.with_indifferent_access
   end
 
+  # This method converts an IMS Registration into a "Tool Configuration V2",
+  # the flattened and standardized version of the Canvas proprietary configuration
+  # format meant for internal use with LTI Registrations.
+  def registration_configuration
+    config = lti_tool_configuration
+
+    {
+      name: client_name,
+      description: config["description"],
+      domain: config["domain"],
+      custom_fields: config["custom_parameters"],
+      target_link_uri: config["target_link_uri"],
+      privacy_level:,
+      icon_url: config["icon_uri"],
+      oidc_initiation_url: initiate_login_uri,
+      redirect_uris:,
+      public_jwk_url: jwks_uri,
+      scopes: overlaid_scopes,
+      placements:
+    }.with_indifferent_access
+  end
+
   def importable_configuration
     configuration&.merge(canvas_extensions)&.merge(configuration_to_cet_settings_map)
   end
@@ -118,6 +134,12 @@ class Lti::IMS::Registration < ApplicationRecord
     claims = lti_tool_configuration["claims"] || []
     infered_privacy_level = infer_privacy_level_from(claims)
     registration_overlay["privacy_level"] || lti_tool_configuration["https://#{CANVAS_EXTENSION_LABEL}/lti/privacy_level"] || infered_privacy_level
+  end
+
+  def overlaid_scopes(apply_overlay: true)
+    return scopes unless apply_overlay
+
+    scopes.reject { |s| registration_overlay["disabledScopes"]&.include?(s) || false }
   end
 
   def update_external_tools?
@@ -238,15 +260,15 @@ class Lti::IMS::Registration < ApplicationRecord
       developer_key_id: developer_key.global_id.to_s,
       overlay: registration_overlay,
       lti_tool_configuration:,
-      application_type:,
-      grant_types:,
-      response_types:,
+      application_type: REQUIRED_APPLICATION_TYPE,
+      grant_types: REQUIRED_GRANT_TYPES,
+      response_types: REQUIRED_RESPONSE_TYPES,
       redirect_uris:,
       initiate_login_uri:,
       client_name:,
       jwks_uri:,
       logo_uri:,
-      token_endpoint_auth_method:,
+      token_endpoint_auth_method: REQUIRED_TOKEN_ENDPOINT_AUTH_METHOD,
       contacts:,
       client_uri:,
       policy_uri:,
@@ -261,23 +283,6 @@ class Lti::IMS::Registration < ApplicationRecord
   end
 
   private
-
-  def required_values_are_present
-    if (REQUIRED_GRANT_TYPES - grant_types).present?
-      errors.add(:grant_types, "Must include #{REQUIRED_GRANT_TYPES.join(", ")}")
-    end
-    if (REQUIRED_RESPONSE_TYPES - response_types).present?
-      errors.add(:response_types, "Must include #{REQUIRED_RESPONSE_TYPES.join(", ")}")
-    end
-
-    if token_endpoint_auth_method != REQUIRED_TOKEN_ENDPOINT_AUTH_METHOD
-      errors.add(:token_endpoint_auth_method, "Must be 'private_key_jwt'")
-    end
-
-    if application_type != REQUIRED_APPLICATION_TYPE
-      errors.add(:application_type, "Must be 'web'")
-    end
-  end
 
   def redirect_uris_contains_uris
     return if redirect_uris.all? { |uri| uri.match? URI::DEFAULT_PARSER.make_regexp(["http", "https"]) }

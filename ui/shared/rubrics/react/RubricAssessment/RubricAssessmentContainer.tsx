@@ -23,8 +23,7 @@ import {ScreenReaderContent} from '@instructure/ui-a11y-content'
 import {Flex} from '@instructure/ui-flex'
 import {View} from '@instructure/ui-view'
 import {SimpleSelect} from '@instructure/ui-simple-select'
-import {Button, CloseButton, IconButton} from '@instructure/ui-buttons'
-import {IconDownloadLine, IconPrinterLine} from '@instructure/ui-icons'
+import {Button, CloseButton} from '@instructure/ui-buttons'
 import {Text} from '@instructure/ui-text'
 import type {
   RubricAssessmentData,
@@ -45,13 +44,16 @@ const {ash, shamrock} = colors
 
 type RubricAssessmentContainerProps = {
   criteria: RubricCriterion[]
+  hidePoints: boolean
   isPreviewMode: boolean
   isPeerReview: boolean
+  isFreeFormCriterionComments: boolean
   ratingOrder: string
   rubricTitle: string
   rubricAssessmentData: RubricAssessmentData[]
   rubricAssessmentId: string
   rubricAssessors: RubricAssessmentSelect
+  rubricSavedComments?: Record<string, string[]>
   selectedViewMode: ViewMode
   onAccessorChange: (accessorId: string) => void
   onViewModeChange: (viewMode: ViewMode) => void
@@ -61,13 +63,16 @@ type RubricAssessmentContainerProps = {
 }
 export const RubricAssessmentContainer = ({
   criteria,
+  hidePoints,
   isPreviewMode,
   isPeerReview,
+  isFreeFormCriterionComments,
   ratingOrder,
   rubricTitle,
   rubricAssessmentData,
   rubricAssessmentId,
   rubricAssessors,
+  rubricSavedComments = {},
   selectedViewMode,
   onAccessorChange,
   onDismiss,
@@ -101,9 +106,14 @@ export const RubricAssessmentContainer = ({
       return (
         <TraditionalView
           criteria={criteria}
-          isPeerReview={isPeerReview}
+          hidePoints={hidePoints}
+          ratingOrder={ratingOrder}
           rubricAssessmentData={rubricAssessmentData}
           rubricTitle={rubricTitle}
+          rubricSavedComments={rubricSavedComments}
+          isPreviewMode={isPreviewMode}
+          isPeerReview={isPeerReview}
+          isFreeFormCriterionComments={isFreeFormCriterionComments}
           onUpdateAssessmentData={onUpdateAssessmentData}
         />
       )
@@ -112,12 +122,15 @@ export const RubricAssessmentContainer = ({
     return (
       <ModernView
         criteria={criteria}
-        isPeerReview={isPeerReview}
+        hidePoints={hidePoints}
         isPreviewMode={isPreviewMode}
+        isPeerReview={isPeerReview}
         ratingOrder={ratingOrder}
+        rubricSavedComments={rubricSavedComments}
         rubricAssessmentData={rubricAssessmentData}
         selectedViewMode={selectedViewMode}
         onUpdateAssessmentData={onUpdateAssessmentData}
+        isFreeFormCriterionComments={isFreeFormCriterionComments}
       />
     )
   }
@@ -145,7 +158,9 @@ export const RubricAssessmentContainer = ({
         <Flex.Item as="header">
           <AssessmentHeader
             disableTraditionalView={disableTraditionalView}
+            hidePoints={hidePoints}
             instructorPoints={instructorPoints}
+            isFreeFormCriterionComments={isFreeFormCriterionComments}
             isPreviewMode={isPreviewMode}
             isPeerReview={isPeerReview}
             isTraditionalView={isTraditionalView}
@@ -163,7 +178,7 @@ export const RubricAssessmentContainer = ({
             {renderViewContainer()}
           </View>
         </Flex.Item>
-        {!isPreviewMode && !isPeerReview && (
+        {!isPreviewMode && onSubmit && (
           <Flex.Item as="footer">
             <AssessmentFooter onSubmit={onSubmit} />
           </Flex.Item>
@@ -175,11 +190,13 @@ export const RubricAssessmentContainer = ({
 
 type ViewModeSelectProps = {
   disableTraditionalView: boolean
+  isFreeFormCriterionComments: boolean
   selectedViewMode: ViewMode
   onViewModeChange: (viewMode: ViewMode) => void
 }
 const ViewModeSelect = ({
   disableTraditionalView,
+  isFreeFormCriterionComments,
   selectedViewMode,
   onViewModeChange,
 }: ViewModeSelectProps) => {
@@ -204,9 +221,11 @@ const ViewModeSelect = ({
       <SimpleSelect.Option id="horizontal" value="horizontal">
         {I18n.t('Horizontal')}
       </SimpleSelect.Option>
-      <SimpleSelect.Option id="vertical" value="vertical">
-        {I18n.t('Vertical')}
-      </SimpleSelect.Option>
+      {!isFreeFormCriterionComments && (
+        <SimpleSelect.Option id="vertical" value="vertical">
+          {I18n.t('Vertical')}
+        </SimpleSelect.Option>
+      )}
     </SimpleSelect>
   )
 }
@@ -214,8 +233,13 @@ const ViewModeSelect = ({
 type InstructorScoreProps = {
   instructorPoints: number
   isPeerReview: boolean
+  isPreviewMode: boolean
 }
-const InstructorScore = ({instructorPoints = 0, isPeerReview}: InstructorScoreProps) => {
+const InstructorScore = ({
+  instructorPoints = 0,
+  isPeerReview,
+  isPreviewMode,
+}: InstructorScoreProps) => {
   return (
     <Flex as="div" height="3rem" alignItems="center">
       <Flex.Item as="div" width="13.813rem" align="center">
@@ -241,7 +265,7 @@ const InstructorScore = ({instructorPoints = 0, isPeerReview}: InstructorScorePr
             lineHeight: '3rem',
             width: '4.313rem',
             height: '3rem',
-            backgroundColor: isPeerReview ? ash : shamrock,
+            backgroundColor: isPreviewMode ? ash : shamrock,
             borderRadius: '0 .35rem .35rem 0',
             textAlign: 'center',
           }}
@@ -291,7 +315,9 @@ const AccessorSelect = ({
 
 type AssessmentHeaderProps = {
   disableTraditionalView: boolean
+  hidePoints: boolean
   instructorPoints: number
+  isFreeFormCriterionComments: boolean
   isPreviewMode: boolean
   isPeerReview: boolean
   isTraditionalView: boolean
@@ -305,7 +331,9 @@ type AssessmentHeaderProps = {
 }
 const AssessmentHeader = ({
   disableTraditionalView,
+  hidePoints,
   instructorPoints,
+  isFreeFormCriterionComments,
   isPreviewMode,
   isPeerReview,
   isTraditionalView,
@@ -340,6 +368,7 @@ const AssessmentHeader = ({
         <Flex.Item shouldGrow={true} shouldShrink={true}>
           <ViewModeSelect
             disableTraditionalView={disableTraditionalView}
+            isFreeFormCriterionComments={isFreeFormCriterionComments}
             selectedViewMode={selectedViewMode}
             onViewModeChange={onViewModeChange}
           />
@@ -358,14 +387,20 @@ const AssessmentHeader = ({
                 </View>
               </Flex.Item>
             )}
-            <Flex.Item>
-              <View as="div" margin="0 large 0 0" themeOverride={{marginLarge: '2.938rem'}}>
-                <InstructorScore isPeerReview={isPeerReview} instructorPoints={instructorPoints} />
-              </View>
-            </Flex.Item>
+            {!hidePoints && (
+              <Flex.Item>
+                <View as="div" margin="0 large 0 0" themeOverride={{marginLarge: '2.938rem'}}>
+                  <InstructorScore
+                    isPeerReview={isPeerReview}
+                    instructorPoints={instructorPoints}
+                    isPreviewMode={isPreviewMode}
+                  />
+                </View>
+              </Flex.Item>
+            )}
           </>
         )}
-        <Flex.Item margin="0 0 0 small">
+        {/* <Flex.Item margin="0 0 0 small">
           <IconButton disabled={isPreviewMode} screenReaderLabel="Print">
             <IconPrinterLine />
           </IconButton>
@@ -374,7 +409,7 @@ const AssessmentHeader = ({
           <IconButton disabled={isPreviewMode} screenReaderLabel="Download">
             <IconDownloadLine />
           </IconButton>
-        </Flex.Item>
+        </Flex.Item> */}
       </Flex>
 
       {!isTraditionalView && (
@@ -390,9 +425,15 @@ const AssessmentHeader = ({
             </Flex.Item>
           )}
 
-          <Flex.Item margin="0 0 0 small">
-            <InstructorScore isPeerReview={isPeerReview} instructorPoints={instructorPoints} />
-          </Flex.Item>
+          {!hidePoints && (
+            <Flex.Item margin="0 0 0 small">
+              <InstructorScore
+                isPeerReview={isPeerReview}
+                instructorPoints={instructorPoints}
+                isPreviewMode={isPreviewMode}
+              />
+            </Flex.Item>
+          )}
 
           <View as="hr" margin="medium 0 medium 0" />
         </>

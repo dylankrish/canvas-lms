@@ -108,7 +108,7 @@ class WikiPagesController < ApplicationController
       end
 
       if authorized_action(@page, @current_user, :read) &&
-         (!@context.conditional_release? || enforce_assignment_visible(@page))
+         ((!@context.conditional_release? && !Account.site_admin.feature_enabled?(:differentiated_modules)) || enforce_assignment_visible(@page))
         if params[:id] != @page.url
           InstStatsd::Statsd.increment("wikipage.show.page_url_resolved")
           redirect_to polymorphic_url([@context, :wiki_page], id: @page, titleize: params[:titleize])
@@ -130,7 +130,7 @@ class WikiPagesController < ApplicationController
       set_master_course_js_env_data(@page, @context)
       js_env(ConditionalRelease::Service.env_for(@context))
       wiki_pages_js_env(@context)
-      if !ConditionalRelease::Service.enabled_in_context?(@context) ||
+      if (!ConditionalRelease::Service.enabled_in_context?(@context) && !Account.site_admin.feature_enabled?(:differentiated_modules)) ||
          enforce_assignment_visible(@page)
         add_crumb(@page.title)
         @padless = true
@@ -143,7 +143,7 @@ class WikiPagesController < ApplicationController
 
   def revisions
     if @page.grants_right?(@current_user, session, :read_revisions)
-      if !@context.conditional_release? || enforce_assignment_visible(@page)
+      if (!@context.conditional_release? && !Account.site_admin.feature_enabled?(:differentiated_modules)) || enforce_assignment_visible(@page)
         add_crumb(@page.title, polymorphic_url([@context, @page]))
         add_crumb(t("#crumbs.revisions", "Revisions"))
 
@@ -171,7 +171,7 @@ class WikiPagesController < ApplicationController
   def wiki_pages_js_env(context)
     set_k5_mode # we need this to run now, even though we haven't hit the render hook yet
     @wiki_pages_env ||= {
-      wiki_page_menu_tools: filtered_wiki_page_menu_tools,
+      wiki_page_menu_tools: external_tools_display_hashes(:wiki_page_menu),
       wiki_index_menu_tools: external_tools_display_hashes(:wiki_index_menu),
       DISPLAY_SHOW_ALL_LINK: tab_enabled?(context.class::TAB_PAGES, no_render: true) && !@k5_details_view,
       CAN_SET_TODO_DATE: context.grants_any_right?(@current_user, session, :manage_content, :manage_course_content_edit),
@@ -183,22 +183,5 @@ class WikiPagesController < ApplicationController
     end
     js_env(@wiki_pages_env)
     @wiki_pages_env
-  end
-
-  def filtered_wiki_page_menu_tools
-    tools = external_tools_display_hashes(:wiki_page_menu)
-    return tools unless tools.present? && @context.is_a?(Course)
-
-    # we do not support tray launch method on this page without the drawer
-    unless @domain_root_account&.feature_enabled?(:external_tool_drawer)
-      tools.reject! { |tool| tool[:launch_method] == "tray" }
-    end
-
-    # students should only see menu tools that launch in the tray
-    if context.user_is_student?(@current_user, include_fake_student: true, include_all: true)
-      tools.select! { |tool| tool[:launch_method] == "tray" }
-    end
-
-    tools.presence || []
   end
 end

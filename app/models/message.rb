@@ -235,7 +235,7 @@ class Message < ActiveRecord::Base
 
   scope :in_state, ->(state) { where(workflow_state: Array(state).map(&:to_s)) }
 
-  scope :at_timestamp, ->(timestamp) { where("created_at >= ? AND created_at < ?", Time.at(timestamp.to_i), Time.at(timestamp.to_i + 1)) }
+  scope :at_timestamp, ->(timestamp) { where(created_at: Time.at(timestamp.to_i)...Time.at(timestamp.to_i + 1)) }
 
   # an optimization for queries that would otherwise target the main table to
   # make them target the specific partition table. Naturally this only works if
@@ -842,7 +842,7 @@ self.user,
   def notification_targets
     case path_type
     when "push"
-      user.notification_endpoints.pluck(:arn)
+      user.notification_endpoints.select("DISTINCT ON (token, arn) *").map(&:arn)
     when "twitter"
       twitter_service = user.user_services.where(service: "twitter").first
       return [] unless twitter_service

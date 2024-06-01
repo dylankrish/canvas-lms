@@ -104,7 +104,7 @@ module Csp::AccountHelper
   def add_domain!(domain)
     domain = domain.downcase
     Csp::Domain.unique_constraint_retry do |retry_count|
-      if retry_count > 0 && (record = csp_domains.where(domain:).take)
+      if retry_count > 0 && (record = csp_domains.find_by(domain:))
         record.undestroy if record.deleted?
         record
       else
@@ -115,7 +115,7 @@ module Csp::AccountHelper
   end
 
   def remove_domain!(domain)
-    csp_domains.active.where(domain: domain.downcase).take&.destroy!
+    csp_domains.active.find_by(domain: domain.downcase)&.destroy!
   end
 
   def csp_whitelisted_domains(request = nil, include_files:, include_tools:)
@@ -133,13 +133,29 @@ module Csp::AccountHelper
   end
 
   ACCOUNT_TOOL_CACHE_KEY_PREFIX = "account_tool_domains"
-  def cached_tool_domains
-    @cached_tool_domains ||= Rails.cache.fetch([ACCOUNT_TOOL_CACHE_KEY_PREFIX, global_id].cache_key) do
-      get_account_tool_domains
+
+  def account_tool_cache_key(global_id, internal_service_only)
+    key = [ACCOUNT_TOOL_CACHE_KEY_PREFIX, global_id]
+    key << "internal_service_only" if internal_service_only
+    key.cache_key
+  end
+
+  def cached_tool_domains(internal_service_only: false)
+    @cached_tool_domains ||= {}
+    @cached_tool_domains[internal_service_only] ||= Rails.cache.fetch(
+      account_tool_cache_key(global_id, internal_service_only)
+    ) do
+      get_account_tool_domains(internal_service_only:)
     end
   end
 
-  def csp_tools_grouped_by_domain
+  def csp_tools_grouped_by_domain(internal_service_only: false)
+    csp_tool_scope = ContextExternalTool.where(context_type: "Account", context_id: account_chain_ids).active
+
+    if internal_service_only
+      csp_tool_scope = csp_tool_scope.joins(:developer_key).where(developer_keys: { internal_service: true })
+    end
+
     csp_tool_scope.each_with_object({}) do |tool, hash|
       Csp::Domain.domains_for_tool(tool).each do |domain|
         hash[domain] ||= []
@@ -148,16 +164,13 @@ module Csp::AccountHelper
     end
   end
 
-  def get_account_tool_domains
-    csp_tools_grouped_by_domain.keys.uniq
-  end
-
-  def csp_tool_scope
-    ContextExternalTool.where(context_type: "Account", context_id: account_chain_ids).active
+  def get_account_tool_domains(internal_service_only:)
+    csp_tools_grouped_by_domain(internal_service_only:).keys.uniq
   end
 
   def clear_tool_domain_cache
-    Rails.cache.delete([ACCOUNT_TOOL_CACHE_KEY_PREFIX, global_id].cache_key)
+    Rails.cache.delete(account_tool_cache_key(global_id, false))
+    Rails.cache.delete(account_tool_cache_key(global_id, true))
     Account.delay_if_production.invalidate_inherited_caches(self, [ACCOUNT_TOOL_CACHE_KEY_PREFIX])
   end
 
@@ -174,7 +187,13 @@ module Csp::AccountHelper
     end
     canvadocs_host = Canvadocs.enabled?.presence && URI.parse(Canvadocs.config["base_url"]).host
     inst_fs_host = InstFS.enabled?.presence && URI.parse(InstFS.app_host).host
-    [files_host, canvadocs_host, inst_fs_host].compact
+    # allow for custom CDN domain for inst-fs, sub-domain naming scheme not enforced
+    inst_fs_cdn_host = "*.#{inst_fs_host}" if inst_fs_host
+
+    csp_files_domains = [files_host, canvadocs_host, inst_fs_host]
+    csp_files_domains << inst_fs_cdn_host if inst_fs_cdn_host
+
+    csp_files_domains.compact
   end
 
   def csp_logging_config

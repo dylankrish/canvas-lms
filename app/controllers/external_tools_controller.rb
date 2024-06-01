@@ -181,7 +181,7 @@ class ExternalToolsController < ApplicationController
       end
 
       launch_type = placement.present? ? :indirect_link : :content_item
-      Lti::LogService.new(tool:, context: @context, user: @current_user, placement:, launch_type:).call
+      Lti::LogService.new(tool:, context: @context, user: @current_user, session_id: session[:session_id], placement:, launch_type:).call
 
       display_override = params["borderless"] ? "borderless" : params[:display]
       render Lti::AppUtil.display_template(@tool.display_type(placement), display_override:)
@@ -350,7 +350,7 @@ class ExternalToolsController < ApplicationController
       if tool
         placement = launch_settings.dig("metadata", "placement")
         launch_type = launch_settings.dig("metadata", "launch_type")&.to_sym
-        Lti::LogService.new(tool:, context: @context, user: @current_user, placement:, launch_type:).call
+        Lti::LogService.new(tool:, context: @context, user: @current_user, session_id: session[:session_id], placement:, launch_type:).call
         log_asset_access(tool, "external_tools", "external_tools", overwrite: false)
       end
 
@@ -491,7 +491,7 @@ class ExternalToolsController < ApplicationController
         js_env(LTI_LAUNCH_RESOURCE_URL: @lti_launch.resource_url)
         set_tutorial_js_env
 
-        Lti::LogService.new(tool: @tool, context: @context, user: @current_user, placement:, launch_type: :direct_link).call
+        Lti::LogService.new(tool: @tool, context: @context, user: @current_user, session_id: session[:session_id], placement:, launch_type: :direct_link).call
 
         render Lti::AppUtil.display_template(@tool.display_type(placement), display_override: params[:display])
         timing_meta.tags = { lti_version: @tool&.lti_version }.compact
@@ -552,7 +552,7 @@ class ExternalToolsController < ApplicationController
         return
       end
 
-      Lti::LogService.new(tool: @tool, context: @context, user: @current_user, placement: selection_type, launch_type: :resource_selection).call
+      Lti::LogService.new(tool: @tool, context: @context, user: @current_user, session_id: session[:session_id], placement: selection_type, launch_type: :resource_selection).call
 
       render Lti::AppUtil.display_template("borderless")
       timing_meta.tags = { lti_version: @tool&.lti_version }.compact
@@ -702,7 +702,7 @@ class ExternalToolsController < ApplicationController
 
     if assignment.present? && ((@current_user && assignment.quiz_lti?) || assignment.root_account.feature_enabled?(:lti_resource_link_id_speedgrader_launches_reference_assignment))
       # Set assignment LTI launch parameters for this code path (e.g. launches
-      # from Speedgrader)
+      # from SpeedGrader)
       opts[:link_code] = @tool.opaque_identifier_for(assignment.external_tool_tag)
       opts[:overrides] ||= {}
       opts[:overrides]["resource_link_title"] = assignment.title

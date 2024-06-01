@@ -47,7 +47,6 @@ export default function SearchApp() {
   const [feedbackOpen, setFeedbackOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [searchResults, setSearchResults] = useState([])
-  const [searchTerm, setSearchTerm] = useState('')
   const [indexingProgress, setIndexingProgress] = useState(null)
 
   useEffect(() => {
@@ -57,17 +56,16 @@ export default function SearchApp() {
   }, [])
 
   const checkIndexStatus = useCallback(() => {
-    fetch(`/api/v1/courses/${ENV.COURSE_ID}/smartsearch/index_status`)
-      .then(res => {
-        res.json().then(({status, progress}) => {
-          if (status === 'indexing') {
-            setIndexingProgress(progress)
-            setTimeout(checkIndexStatus, 2000)
-          } else {
-            setIndexingProgress(null)
-          }
-        })
+    fetch(`/api/v1/courses/${ENV.COURSE_ID}/smartsearch/index_status`).then(res => {
+      res.json().then(({status, progress}) => {
+        if (status === 'indexing') {
+          setIndexingProgress(progress)
+          setTimeout(checkIndexStatus, 2000)
+        } else {
+          setIndexingProgress(null)
+        }
       })
+    })
   }, [])
 
   useEffect(() => {
@@ -115,13 +113,16 @@ export default function SearchApp() {
   const onSearch = e => {
     e.preventDefault()
 
+    if (!searchInput.current) return
+
+    const searchTerm = searchInput.current.value.trim()
     if (searchTerm === '') return
 
     setIsLoading(true)
     setSearchResults([])
     setPreviousSearch(searchTerm)
 
-    fetch(`/api/v1/courses/${ENV.COURSE_ID}/smartsearch?q=${searchTerm}`)
+    fetch(`/api/v1/courses/${ENV.COURSE_ID}/smartsearch?q=${searchTerm}&per_page=25`)
       .then(res => {
         res
           .json()
@@ -201,7 +202,6 @@ export default function SearchApp() {
         <fieldset>
           <TextInput
             inputRef={el => (searchInput.current = el)}
-            onChange={e => setSearchTerm(e.target.value)}
             placeholder={I18n.t('Food that a panda eats')}
             renderAfterInput={
               <IconButton
@@ -218,25 +218,22 @@ export default function SearchApp() {
         </fieldset>
       </form>
 
-      {
-        indexingProgress ? (
-          <IndexingProgress progress={indexingProgress} />
-        ) : isLoading ? (
-          <Flex justifyItems="center">
-            <Spinner renderTitle={I18n.t('Searching')} />
-          </Flex>
-        ) : (
-          <View display="block" className="searchResults" margin="small 0 0 0">
-            <SearchResults
-              onDislike={onDislike}
-              onExplain={onExplain}
-              onLike={onLike}
-              searchResults={searchResults}
-            />
-          </View>
-        )
-      }
-
+      {indexingProgress !== null ? (
+        <IndexingProgress progress={indexingProgress} />
+      ) : isLoading ? (
+        <Flex justifyItems="center">
+          <Spinner renderTitle={I18n.t('Searching')} />
+        </Flex>
+      ) : (
+        <View display="block" className="searchResults" margin="small 0 0 0">
+          <SearchResults
+            onDislike={onDislike}
+            onExplain={onExplain}
+            onLike={onLike}
+            searchResults={searchResults}
+          />
+        </View>
+      )}
     </View>
   )
 }

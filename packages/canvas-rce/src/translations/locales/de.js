@@ -185,6 +185,9 @@ const locale = {
   "congruent_5a244acd": { "message": "Kongruent" },
   "contains_311f37b7": { "message": "Enthält" },
   "content_1440204b": { "message": "Inhalt" },
+  "content_in_the_editor_will_be_changed_press_cancel_d5bf3357": {
+    "message": "Inhalt im Editor wird geändert Klicken Sie auf „Abbrechen“, um den originlaen Inhalt beizubehalten."
+  },
   "content_is_still_being_uploaded_if_you_continue_it_8f06d0cb": {
     "message": "Der Inhalt wird noch hochgeladen, wenn Sie fortfahren, wird er nicht richtig eingebettet."
   },
@@ -668,6 +671,7 @@ const locale = {
   "nested_less_than_27d17e58": { "message": "Geschachtelt kleiner als" },
   "new_quiz_34aacba6": { "message": "Neues Quiz" },
   "next_40e12421": { "message": "Weiter" },
+  "next_findtext_9d69f0fe": { "message": "Nächster { findText }" },
   "no_accessibility_issues_were_detected_f8d3c875": {
     "message": "Es wurden keine Zugangsprobleme festgestellt."
   },
@@ -800,12 +804,16 @@ const locale = {
   "precedes_196b9aef": { "message": "Vorrangig" },
   "precedes_equal_20701e84": { "message": "Vorrangig oder gleich" },
   "preformatted_d0670862": { "message": "Vorformatiert" },
+  "prepend_findtext_append_8e0e769a": {
+    "message": "{ prepend }{ findText }{ append }"
+  },
   "prev_f82cbc48": { "message": "Vorher" },
   "preview_53003fd2": { "message": "Vorschau" },
   "preview_a3f8f854": { "message": "VORSCHAU" },
   "preview_in_overlay_ed772c46": { "message": "Vorschau in Overlay" },
   "preview_inline_9787330": { "message": "Inline-Vorschau" },
   "previous_bd2ac015": { "message": "Vorherige" },
+  "previous_findtext_8dfbfd30": { "message": "Vorheriger { findText }" },
   "prime_917ea60e": { "message": "Primzahl" },
   "prime_numbers_13464f61": { "message": "Primzahlen" },
   "product_39cf144f": { "message": "Produkt" },
@@ -835,12 +843,27 @@ const locale = {
   "remove_heading_style_5fdc8855": { "message": "Überschriftsstil entfernen" },
   "remove_link_d1f2f4d0": { "message": "Link entfernen" },
   "replace_all_d3d68b3": { "message": "Alle ersetzen" },
+  "replace_all_findtext_with_replacetext_da574b32": {
+    "message": "Alle { findText } mit { replaceText } ersetzen"
+  },
   "replace_e61834a7": { "message": "Ersetzen" },
+  "replace_findtext_with_replacetext_7b5c7fb3": {
+    "message": "{ findText } mit { replaceText } ersetzen"
+  },
   "replace_with_eeff01ad": { "message": "Ersetzen mit" },
+  "replaced_alertfindtext_with_alertreplacetext_de5c1795": {
+    "message": "{ alertFindText } mit { alertReplaceText } ersetzt"
+  },
+  "replaced_all_alertfindtext_with_alertreplacetext_83fdfe59": {
+    "message": "Alle { alertFindText } mit { alertReplaceText } ersetzt"
+  },
   "reset_95a81614": { "message": "Zurücksetzen" },
   "resize_ec83d538": { "message": "Größe ändern" },
   "restore_auto_save_deccd84b": {
     "message": "Automatisches Speichern wiederherstellen"
+  },
+  "result_index_of_max_7db5ad8b": {
+    "message": "Ergebnis { index } von { max }"
   },
   "reverse_turnstile_does_not_yield_7558be06": {
     "message": "Reverses Drehkreuz (kein Ergebnis)"

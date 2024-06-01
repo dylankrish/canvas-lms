@@ -20,7 +20,8 @@
 import {useScope as useI18nScope} from '@canvas/i18n'
 import $ from 'jquery'
 import {extend} from 'lodash'
-import * as tz from '@canvas/datetime'
+import * as tz from '@instructure/datetime'
+import {fudgeDateForProfileTimezone} from '@instructure/datetime'
 import {View} from '@canvas/backbone'
 import template from '../../jst/messageItem.handlebars'
 import '@canvas/avatar/jst/_avatar.handlebars'
@@ -77,7 +78,7 @@ export default class MessageItemView extends View {
   // Returns the model's "conversation" key object.
   toJSON() {
     const json = this.model.toJSON()
-    const fudged = $.fudgeDateForProfileTimezone(tz.parse(json.created_at))
+    const fudged = fudgeDateForProfileTimezone(tz.parse(json.created_at))
     return extend(json, {created_at: fudged})
   }
 

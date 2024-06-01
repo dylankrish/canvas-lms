@@ -183,6 +183,9 @@ const locale = {
   "congruent_5a244acd": { "message": "สอดคล้อง" },
   "contains_311f37b7": { "message": "ประกอบด้วย" },
   "content_1440204b": { "message": "ข้อมูล" },
+  "content_in_the_editor_will_be_changed_press_cancel_d5bf3357": {
+    "message": "เนื้อหาในโปรแกรมแก้ไขจะมีการเปลี่ยนแปลง กด ยกเลิก (Cancel) เพื่อเก็บเนื้อหาเดิมไว้"
+  },
   "content_is_still_being_uploaded_if_you_continue_it_8f06d0cb": {
     "message": "เนื้อหายังอัพโหลดอยู่ หากคุณดำเนินการต่อ ข้อมูลจะไม่ถูกผนวกอย่างถูกต้อง"
   },
@@ -644,6 +647,7 @@ const locale = {
   "nested_less_than_27d17e58": { "message": "เชิงซ้อนน้อยกว่า" },
   "new_quiz_34aacba6": { "message": "แบบทดสอบใหม่" },
   "next_40e12421": { "message": "ถัดไป" },
+  "next_findtext_9d69f0fe": { "message": "{ findText } ถัดไป" },
   "no_accessibility_issues_were_detected_f8d3c875": {
     "message": "ไม่พบปัญหาในการใช้งาน"
   },
@@ -762,12 +766,16 @@ const locale = {
   "precedes_196b9aef": { "message": "นำหน้า" },
   "precedes_equal_20701e84": { "message": "นำหน้าเท่ากับ" },
   "preformatted_d0670862": { "message": "กำหนดรูปแบบไว้ล่วงหน้า" },
+  "prepend_findtext_append_8e0e769a": {
+    "message": "{ prepend }{ findText }{ append }"
+  },
   "prev_f82cbc48": { "message": "ก่อนหน้า" },
   "preview_53003fd2": { "message": "แสดงตัวอย่าง" },
   "preview_a3f8f854": { "message": "แสดงตัวอย่าง" },
   "preview_in_overlay_ed772c46": { "message": "แสดงตัวอย่างเป็นโอเวอร์เลย์" },
   "preview_inline_9787330": { "message": "แสดงตัวอย่างในแถว" },
   "previous_bd2ac015": { "message": "ก่อนหน้า" },
+  "previous_findtext_8dfbfd30": { "message": "{ findText } ก่อนหน้า" },
   "prime_917ea60e": { "message": "เฉพาะ" },
   "prime_numbers_13464f61": { "message": "จำนวนเฉพาะ" },
   "product_39cf144f": { "message": "ผล" },
@@ -797,12 +805,27 @@ const locale = {
   "remove_heading_style_5fdc8855": { "message": "ลบรูปแบบหัวเรื่อง" },
   "remove_link_d1f2f4d0": { "message": "ลบลิงค์" },
   "replace_all_d3d68b3": { "message": "แทนที่ทั้งหมด" },
+  "replace_all_findtext_with_replacetext_da574b32": {
+    "message": "แทนที่ { findText } ทั้งหมดด้วย { replaceText }"
+  },
   "replace_e61834a7": { "message": "แทนที่" },
+  "replace_findtext_with_replacetext_7b5c7fb3": {
+    "message": "แทนที่ { findText } ด้ววย { replaceText }"
+  },
   "replace_with_eeff01ad": { "message": "แทนที่ด้วย" },
+  "replaced_alertfindtext_with_alertreplacetext_de5c1795": {
+    "message": "แทนที่ { alertFindText } ด้วย { alertReplaceText }"
+  },
+  "replaced_all_alertfindtext_with_alertreplacetext_83fdfe59": {
+    "message": "แทนที่ { alertFindText } ทั้งหมดด้วย { alertReplaceText }"
+  },
   "reset_95a81614": { "message": "รีเซ็ต" },
   "resize_ec83d538": { "message": "ปรับขนาด" },
   "restore_auto_save_deccd84b": {
     "message": "กู้คืนที่บันทึกอัตโนมัติหรือไม่"
+  },
+  "result_index_of_max_7db5ad8b": {
+    "message": "ผลลัพธ์ { index } จาก { max }"
   },
   "reverse_turnstile_does_not_yield_7558be06": {
     "message": "Reverse Turnstile (มีเกิดผลลัพธ์)"

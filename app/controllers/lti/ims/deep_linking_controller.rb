@@ -72,7 +72,7 @@ module Lti
           # deep linking on the new/edit assignment page should:
           # * not create a resource link
           # * not reload the page
-          if for_placement?(:assignment_selection)
+          if for_placement?(:assignment_selection) || for_placement?(:submission_type_selection)
             render_content_items(reload_page: false)
             return
           end
@@ -155,6 +155,7 @@ module Lti
                    ltiEndpoint: polymorphic_url([:retrieve, @context, :external_tools]),
                    reloadpage: reload_page,
                    moduleCreated: module_created,
+                   replaceEditorContents: replace_editor_contents?,
                    **extra
                  }.compact
                })

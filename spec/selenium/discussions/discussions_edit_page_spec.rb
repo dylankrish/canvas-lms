@@ -20,6 +20,9 @@
 require_relative "../helpers/discussions_common"
 require_relative "../helpers/items_assign_to_tray"
 require_relative "../helpers/context_modules_common"
+require_relative "../../helpers/k5_common"
+require_relative "../dashboard/pages/k5_important_dates_section_page"
+require_relative "../dashboard/pages/k5_dashboard_common_page"
 require_relative "../common"
 require_relative "pages/discussion_page"
 require_relative "../assignments/page_objects/assignment_create_edit_page"
@@ -29,6 +32,9 @@ describe "discussions" do
   include DiscussionsCommon
   include ItemsAssignToTray
   include ContextModulesCommon
+  include K5DashboardCommonPageObject
+  include K5Common
+  include K5ImportantDatesSectionPageObject
 
   let(:course) { course_model.tap(&:offer!) }
   let(:teacher) { teacher_in_course(course:, name: "teacher", active_all: true).user }
@@ -272,7 +278,7 @@ describe "discussions" do
               f("[data-testid='grading-schemes-selector-option-#{grading_standard.id}']").click
 
               f(".form-actions button[type=submit]").click
-              fj("span:contains('Continue')").click
+              fj(".ui-button-text:contains('Continue')").click
               a = DiscussionTopic.last.assignment
               expect(a.grading_standard_id).to eq grading_standard.id
             end
@@ -516,6 +522,19 @@ describe "discussions" do
 
             expect_new_page_load { f(".form-actions button[type=submit]").click }
             expect(fj("span:contains('anonymous topic title')")).to be_present
+          end
+
+          it "able to save anon, not graded, quick added from assignments", :ignore_js_errors do
+            get "/courses/#{course.id}/assignments"
+
+            f(".add_assignment").click
+            click_option(f('[name="submission_types"]'), "Discussion")
+            f(".create_assignment_dialog input[type=text]").send_keys("anon disc from assignment")
+            f(".more_options").click
+
+            f("input[type=radio][value=partial_anonymity]").click
+            f("input#use_for_grading").click
+            expect_new_page_load { f("button.save_and_publish").click }
           end
         end
       end
@@ -843,6 +862,29 @@ describe "discussions" do
           expect(DiscussionTopic.last.assignment).to be_nil
         end
 
+        it "sets the mark important dates checkbox for discussion edit when differentiated modules ff is off" do
+          feature_setup
+
+          graded_discussion = create_graded_discussion(course)
+
+          course_override_due_date = 5.days.from_now
+          course_section = course.course_sections.create!(name: "section alpha")
+          graded_discussion.assignment.assignment_overrides.create!(set_type: "CourseSection", set_id: course_section.id, due_at: course_override_due_date)
+
+          get "/courses/#{course.id}/discussion_topics/#{graded_discussion.id}/edit"
+
+          expect(mark_important_dates).to be_displayed
+          scroll_to_element(mark_important_dates)
+          click_mark_important_dates
+
+          Discussion.save_button.click
+          wait_for_ajaximations
+
+          assignment = Assignment.last
+
+          expect(assignment.important_dates).to be(true)
+        end
+
         context "with archived grading schemes enabled" do
           before do
             Account.site_admin.enable_feature!(:grading_scheme_updates)
@@ -1153,7 +1195,9 @@ describe "discussions" do
             wait_for_ajaximations
 
             assignment = Assignment.last
+            assignment.reload
             expect(assignment.assignment_overrides.active.count).to eq 0
+            expect(assignment.only_visible_to_overrides).to be_falsey
           end
 
           it "displays module overrides correctly" do
@@ -1195,6 +1239,90 @@ describe "discussions" do
             expect(f("body")).not_to contain_jqcss(inherited_from_selector)
           end
 
+          it "displays module and course overrides correctly" do
+            graded_discussion = create_graded_discussion(course)
+            module1 = course.context_modules.create!(name: "Module 1")
+            graded_discussion.context_module_tags.create! context_module: module1, context: course, tag_type: "context_module"
+
+            override = module1.assignment_overrides.create!
+            override.assignment_override_students.create!(user: @student1)
+            graded_discussion.assignment.assignment_overrides.create!(set: course, due_at: 1.day.from_now)
+
+            # Open page and assignTo tray
+            get "/courses/#{course.id}/discussion_topics/#{graded_discussion.id}/edit"
+            Discussion.assign_to_button.click
+            wait_for_assign_to_tray_spinner
+
+            # Verify that Everyone tag does not appear
+            expect(module_item_assign_to_card.count).to eq 2
+            expect(module_item_assign_to_card[0].find_all(assignee_selected_option_selector).map(&:text)).to eq ["Everyone else"]
+            expect(module_item_assign_to_card[1].find_all(assignee_selected_option_selector).map(&:text)).to eq ["User"]
+            expect(inherited_from.last.text).to eq("Inherited from #{module1.name}")
+          end
+
+          it "creates a course override if everyone is added with a module override" do
+            graded_discussion = create_graded_discussion(course)
+            module1 = course.context_modules.create!(name: "Module 1")
+            graded_discussion.context_module_tags.create! context_module: module1, context: course, tag_type: "context_module"
+
+            override = module1.assignment_overrides.create!
+            override.assignment_override_students.create!(user: @student1)
+
+            # Open page and assignTo tray
+            get "/courses/#{course.id}/discussion_topics/#{graded_discussion.id}/edit"
+            Discussion.assign_to_button.click
+            wait_for_assign_to_tray_spinner
+
+            # Verify the module override is shown
+            expect(module_item_assign_to_card.count).to eq 1
+            expect(module_item_assign_to_card[0].find_all(assignee_selected_option_selector).map(&:text)).to eq ["User"]
+            expect(inherited_from.last.text).to eq("Inherited from #{module1.name}")
+
+            click_add_assign_to_card
+            select_module_item_assignee(1, "Everyone else")
+
+            click_save_button("Apply")
+
+            # Save the discussion without changing the inherited module override
+            Discussion.save_button.click
+            Discussion.section_warning_continue_button.click
+            wait_for_ajaximations
+
+            assignment = graded_discussion.assignment
+            assignment.reload
+            # Expect the existing override to be the module override
+            expect(assignment.assignment_overrides.active.count).to eq 1
+            expect(assignment.all_assignment_overrides.active.count).to eq 2
+            expect(assignment.assignment_overrides.first.set_type).to eq "Course"
+            expect(assignment.only_visible_to_overrides).to be_truthy
+          end
+
+          it "does not display module override if an unassigned override exists" do
+            graded_discussion = create_graded_discussion(course)
+            module1 = course.context_modules.create!(name: "Module 1")
+            graded_discussion.context_module_tags.create! context_module: module1, context: course, tag_type: "context_module"
+
+            override = module1.assignment_overrides.create!
+            override.assignment_override_students.create!(user: @student1)
+
+            unassigned_override = graded_discussion.assignment.assignment_overrides.create!
+            unassigned_override.assignment_override_students.create!(user: @student1)
+            unassigned_override.update(unassign_item: true)
+
+            assigned_override = graded_discussion.assignment.assignment_overrides.create!
+            assigned_override.assignment_override_students.create!(user: @student2)
+
+            # Open page and assignTo tray
+            get "/courses/#{course.id}/discussion_topics/#{graded_discussion.id}/edit"
+            Discussion.assign_to_button.click
+            wait_for_assign_to_tray_spinner
+
+            # Verify the module override is not shown
+            expect(module_item_assign_to_card.count).to eq 1
+            expect(module_item_assign_to_card[0].find_all(assignee_selected_option_selector).map(&:text)).to eq ["User"]
+            expect(module_item_assign_to_card[0]).not_to contain_css(inherited_from_selector)
+          end
+
           it "does not create an override if the modules override is not updated" do
             graded_discussion = create_graded_discussion(course)
             module1 = course.context_modules.create!(name: "Module 1")
@@ -1220,11 +1348,12 @@ describe "discussions" do
             wait_for_ajaximations
 
             assignment = graded_discussion.assignment
-
+            assignment.reload
             # Expect the existing override to be the module override
             expect(assignment.assignment_overrides.active.count).to eq 0
             expect(assignment.all_assignment_overrides.active.count).to eq 1
             expect(assignment.all_assignment_overrides.first.context_module_id).to eq module1.id
+            expect(assignment.only_visible_to_overrides).to be_falsey
           end
 
           it "displays highighted cards correctly" do
@@ -1279,6 +1408,36 @@ describe "discussions" do
             # Expect both cards to be there
             Discussion.assign_to_button.click
             expect(module_item_assign_to_card.count).to eq 2
+          end
+
+          it "sets the mark important dates checkbox for discussion edit" do
+            feature_setup
+
+            graded_discussion = create_graded_discussion(course)
+
+            get "/courses/#{course.id}/discussion_topics/#{graded_discussion.id}/edit"
+
+            Discussion.assign_to_button.click
+            wait_for_assign_to_tray_spinner
+
+            keep_trying_until { expect(item_tray_exists?).to be_truthy }
+
+            formatted_date = format_date_for_view(2.days.from_now(Time.zone.now), "%m/%d/%Y")
+            update_due_date(0, formatted_date)
+            update_due_time(0, "5:00 PM")
+
+            click_save_button("Apply")
+
+            expect(mark_important_dates).to be_displayed
+            scroll_to_element(mark_important_dates)
+            click_mark_important_dates
+
+            Discussion.save_button.click
+            wait_for_ajaximations
+
+            assignment = Assignment.last
+
+            expect(assignment.important_dates).to be(true)
           end
         end
 

@@ -112,7 +112,12 @@ class WikiPage < ActiveRecord::Base
   }
 
   scope :visible_to_user, lambda { |user_id|
-    where("wiki_pages.assignment_id IS NULL OR EXISTS (SELECT 1 FROM #{AssignmentStudentVisibility.quoted_table_name} asv WHERE wiki_pages.assignment_id = asv.assignment_id AND asv.user_id = ?)", user_id)
+    if Account.site_admin.feature_enabled?(:differentiated_modules)
+      where("wiki_pages.assignment_id IS NULL AND (EXISTS (SELECT 1 FROM #{WikiPageStudentVisibility.quoted_table_name} psv WHERE wiki_pages.id = psv.wiki_page_id AND psv.user_id = ?) OR wiki_pages.context_type = 'Group')", user_id)
+        .or(where("wiki_pages.assignment_id IS NOT NULL AND EXISTS (SELECT 1 FROM #{AssignmentStudentVisibility.quoted_table_name} asv WHERE wiki_pages.assignment_id = asv.assignment_id AND asv.user_id = ?)", user_id))
+    else
+      where("wiki_pages.assignment_id IS NULL OR EXISTS (SELECT 1 FROM #{AssignmentStudentVisibility.quoted_table_name} asv WHERE wiki_pages.assignment_id = asv.assignment_id AND asv.user_id = ?)", user_id)
+    end
   }
 
   TITLE_LENGTH = 255
@@ -324,16 +329,33 @@ class WikiPage < ActiveRecord::Base
   scope :order_by_id, -> { order(:id) }
 
   def low_level_locked_for?(user, opts = {})
-    return false unless could_be_locked
+    if Account.site_admin.feature_enabled?(:differentiated_modules)
+      return false if opts[:check_policies] && grants_right?(user, :update)
 
-    RequestCache.cache(locked_request_cache_key(user), opts[:deep_check_if_needed]) do
-      locked = false
-      if (item = locked_by_module_item?(user, opts))
-        locked = { object: self, module: item.context_module }
-        unlock_at = locked[:module].unlock_at
-        locked[:unlock_at] = unlock_at if unlock_at && unlock_at > Time.now.utc
+      RequestCache.cache(locked_request_cache_key(user)) do
+        locked = false
+        page_for_user = (assignment || self).overridden_for(user)
+        if page_for_user.unlock_at && page_for_user.unlock_at > Time.zone.now
+          locked = { object: page_for_user, unlock_at: page_for_user.unlock_at }
+        elsif could_be_locked && (item = locked_by_module_item?(user, opts))
+          locked = { object: self, module: item.context_module }
+        elsif page_for_user.lock_at && page_for_user.lock_at < Time.zone.now
+          locked = { object: page_for_user, lock_at: page_for_user.lock_at }
+        end
+        locked
       end
-      locked
+    else
+      return false unless could_be_locked
+
+      RequestCache.cache(locked_request_cache_key(user), opts[:deep_check_if_needed]) do
+        locked = false
+        if (item = locked_by_module_item?(user, opts))
+          locked = { object: self, module: item.context_module }
+          unlock_at = locked[:module].unlock_at
+          locked[:unlock_at] = unlock_at if unlock_at && unlock_at > Time.now.utc
+        end
+        locked
+      end
     end
   end
 

@@ -790,9 +790,9 @@ CanvasRails::Application.routes.draw do
     resources :developer_keys, only: :index
     get "/developer_keys/:key_id", controller: :developer_keys, action: :index, as: "account_developer_key_view"
 
-    get "extensions", controller: :lti_registrations, action: :index, as: "lti_registrations"
-    get "extensions/*path", controller: :lti_registrations, action: :index
-    get "extensions/manage", controller: :lti_registrations, action: :index, as: "lti_manage_registrations"
+    get "extensions", controller: "lti/registrations", action: :index, as: "lti_registrations"
+    get "extensions/*path", controller: "lti/registrations", action: :index
+    get "extensions/manage", controller: "lti/registrations", action: :index, as: "lti_manage_registrations"
 
     get "release_notes" => "release_notes#manage", :as => :release_notes_manage
 
@@ -830,6 +830,9 @@ CanvasRails::Application.routes.draw do
 
   get "login/canvas" => "login/canvas#new", :as => :canvas_login
   post "login/canvas" => "login/canvas#create"
+
+  get "login/email_verify" => "login/email_verify#show", :as => :login_email_verify_show
+  post "login/email_verify" => "login/email_verify#verify", :as => :login_email_verify
 
   get "login/ldap" => "login/ldap#new"
   post "login/ldap" => "login/ldap#create"
@@ -1104,6 +1107,12 @@ CanvasRails::Application.routes.draw do
     get "courses/:course_id/search", action: :show, as: :course_search
     # TODO: Add back global search once we have a good way to handle it
     # get "search", action: :show
+  end
+
+  scope(controller: :translation) do
+    post "courses/:course_id/translate", action: :translate
+    post "courses/:course_id/translate/paragraph", action: :translate_paragraph
+    post "translate/message", action: :translate_message
   end
 
   ### API routes ###
@@ -1458,6 +1467,9 @@ CanvasRails::Application.routes.draw do
         delete "#{context.pluralize}/:#{context}_id/discussion_topics/:topic_id", controller: :discussion_topics, action: :destroy
 
         get "#{context.pluralize}/:#{context}_id/discussion_topics/:topic_id/view", action: :view, as: "#{context}_discussion_topic_view"
+        get "#{context.pluralize}/:#{context}_id/discussion_topics/:topic_id/summaries", action: :summary, as: "#{context}_discussion_topic_summary"
+        put "#{context.pluralize}/:#{context}_id/discussion_topics/:topic_id/summaries/disable", action: :disable_summary, as: "#{context}_discussion_topic_disable_summary"
+        post "#{context.pluralize}/:#{context}_id/discussion_topics/:topic_id/summaries/:summary_id/feedback", action: :summary_feedback, as: "#{context}_discussion_topic_summary_feedback"
         post "#{context.pluralize}/:#{context}_id/discussion_topics/:topic_id/duplicate", action: :duplicate
         get "#{context.pluralize}/:#{context}_id/discussion_topics/:topic_id/entry_list", action: :entry_list, as: "#{context}_discussion_topic_entry_list"
         post "#{context.pluralize}/:#{context}_id/discussion_topics/:topic_id/entries", action: :add_entry, as: "#{context}_discussion_add_entry"
@@ -1704,6 +1716,7 @@ CanvasRails::Application.routes.draw do
       put "accounts/:account_id/logins/:id", action: :update
       delete "users/:user_id/logins/:id", action: :destroy
       post "users/reset_password", action: :forgot_password
+      post "users/:user_id/logins/:id/migrate_login_attribute", action: :migrate_login_attribute
     end
 
     scope(controller: :accounts) do
@@ -1902,6 +1915,11 @@ CanvasRails::Application.routes.draw do
 
       get "accounts/:account_id/developer_keys", action: :index, as: "account_developer_keys"
       post "accounts/:account_id/developer_keys", action: :create
+    end
+
+    scope(controller: "lti/registrations") do
+      delete "accounts/:account_id/lti_registrations/:id", action: :destroy
+      get "accounts/:account_id/lti_registrations/:id", action: :show
     end
 
     scope(controller: :immersive_reader) do

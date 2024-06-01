@@ -648,6 +648,7 @@ describe DiscussionTopicsController, type: :request do
         "discussion_subentry_count" => 0,
         "assignment_id" => nil,
         "is_section_specific" => @topic.is_section_specific,
+        "summary_enabled" => @topic.summary_enabled,
         "published" => true,
         "can_unpublish" => true,
         "delayed_post_at" => nil,
@@ -1160,6 +1161,88 @@ describe DiscussionTopicsController, type: :request do
               expect(json.count).to eq 2
               expect(json.pluck("id")).to match_array [@announcement.id, @announcement2.id]
             end
+          end
+        end
+      end
+
+      describe "differentiated modules" do
+        before do
+          Account.site_admin.enable_feature! :differentiated_modules
+        end
+
+        context "ungraded discussions" do
+          before do
+            course_factory(active_all: true)
+            @course_section = @course.course_sections.create
+
+            @student1, @student2 = create_users(2, return_type: :record)
+            @course.enroll_student(@student1, enrollment_state: "active")
+            @course.enroll_student(@student2, enrollment_state: "active")
+            student_in_section(@course.course_sections.first, user: @student1)
+            student_in_section(@course.course_sections.second, user: @student2)
+
+            @teacher = teacher_in_course(course: @course, active_enrollment: true).user
+            @topic_visible_to_everyone = discussion_topic_model(user: @teacher, context: @course)
+            @topic = discussion_topic_model(user: @teacher, context: @course)
+            @topic.update!(only_visible_to_overrides: true)
+          end
+
+          it "shows only the visible topics" do
+            override = @topic.assignment_overrides.create!
+            override.assignment_override_students.create!(user: @student1)
+
+            @user = @student2
+
+            json = api_call(:get,
+                            "/api/v1/courses/#{@course.id}/discussion_topics.json",
+                            { controller: "discussion_topics", action: "index", format: "json", course_id: @course.id.to_s })
+            expect(json.size).to eq 1
+
+            @user = @student1
+
+            json = api_call(:get,
+                            "/api/v1/courses/#{@course.id}/discussion_topics.json",
+                            { controller: "discussion_topics", action: "index", format: "json", course_id: @course.id.to_s })
+            expect(json.size).to eq 2
+          end
+
+          it "is visible only to users who can access the assigned section" do
+            @topic.assignment_overrides.create!(set: @course_section)
+
+            @user = @student2
+            json = api_call(:get,
+                            "/api/v1/courses/#{@course.id}/discussion_topics.json",
+                            { controller: "discussion_topics", action: "index", format: "json", course_id: @course.id.to_s })
+            expect(json.size).to eq 2
+
+            @user = @student1
+            json = api_call(:get,
+                            "/api/v1/courses/#{@course.id}/discussion_topics.json",
+                            { controller: "discussion_topics", action: "index", format: "json", course_id: @course.id.to_s })
+            expect(json.size).to eq 1
+          end
+
+          it "is visible only to students in module override section" do
+            context_module = @course.context_modules.create!(name: "module")
+            context_module.content_tags.create!(content: @topic, context: @course)
+
+            override2 = @topic.assignment_overrides.create!(unlock_at: "2022-02-01T01:00:00Z",
+                                                            unlock_at_overridden: true,
+                                                            lock_at: "2022-02-02T01:00:00Z",
+                                                            lock_at_overridden: true)
+            override2.assignment_override_students.create!(user: @student2)
+
+            @user = @student2
+            json = api_call(:get,
+                            "/api/v1/courses/#{@course.id}/discussion_topics.json",
+                            { controller: "discussion_topics", action: "index", format: "json", course_id: @course.id.to_s })
+            expect(json.size).to eq 2
+
+            @user = @student1
+            json = api_call(:get,
+                            "/api/v1/courses/#{@course.id}/discussion_topics.json",
+                            { controller: "discussion_topics", action: "index", format: "json", course_id: @course.id.to_s })
+            expect(json.size).to eq 1
           end
         end
       end
@@ -2124,6 +2207,7 @@ describe DiscussionTopicsController, type: :request do
       "unread_count" => 0,
       "user_can_see_posts" => true,
       "is_section_specific" => gtopic.is_section_specific,
+      "summary_enabled" => gtopic.summary_enabled,
       "subscribed" => true,
       "podcast_url" => nil,
       "podcast_has_student_posts" => false,
@@ -2236,6 +2320,7 @@ describe DiscussionTopicsController, type: :request do
       "id" => announcement.id,
       "is_announcement" => true,
       "is_section_specific" => false,
+      "summary_enabled" => false,
       "last_reply_at" => announcement.last_reply_at.as_json,
       "lock_at" => nil,
       "locked" => false,

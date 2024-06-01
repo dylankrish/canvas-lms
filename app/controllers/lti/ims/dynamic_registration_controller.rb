@@ -19,6 +19,10 @@
 
 module Lti
   module IMS
+    # @API LTI Dynamic Registrations
+    # @internal
+    # Implements the 1EdTech LTI 1.3 Dynamic Registration <a href="/doc/api/registration.html">spec</a>.
+    # See the <a href="/doc/api/registration.html">Registration guide</a> for how to use this API.
     class DynamicRegistrationController < ApplicationController
       REGISTRATION_TOKEN_EXPIRATION = 1.hour
 
@@ -97,6 +101,10 @@ module Lti
         render json: registration
       end
 
+      # @API Create a Dynamic Registration
+      # The final step of the Dynamic Registration process.
+      # Refer to the Registration guide linked at the top of this page for usage of this endpoint.
+      # Requires special Dynamic Registration token and is not for out-of-band use.
       def create
         access_token = AuthenticationMethods.access_token(request)
         jwt = Canvas::Security.decode_jwt(access_token)
@@ -120,14 +128,21 @@ module Lti
           return
         end
 
-        root_account.shard.activate do
-          registration_params = params.permit(*expected_registration_params)
-          registration_params["lti_tool_configuration"] = registration_params["https://purl.imsglobal.org/spec/lti-tool-configuration"]
-          registration_params.delete("https://purl.imsglobal.org/spec/lti-tool-configuration")
-          scopes = registration_params["scope"].split
-          registration_params.delete("scope")
+        registration_params = params.permit(*expected_registration_params)
+        registration_params["lti_tool_configuration"] = registration_params["https://purl.imsglobal.org/spec/lti-tool-configuration"]
+        registration_params.delete("https://purl.imsglobal.org/spec/lti-tool-configuration")
+        scopes = registration_params["scope"].split
+        registration_params.delete("scope")
+        error_messages = validate_registration_params(registration_params)
 
+        if error_messages.present?
+          render status: :unprocessable_entity, json: { errors: error_messages }
+          return
+        end
+
+        root_account.shard.activate do
           developer_key = DeveloperKey.new(
+            current_user: User.find(jwt["user_id"]),
             name: registration_params["client_name"],
             account: root_account.site_admin? ? nil : root_account,
             redirect_uris: registration_params["redirect_uris"],
@@ -164,15 +179,15 @@ module Lti
       def render_registration(registration, developer_key)
         render json: {
           client_id: developer_key.global_id.to_s,
-          application_type: registration.application_type,
-          grant_types: registration.grant_types,
+          application_type: Lti::IMS::Registration::REQUIRED_APPLICATION_TYPE,
+          grant_types: Lti::IMS::Registration::REQUIRED_GRANT_TYPES,
           initiate_login_uri: registration.initiate_login_uri,
           redirect_uris: registration.redirect_uris,
-          response_types: registration.response_types,
+          response_types: Lti::IMS::Registration::REQUIRED_RESPONSE_TYPES,
           client_name: registration.client_name,
           jwks_uri: registration.jwks_uri,
           logo_uri: developer_key.icon_url,
-          token_endpoint_auth_method: registration.token_endpoint_auth_method,
+          token_endpoint_auth_method: Lti::IMS::Registration::REQUIRED_TOKEN_ENDPOINT_AUTH_METHOD,
           scope: registration.scopes.join(" "),
           "https://purl.imsglobal.org/spec/lti-tool-configuration": registration.lti_tool_configuration.merge(
             {
@@ -183,10 +198,33 @@ module Lti
       end
 
       def respond_with_error(status_code, message)
-        head status_code
-        render json: {
-          errorMessage: message
-        }
+        render status: status_code,
+               json: {
+                 errorMessage: message
+               }
+      end
+
+      def validate_registration_params(registration_params)
+        grant_types = registration_params.delete("grant_types") || []
+        response_types = registration_params.delete("response_types") || []
+        application_type = registration_params.delete("application_type")
+        token_endpoint_auth_method = registration_params.delete("token_endpoint_auth_method")
+        errors = []
+        if (Lti::IMS::Registration::REQUIRED_GRANT_TYPES - grant_types).present?
+          errors << { field: :grant_types, message: "Must include #{Lti::IMS::Registration::REQUIRED_GRANT_TYPES.join(", ")}" }
+        end
+        if (Lti::IMS::Registration::REQUIRED_RESPONSE_TYPES - response_types).present?
+          errors << { field: :response_types, message: "Must include #{Lti::IMS::Registration::REQUIRED_RESPONSE_TYPES.join(", ")}" }
+        end
+
+        if token_endpoint_auth_method != Lti::IMS::Registration::REQUIRED_TOKEN_ENDPOINT_AUTH_METHOD
+          errors << { field: :token_endpoint_auth_method, message: "Must be 'private_key_jwt'" }
+        end
+
+        if application_type != Lti::IMS::Registration::REQUIRED_APPLICATION_TYPE
+          errors << { field: :application_type, message: "Must be 'web'" }
+        end
+        errors
       end
 
       def require_dynamic_registration_flag

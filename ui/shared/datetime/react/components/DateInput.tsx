@@ -19,7 +19,7 @@
 import {useScope as useI18nScope} from '@canvas/i18n'
 import React, {useRef, useCallback, useEffect, useState} from 'react'
 import moment, {type Moment} from 'moment-timezone'
-import * as tz from '../../index'
+import * as tz from '@instructure/datetime'
 import {AccessibleContent} from '@instructure/ui-a11y-content'
 import {Calendar} from '@instructure/ui-calendar'
 import {DateInput} from '@instructure/ui-date-input'
@@ -148,6 +148,10 @@ export type CanvasDateInputProps = {
    *     and call onSelectedDateChange(null, 'error')
    */
   defaultToToday?: boolean
+  /**
+   * Provides a ref to the underlying input element.
+   */
+  inputRef?: (element: HTMLInputElement | null) => void
 }
 
 /**
@@ -178,6 +182,7 @@ export default function CanvasDateInput({
   timezone = ENV?.TIMEZONE || Intl.DateTimeFormat().resolvedOptions().timeZone,
   width,
   withRunningValue,
+  inputRef,
 }: CanvasDateInputProps) {
   const todayMoment = moment().tz(timezone)
 
@@ -481,6 +486,7 @@ export default function CanvasDateInput({
       data-testid={dataTestid}
       size={size}
       placeholder={placeholder}
+      inputRef={inputRef}
     >
       {renderDays()}
     </DateInput>

@@ -33,24 +33,27 @@ gem "active_model_serializers", "~> 0.9.9"
 gem "addressable", "~> 2.8", require: false
 gem "authlogic", "~> 6.4"
   gem "scrypt", "~> 3.0"
+gem "aws-sdk-bedrockruntime", "~> 1.7", require: false
 gem "aws-sdk-kinesis", "~> 1.45", require: false
 gem "aws-sdk-s3", "~> 1.119", require: false
 gem "aws-sdk-sns", "~> 1.60", require: false
 gem "aws-sdk-sqs", "~> 1.53", require: false
+gem "aws-sdk-sagemakerruntime", "~> 1.61", require: false
 gem "rqrcode", "~> 2.2", require: false
 gem "bcrypt", "~> 3.1"
 gem "bigdecimal", "~> 3.1"
 gem "browser", "~> 5.3", require: false
 gem "business_time", "0.13.0"
 gem "canvas_connect", "0.3.16"
-gem "canvas_link_migrator", "~> 1.0.8"
+gem "canvas_link_migrator", "~> 1.0.9"
 gem "canvas_webex", "0.18.2"
+gem "cld", "~> 0.13"
 gem "crocodoc-ruby", "0.0.1", require: false
 gem "code_ownership", "~> 1.33"
 gem "ddtrace", "~> 1.13", require: false
 gem "docx", "~> 0.8"
 gem "encrypted_cookie_store-instructure", "~> 1.2", require: "encrypted_cookie_store"
-gem "gepub", "1.0.15"
+gem "gepub", "~> 1.0"
 gem "apollo-federation", "~> 3.8"
 gem "graphql", "~> 2.3.0"
 gem "graphql-batch", "~> 0.5"
@@ -61,6 +64,7 @@ gem "icalendar", "~> 2.9", require: false
 gem "diplomat", "~> 2.6", require: false
 gem "ims-lti", "~> 2.3", require: "ims"
 gem "rrule", "~> 0.5", require: false
+gem "inst_llm", "~> 0.2.4"
 
 gem "inst_access", "0.4.2"
 gem "inst_statsd", "~> 3.0"
@@ -84,6 +88,7 @@ gem "outrigger", "~> 3.0"
 gem "parallel", "~> 1.23", require: false
 gem "pdf-reader", "~> 2.11"
 gem "pg_query", "~> 5.1", require: false
+gem "pragmatic_segmenter", "~> 0.3"
 gem "prawn-emoji", "~> 5.3", require: false
 gem "prawn-rails", "~> 1.4"
   gem "matrix", "0.4.2" # Used to be a default gem but is no more, but prawn depends on it implicitly
